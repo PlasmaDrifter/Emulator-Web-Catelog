@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nintendo Catelog</title>
+<link rel="icon" type="image/png" href="/static/favicon.png">
+<link rel="stylesheet" href="/static/css/style.css?v=1.3">
+</head>
+<body>
+<header>
+  <h1>Nintendo Catelog</h1>
+  <div class="search-box">
+    <input type="search" id="searchInput" placeholder="Search..." size="15" autocomplete="off">
+    <button id="clearSearchBtn" title="Clear search" type="button">&times;</button>
+  </div>
+  <div class="actions">
+    <button id="fetchCoversBtn">Fetch cover art</button>
+    <button id="rescanBtn">Rescan library</button>
+    <span id="status"></span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-target="all">All</button>
+  <button class="tab" data-target="favorites">★ Favorites</button>
+  {% for sys_id, sys_data in library.items() %}
+  <button class="tab" data-target="{{ sys_id }}">{{ sys_data.name }} <span class="count">({{ sys_data.games|length }})</span></button>
+  {% endfor %}
+  <label class="toggle-edit-mode" title="Toggle hide buttons">
+    <input type="checkbox" id="editModeToggle">
+  </label>
+  <button class="tab" data-target="hidden">Hidden</button>
+</nav>
+
+<main>
+  {% for sys_id, sys_data in library.items() %}
+  <section class="system" data-system-section="{{ sys_id }}">
+    <h2>{{ sys_data.name }} <span class="count">({{ sys_data.games|length }})</span></h2>
+    {% if sys_data.games|length == 0 %}
+      <p class="empty">No ROMs found in configured folder.</p>
+    {% else %}
+    <div class="grid">
+      {% for game in sys_data.games %}
+      <div class="card" data-system="{{ sys_id }}" data-path="{{ game.path }}" data-filename="{{ game.filename }}" data-favorite="{{ 'true' if game.favorite else 'false' }}" data-has-cover="{{ 'true' if game.cover else 'false' }}" data-hidden="{{ 'true' if game.hidden else 'false' }}">
+        <button class="star {{ 'active' if game.favorite else '' }}" title="Toggle favorite">★</button>
+        <button class="hide-toggle {{ 'active' if game.hidden else '' }}" title="{{ 'Unhide game' if game.hidden else 'Hide game' }}">{{ '👁' if game.hidden else '🙈' }}</button>
+        <div class="cover">
+          {% if game.cover %}
+            <img src="{{ game.cover }}" alt="{{ game.title }}" loading="lazy">
+          {% else %}
+            <div class="placeholder">
+              <span class="placeholder-title">{{ game.title }}</span>
+              <input type="text" class="fix-input" value="{{ game.title }}">
+              <button class="fix-btn">Find cover</button>
+            </div>
+          {% endif %}
+        </div>
+        <div class="title">{{ game.title }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+  {% endfor %}
+</main>
+
+<script>
+document.querySelectorAll('.card').forEach(card => {
+  card.addEventListener('click', async (e) => {
+    if (e.target.closest('.star') || e.target.closest('.placeholder') || e.target.closest('.hide-toggle')) return;
+    const system = card.dataset.system;
+    const path = card.dataset.path;
+    card.classList.add('launching');
+    const statusEl = document.getElementById('status');
+    statusEl.textContent = 'Launching...';
+    try {
+      const res = await fetch('/api/launch', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({system, path})
+      });
+      const data = await res.json();
+      statusEl.textContent = data.ok ? 'Launched.' : ('Error: ' + data.error);
+    } catch (e) {
+      statusEl.textContent = 'Error: ' + e;
+    }
+    setTimeout(() => { card.classList.remove('launching'); statusEl.textContent = ''; }, 2000);
+  });
+});
+
+document.querySelectorAll('.fix-btn').forEach(btn => {
+  btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const card = btn.closest('.card');
+    const input = card.querySelector('.fix-input');
+    const coverDiv = card.querySelector('.cover');
+    const system = card.dataset.system;
+    const filename = card.dataset.filename;
+    const query = input.value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Searching...';
+    try {
+      const res = await fetch('/api/fetch_cover_single', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({system, filename, query})
+      });
+      const data = await res.json();
+      if (data.ok) {
+        coverDiv.innerHTML = `<img src="${data.cover}" alt="${filename}" loading="lazy">`;
+        card.dataset.hasCover = 'true';
+        applyFilters();
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'No match, try again';
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Error, try again';
+    }
+  });
+});
+
+document.querySelectorAll('.fix-input').forEach(input => {
+  input.addEventListener('click', e => e.stopPropagation());
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      input.closest('.card').querySelector('.fix-btn').click();
+    }
+  });
+});
+
+document.querySelectorAll('.star').forEach(star => {
+  star.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const card = star.closest('.card');
+    const system = card.dataset.system;
+    const filename = card.dataset.filename;
+    try {
+      const res = await fetch('/api/favorite', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({system, filename})
+      });
+      const data = await res.json();
+      if (data.ok) {
+        card.dataset.favorite = data.favorite ? 'true' : 'false';
+        star.classList.toggle('active', data.favorite);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
+});
+
+document.querySelectorAll('.hide-toggle').forEach(btn => {
+  btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const card = btn.closest('.card');
+    const system = card.dataset.system;
+    const filename = card.dataset.filename;
+    try {
+      const res = await fetch('/api/hide', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({system, filename})
+      });
+      const data = await res.json();
+      if (data.ok) {
+        card.dataset.hidden = data.hidden ? 'true' : 'false';
+        btn.classList.toggle('active', data.hidden);
+        btn.textContent = data.hidden ? '👁' : '🙈';
+        btn.title = data.hidden ? 'Unhide game' : 'Hide game';
+        applyFilters();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
+});
+
+document.getElementById('rescanBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('status');
+  statusEl.textContent = 'Rescanning storage...';
+  try {
+    await fetch('/api/rescan');
+    location.reload();
+  } catch(e) {
+    location.reload();
+  }
+});
+
+let activeTarget = 'all';
+
+function applyFilters() {
+  const searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  let totalVisible = 0;
+  let favoritesVisible = 0;
+  let hiddenVisible = 0;
+  const systemCounts = {};
+
+  document.querySelectorAll('.system').forEach(section => {
+    systemCounts[section.dataset.systemSection] = 0;
+  });
+
+  document.querySelectorAll('.system').forEach(section => {
+    const sysId = section.dataset.systemSection;
+    const cards = section.querySelectorAll('.card');
+    let anyVisible = false;
+
+    cards.forEach(card => {
+      const isHidden = card.dataset.hidden === 'true';
+      const isFavorite = card.dataset.favorite === 'true';
+      const title = card.querySelector('.title').textContent.trim().toLowerCase();
+      const matchesSearch = !searchQuery || title.includes(searchQuery);
+
+      let show;
+      if (activeTarget === 'hidden') {
+        show = isHidden;
+      } else if (activeTarget === 'all') {
+        show = !isHidden;
+      } else if (activeTarget === 'favorites') {
+        show = isFavorite && !isHidden;
+      } else {
+        show = sysId === activeTarget && !isHidden;
+      }
+
+      if (show && !matchesSearch) {
+        show = false;
+      }
+
+      card.style.display = show ? '' : 'none';
+      if (show) anyVisible = true;
+
+      if (matchesSearch) {
+        if (isHidden) {
+          hiddenVisible++;
+        } else {
+          totalVisible++;
+          if (isFavorite) favoritesVisible++;
+          if (systemCounts[sysId] !== undefined) {
+            systemCounts[sysId]++;
+          }
+        }
+      }
+    });
+
+    const sectionMatches = ['all', 'favorites', 'hidden'].includes(activeTarget) || sysId === activeTarget;
+    section.style.display = (sectionMatches && anyVisible) ? '' : 'none';
+
+    const headerCountSpan = section.querySelector('h2 .count');
+    if (headerCountSpan) {
+      headerCountSpan.textContent = `(${systemCounts[sysId]})`;
+    }
+  });
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    const target = tab.dataset.target;
+    let countSpan = tab.querySelector('.count');
+
+    if (!countSpan && ['all', 'favorites', 'hidden'].includes(target)) {
+      countSpan = document.createElement('span');
+      countSpan.className = 'count';
+      tab.appendChild(countSpan);
+    }
+
+    if (countSpan) {
+      if (target === 'all') countSpan.textContent = ` (${totalVisible})`;
+      else if (target === 'favorites') countSpan.textContent = ` (${favoritesVisible})`;
+      else if (target === 'hidden') countSpan.textContent = ` (${hiddenVisible})`;
+      else if (systemCounts[target] !== undefined) {
+        countSpan.textContent = ` (${systemCounts[target]})`;
+      }
+    }
+  });
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    activeTarget = tab.dataset.target;
+    applyFilters();
+  });
+});
+
+document.getElementById('fetchCoversBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('status');
+  statusEl.textContent = 'Fetching and compressing covers, this can take a while...';
+  try {
+    const res = await fetch('/api/fetch_covers', {method: 'POST'});
+    const data = await res.json();
+    if (data.ok) {
+      statusEl.textContent = `Fetched ${data.fetched}, skipped ${data.skipped}, failed ${data.failed}. Rescanning...`;
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      statusEl.textContent = 'Error: ' + data.error;
+    }
+  } catch (e) {
+    statusEl.textContent = 'Error: ' + e;
+  }
+});
+
+const searchInput = document.getElementById('searchInput');
+const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+function updateClearButton() {
+  if (searchInput.value.length > 0) {
+    clearSearchBtn.style.display = 'block';
+  } else {
+    clearSearchBtn.style.display = 'none';
+  }
+}
+
+searchInput.addEventListener('input', () => {
+  updateClearButton();
+  applyFilters();
+});
+
+clearSearchBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  updateClearButton();
+  applyFilters();
+  searchInput.focus();
+});
+
+const editModeToggle = document.getElementById('editModeToggle');
+const showHideControls = localStorage.getItem('showHideControls') === 'true';
+editModeToggle.checked = showHideControls;
+if (showHideControls) {
+  document.body.classList.add('show-hide-controls');
+}
+
+editModeToggle.addEventListener('change', () => {
+  if (editModeToggle.checked) {
+    document.body.classList.add('show-hide-controls');
+    localStorage.setItem('showHideControls', 'true');
+  } else {
+    document.body.classList.remove('show-hide-controls');
+    localStorage.setItem('showHideControls', 'false');
+  }
+});
+
+applyFilters();
+</script>
+</body>
+</html>
