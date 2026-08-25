@@ -24,7 +24,6 @@ A fast, lightweight, self-hosted web catalog and remote launcher for your retro 
 - **Automated Cover Art Scraping**: One-click cover fetching from SteamGridDB with automatic image optimization and local caching in `static/covers/`.
 - **Manual Cover Art Override**: Drop custom cover art directly into the web UI or filesystem for unmatched or homebrew titles.
 - **Favorites & Visibility Management**: Toggle game favorites with custom glowing highlights, or hide unwanted duplicates/updates from the main catalog.
-- **Remote & Local Access**: Access the web UI from your desktop browser, phone, tablet, or over a Tailscale / local network while games launch on your main display.
 - **Zero Heavy Databases**: Library state is indexed dynamically from your real directory structure, with cached metadata stored in lightweight JSON files.
 
 ---
