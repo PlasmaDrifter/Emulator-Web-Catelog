@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.bak*
+.DS_Store
+.venv/
+venv/
+*.log
+app copy.py
+static/covers/*
+!static/covers/.gitkeep
