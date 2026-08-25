@@ -31,10 +31,11 @@ A fast, lightweight, self-hosted web catalog and remote launcher for your retro 
 
 ## Quickstart & Installation
 
-### 1. Clone or Copy Files
+### 1. Clone the Repository
 
 ```bash
-cd /home/jmc/Source/romcat
+git clone https://github.com/PlasmaDrifter/Emulator-Web-Catelog.git romcat
+cd romcat
 ```
 
 ### 2. Create Python Virtual Environment & Install Dependencies
@@ -66,7 +67,7 @@ Open your browser and navigate to:
 ```text
 http://localhost:8420
 ```
-Or use your machine's local IP / Tailscale IP (e.g. `http://100.x.y.z:8420`).
+Or use your machine's local IP / Tailscale IP (e.g. `http://<server-ip>:8420`).
 
 ---
 
@@ -89,13 +90,13 @@ systems:
 
 ### Understanding Parameters
 
-- **`system_identifier`**: Lowercase or camelCase key used internally (e.g. `nes`, `snes`, `n64`, `Gamecube`, `WiiU`, `Switch`).
+- **`system_identifier`**: Lowercase or camelCase key used internally (e.g. `nes`, `snes`, `n64`, `gamecube`, `wiiu`, `switch`).
 - **`name`**: The user-facing name shown in the top navigation tab and header.
 - **`folder`**: Path to the ROM directory on your host filesystem. Can be a single directory path or a YAML list of multiple paths:
   ```yaml
   folder:
-    - "/home/jmc/Storage/nvme2tb/WiiU Roms/"
-    - "/home/jmc/Storage/disk3tb/ROMS/WiiU Roms/"
+    - "/path/to/primary/roms/WiiU/"
+    - "/path/to/secondary/storage/WiiU/"
   ```
 - **`extensions`**: List of file extensions to include in the scan.
 - **`command`**: The exact shell command used to start the emulator.
@@ -127,14 +128,14 @@ If your emulators are installed via Flatpak, use `flatpak run <Application-ID> {
 
 #### 2. Native Binaries & AppImages
 
-For standalone binaries or AppImages located in your user folder:
+For standalone binaries or AppImages located in your system or applications directory:
 
 ```yaml
 Switch:
   name: "Switch"
-  folder: "/home/jmc/Storage/nvme2tb/Switch Games/"
+  folder: "/path/to/roms/Switch/"
   extensions: [".nsp", ".xci"]
-  command: "env DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 /home/jmc/Applications/Eden -g {rom}"
+  command: "env DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 /path/to/emulator/binary -g {rom}"
 ```
 
 #### 3. RetroArch with Libretro Cores
@@ -144,7 +145,7 @@ To launch via RetroArch cores directly:
 ```yaml
 snes:
   name: "SNES"
-  folder: "/home/jmc/Storage/disk3tb/ROMS/SNES Roms/"
+  folder: "/path/to/roms/SNES/"
   extensions: [".sfc", ".smc"]
   command: "retroarch -L /usr/lib/libretro/snes9x_libretro.so {rom}"
 ```
@@ -161,7 +162,7 @@ To add a new console (for example, Game Boy Advance):
 ```yaml
   gba:
     name: "Game Boy Advance"
-    folder: "/home/jmc/Storage/disk3tb/ROMS/GBA/"
+    folder: "/path/to/roms/GBA/"
     extensions: [".gba", ".zip"]
     command: "flatpak run io.mgba.mGBA {rom}"
 ```
@@ -313,7 +314,7 @@ Emulator-Web-Catelog/
 
 To keep the web catalog running automatically in the background on boot:
 
-Create `~/.config/systemd/user/romcat.service`:
+1. Create a user service definition at `~/.config/systemd/user/romcat.service`:
 
 ```ini
 [Unit]
@@ -322,8 +323,8 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/jmc/Source/romcat
-ExecStart=/home/jmc/Source/romcat/venv/bin/python3 /home/jmc/Source/romcat/app.py
+WorkingDirectory=%h/romcat
+ExecStart=%h/romcat/venv/bin/python3 %h/romcat/app.py
 Restart=on-failure
 RestartSec=5
 
@@ -331,14 +332,16 @@ RestartSec=5
 WantedBy=default.target
 ```
 
-Enable and start the user service:
+*(Note: `%h` is a standard systemd specifier that automatically expands to the user's home directory. Adjust `%h/romcat` if your clone is located in another folder).*
+
+2. Enable and start the user service:
 
 ```bash
 systemctl --user daemon-reload
 systemctl --user enable --now romcat.service
 ```
 
-Check the status:
+3. Check service status:
 
 ```bash
 systemctl --user status romcat.service
