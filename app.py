@@ -35,6 +35,7 @@ DEFAULT_SETTINGS = {
         "accent_color": "#3a7bd5",
         "tab_active_text": "#ffffff",
         "favorite_color": "#ff00ff",
+        "favorite_star_color": "#ffd700",
         "text_primary": "#e8e8e8",
         "text_muted": "#9aa4b2",
         "border_color": "#2a2e37"

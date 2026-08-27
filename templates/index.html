@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" type="image/png" href="/static/favicon.png">
-<link rel="stylesheet" href="/static/css/style.css?v=1.6">
+<link rel="stylesheet" href="/static/css/style.css?v=1.7">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -17,6 +17,7 @@
     --accent-color: {{ settings.theme.accent_color }};
     --tab-active-text: {{ settings.theme.tab_active_text or '#ffffff' }};
     --favorite-color: {{ settings.theme.favorite_color }};
+    --favorite-star-color: {{ settings.theme.favorite_star_color or '#ffd700' }};
   }
 </style>
 </head>
@@ -172,7 +173,14 @@
           </div>
         </div>
         <div class="color-picker-row">
-          <span>Favorite Star & Glow</span>
+          <span>Favorite Star Color</span>
+          <div class="color-inputs">
+            <input type="color" id="colFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
+            <input type="text" class="color-hex" id="hexFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
+          </div>
+        </div>
+        <div class="color-picker-row">
+          <span>Favorite Card Border & Glow</span>
           <div class="color-inputs">
             <input type="color" id="colFavorite" value="{{ settings.theme.favorite_color }}">
             <input type="text" class="color-hex" id="hexFavorite" value="{{ settings.theme.favorite_color }}">
@@ -539,6 +547,7 @@ const THEME_PRESETS = {
     accent_color: '#3a7bd5',
     tab_active_text: '#ffffff',
     favorite_color: '#ff00ff',
+    favorite_star_color: '#ffd700',
     text_primary: '#e8e8e8',
     text_muted: '#9aa4b2'
   },
@@ -550,6 +559,7 @@ const THEME_PRESETS = {
     accent_color: '#00f0ff',
     tab_active_text: '#000000',
     favorite_color: '#ffd700',
+    favorite_star_color: '#ffd700',
     text_primary: '#ffffff',
     text_muted: '#888888'
   },
@@ -561,6 +571,7 @@ const THEME_PRESETS = {
     accent_color: '#cba6f7',
     tab_active_text: '#11111b',
     favorite_color: '#fab387',
+    favorite_star_color: '#f9e2af',
     text_primary: '#cdd6f4',
     text_muted: '#a6adc8'
   },
@@ -572,6 +583,7 @@ const THEME_PRESETS = {
     accent_color: '#ffe600',
     tab_active_text: '#000000',
     favorite_color: '#ff007f',
+    favorite_star_color: '#fcee0a',
     text_primary: '#fcee0a',
     text_muted: '#00f0ff'
   },
@@ -583,6 +595,7 @@ const THEME_PRESETS = {
     accent_color: '#88c0d0',
     tab_active_text: '#1e222a',
     favorite_color: '#ebcb8b',
+    favorite_star_color: '#ebcb8b',
     text_primary: '#eceff4',
     text_muted: '#d8dee9'
   },
@@ -594,6 +607,7 @@ const THEME_PRESETS = {
     accent_color: '#10b981',
     tab_active_text: '#052e16',
     favorite_color: '#38bdf8',
+    favorite_star_color: '#facc15',
     text_primary: '#ecfdf5',
     text_muted: '#6ee7b7'
   }
@@ -613,6 +627,7 @@ const colorInputs = {
   bg_card: { picker: document.getElementById('colBgCard'), hex: document.getElementById('hexBgCard'), cssVar: '--bg-card' },
   accent_color: { picker: document.getElementById('colAccent'), hex: document.getElementById('hexAccent'), cssVar: '--accent-color' },
   tab_active_text: { picker: document.getElementById('colTabActiveText'), hex: document.getElementById('hexTabActiveText'), cssVar: '--tab-active-text' },
+  favorite_star_color: { picker: document.getElementById('colFavoriteStar'), hex: document.getElementById('hexFavoriteStar'), cssVar: '--favorite-star-color' },
   favorite_color: { picker: document.getElementById('colFavorite'), hex: document.getElementById('hexFavorite'), cssVar: '--favorite-color' },
   text_primary: { picker: document.getElementById('colTextPrimary'), hex: document.getElementById('hexTextPrimary'), cssVar: '--text-primary' },
   text_muted: { picker: document.getElementById('colTextMuted'), hex: document.getElementById('hexTextMuted'), cssVar: '--text-muted' }

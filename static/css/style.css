@@ -10,6 +10,7 @@
   --accent-color: #3a7bd5;
   --tab-active-text: #ffffff;
   --favorite-color: #ff00ff;
+  --favorite-star-color: #ffd700;
 }
 
 * { box-sizing: border-box; }
@@ -218,7 +219,14 @@ main { padding: 12px 24px 24px; }
   transition: color 0.15s, border-color 0.15s;
 }
 .star:hover { color: #fff; border-color: var(--accent-color); }
-.star.active { color: var(--favorite-color); border-color: var(--favorite-color); }
+.star.active {
+  color: var(--favorite-star-color);
+  border-color: var(--favorite-star-color);
+  background: rgba(14, 16, 20, 0.88);
+}
+.star.active svg {
+  filter: drop-shadow(0 0 3px var(--favorite-star-color));
+}
 
 .hide-toggle {
   position: absolute;
