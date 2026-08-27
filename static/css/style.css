@@ -8,6 +8,7 @@
   --text-primary: #e8e8e8;
   --text-muted: #9aa4b2;
   --accent-color: #3a7bd5;
+  --tab-active-text: #ffffff;
   --favorite-color: #ff00ff;
 }
 
@@ -84,7 +85,8 @@ button.icon-btn {
 .tab.active {
   background: var(--accent-color);
   border-color: var(--accent-color);
-  color: #fff;
+  color: var(--tab-active-text);
+  font-weight: 500;
 }
 .tab .count { color: inherit; opacity: 0.75; }
 

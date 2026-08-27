@@ -15,6 +15,7 @@
     --text-primary: {{ settings.theme.text_primary }};
     --text-muted: {{ settings.theme.text_muted }};
     --accent-color: {{ settings.theme.accent_color }};
+    --tab-active-text: {{ settings.theme.tab_active_text or '#ffffff' }};
     --favorite-color: {{ settings.theme.favorite_color }};
   }
 </style>
@@ -161,6 +162,13 @@
           <div class="color-inputs">
             <input type="color" id="colAccent" value="{{ settings.theme.accent_color }}">
             <input type="text" class="color-hex" id="hexAccent" value="{{ settings.theme.accent_color }}">
+          </div>
+        </div>
+        <div class="color-picker-row">
+          <span>Selected Tab Text Color</span>
+          <div class="color-inputs">
+            <input type="color" id="colTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
+            <input type="text" class="color-hex" id="hexTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
           </div>
         </div>
         <div class="color-picker-row">
@@ -530,6 +538,7 @@ const THEME_PRESETS = {
     bg_tabs: '#181b21',
     bg_card: '#22262e',
     accent_color: '#3a7bd5',
+    tab_active_text: '#ffffff',
     favorite_color: '#ff00ff',
     text_primary: '#e8e8e8',
     text_muted: '#9aa4b2'
@@ -540,6 +549,7 @@ const THEME_PRESETS = {
     bg_tabs: '#050505',
     bg_card: '#121212',
     accent_color: '#00f0ff',
+    tab_active_text: '#000000',
     favorite_color: '#ffd700',
     text_primary: '#ffffff',
     text_muted: '#888888'
@@ -550,6 +560,7 @@ const THEME_PRESETS = {
     bg_tabs: '#11111b',
     bg_card: '#313244',
     accent_color: '#cba6f7',
+    tab_active_text: '#11111b',
     favorite_color: '#fab387',
     text_primary: '#cdd6f4',
     text_muted: '#a6adc8'
@@ -560,6 +571,7 @@ const THEME_PRESETS = {
     bg_tabs: '#120520',
     bg_card: '#250e3d',
     accent_color: '#ffe600',
+    tab_active_text: '#000000',
     favorite_color: '#ff007f',
     text_primary: '#fcee0a',
     text_muted: '#00f0ff'
@@ -570,6 +582,7 @@ const THEME_PRESETS = {
     bg_tabs: '#2e3440',
     bg_card: '#434c5e',
     accent_color: '#88c0d0',
+    tab_active_text: '#1e222a',
     favorite_color: '#ebcb8b',
     text_primary: '#eceff4',
     text_muted: '#d8dee9'
@@ -580,6 +593,7 @@ const THEME_PRESETS = {
     bg_tabs: '#0f1c16',
     bg_card: '#1a3328',
     accent_color: '#10b981',
+    tab_active_text: '#052e16',
     favorite_color: '#38bdf8',
     text_primary: '#ecfdf5',
     text_muted: '#6ee7b7'
@@ -599,10 +613,21 @@ const colorInputs = {
   bg_tabs: { picker: document.getElementById('colBgTabs'), hex: document.getElementById('hexBgTabs'), cssVar: '--bg-tabs' },
   bg_card: { picker: document.getElementById('colBgCard'), hex: document.getElementById('hexBgCard'), cssVar: '--bg-card' },
   accent_color: { picker: document.getElementById('colAccent'), hex: document.getElementById('hexAccent'), cssVar: '--accent-color' },
+  tab_active_text: { picker: document.getElementById('colTabActiveText'), hex: document.getElementById('hexTabActiveText'), cssVar: '--tab-active-text' },
   favorite_color: { picker: document.getElementById('colFavorite'), hex: document.getElementById('hexFavorite'), cssVar: '--favorite-color' },
   text_primary: { picker: document.getElementById('colTextPrimary'), hex: document.getElementById('hexTextPrimary'), cssVar: '--text-primary' },
   text_muted: { picker: document.getElementById('colTextMuted'), hex: document.getElementById('hexTextMuted'), cssVar: '--text-muted' }
 };
+
+function getContrastColor(hexColor) {
+  const hex = hexColor.replace('#', '');
+  if (hex.length !== 6) return '#ffffff';
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return (yiq >= 140) ? '#000000' : '#ffffff';
+}
 
 const visibilityToggles = {
   show_search: { el: document.getElementById('toggleSearch'), cls: 'hide-search' },
@@ -639,11 +664,21 @@ function applyLiveTitle() {
 for (const [key, item] of Object.entries(colorInputs)) {
   item.picker.addEventListener('input', () => {
     item.hex.value = item.picker.value;
+    if (key === 'accent_color') {
+      const autoText = getContrastColor(item.picker.value);
+      colorInputs.tab_active_text.picker.value = autoText;
+      colorInputs.tab_active_text.hex.value = autoText;
+    }
     applyLiveTheme();
   });
   item.hex.addEventListener('input', () => {
     if (/^#[0-9A-Fa-f]{6}$/.test(item.hex.value.trim())) {
       item.picker.value = item.hex.value.trim();
+      if (key === 'accent_color') {
+        const autoText = getContrastColor(item.hex.value.trim());
+        colorInputs.tab_active_text.picker.value = autoText;
+        colorInputs.tab_active_text.hex.value = autoText;
+      }
       applyLiveTheme();
     }
   });

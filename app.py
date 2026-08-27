@@ -33,6 +33,7 @@ DEFAULT_SETTINGS = {
         "bg_tabs": "#181b21",
         "bg_card": "#22262e",
         "accent_color": "#3a7bd5",
+        "tab_active_text": "#ffffff",
         "favorite_color": "#ff00ff",
         "text_primary": "#e8e8e8",
         "text_muted": "#9aa4b2",
