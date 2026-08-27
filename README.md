@@ -12,14 +12,14 @@ A fast, lightweight, self-hosted web catalog and remote launcher for your retro 
 
 ## Screenshots
 
-### Main Dashboard (Catppuccin Theme)
+### Main Dashboard (Favorites & Custom Glowing Borders)
 ![ROM Catalog Dashboard](screenshots/catalog.jpg)
 
 ### Settings & Customization Modal
 ![Settings Modal](screenshots/settings.png)
 
-### Nord Frost Theme
-![Nord Theme](screenshots/nord.jpg)
+### Custom Palette (Catppuccin Theme)
+![Custom Theme](screenshots/theme.jpg)
 
 ---
 
@@ -252,9 +252,9 @@ Emulator-Web-Catelog/
 ├── library.json             # Cached library metadata for instant page load performance
 ├── .gitignore               # Ignore cache, logs, virtual environments, and scraped covers
 ├── screenshots/
-│   ├── catalog.jpg          # Application dashboard screenshot (Catppuccin theme)
+│   ├── catalog.jpg          # Application dashboard screenshot (Default theme with glowing borders)
 │   ├── settings.png         # Settings and customization modal screenshot
-│   └── nord.jpg             # Application dashboard screenshot (Nord Frost theme)
+│   └── theme.jpg            # Application dashboard screenshot (Catppuccin theme)
 ├── static/
 │   ├── favicon.png          # Web browser favicon
 │   ├── covers/              # Local cache directory for game boxart
