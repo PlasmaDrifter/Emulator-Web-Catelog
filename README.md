@@ -18,8 +18,8 @@ A fast, lightweight, self-hosted web catalog and remote launcher for your retro 
 ### Settings & Customization Modal
 ![Settings Modal](screenshots/settings.png)
 
-### Custom Palette (Catppuccin Theme)
-![Custom Theme](screenshots/theme.jpg)
+### Nord Frost Theme
+![Nord Theme](screenshots/theme.jpg)
 
 ---
 
