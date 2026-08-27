@@ -1,0 +1,22 @@
+{
+  "title": "ROM Catelog",
+  "theme": {
+    "bg_body": "#14161a",
+    "bg_header": "#1c1f26",
+    "bg_tabs": "#181b21",
+    "bg_card": "#22262e",
+    "accent_color": "#3a7bd5",
+    "favorite_color": "#ff00ff",
+    "text_primary": "#e8e8e8",
+    "text_muted": "#9aa4b2",
+    "border_color": "#2a2e37"
+  },
+  "visibility": {
+    "show_search": true,
+    "show_fetch_covers": true,
+    "show_rescan": true,
+    "show_counts": true,
+    "show_favorites_tab": true,
+    "show_hidden_tab": true
+  }
+}

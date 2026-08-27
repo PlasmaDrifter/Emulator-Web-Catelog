@@ -22,12 +22,70 @@ COVERS_DIR = BASE_DIR / "static" / "covers"
 FAVORITES_PATH = BASE_DIR / "favorites.json"
 HIDDEN_PATH = BASE_DIR / "hidden.json"
 LIBRARY_CACHE_PATH = BASE_DIR / "library.json"
+SETTINGS_PATH = BASE_DIR / "settings.json"
 COVERS_DIR.mkdir(parents=True, exist_ok=True)
+
+DEFAULT_SETTINGS = {
+    "title": "ROM Catelog",
+    "theme": {
+        "bg_body": "#14161a",
+        "bg_header": "#1c1f26",
+        "bg_tabs": "#181b21",
+        "bg_card": "#22262e",
+        "accent_color": "#3a7bd5",
+        "favorite_color": "#ff00ff",
+        "text_primary": "#e8e8e8",
+        "text_muted": "#9aa4b2",
+        "border_color": "#2a2e37"
+    },
+    "visibility": {
+        "show_search": True,
+        "show_fetch_covers": True,
+        "show_rescan": True,
+        "show_counts": True,
+        "show_favorites_tab": True,
+        "show_hidden_tab": True
+    }
+}
 
 app = Flask(__name__)
 
 # Global memory cache for library metadata
 _library_cache = None
+
+
+def load_settings() -> dict:
+    if not SETTINGS_PATH.exists():
+        return {
+            "title": DEFAULT_SETTINGS["title"],
+            "theme": dict(DEFAULT_SETTINGS["theme"]),
+            "visibility": dict(DEFAULT_SETTINGS["visibility"]),
+        }
+    try:
+        data = json.loads(SETTINGS_PATH.read_text())
+        settings = {
+            "title": DEFAULT_SETTINGS["title"],
+            "theme": dict(DEFAULT_SETTINGS["theme"]),
+            "visibility": dict(DEFAULT_SETTINGS["visibility"]),
+        }
+        if isinstance(data, dict):
+            if "title" in data and data["title"]:
+                settings["title"] = str(data["title"])
+            if "theme" in data and isinstance(data["theme"], dict):
+                settings["theme"].update(data["theme"])
+            if "visibility" in data and isinstance(data["visibility"], dict):
+                settings["visibility"].update(data["visibility"])
+        return settings
+    except Exception:
+        return {
+            "title": DEFAULT_SETTINGS["title"],
+            "theme": dict(DEFAULT_SETTINGS["theme"]),
+            "visibility": dict(DEFAULT_SETTINGS["visibility"]),
+        }
+
+
+def save_settings(settings: dict):
+    SETTINGS_PATH.write_text(json.dumps(settings, indent=2))
 
 
 def load_favorites() -> set:
@@ -207,7 +265,26 @@ def save_library_cache(library_data):
 @app.route("/")
 def index():
     library = load_cached_library()
-    return render_template("index.html", library=library)
+    settings = load_settings()
+    return render_template("index.html", library=library, settings=settings)
+
+
+@app.route("/api/settings", methods=["GET", "POST"])
+def api_settings():
+    if request.method == "POST":
+        data = request.get_json(force=True)
+        if not isinstance(data, dict):
+            return jsonify({"ok": False, "error": "invalid payload"}), 400
+        settings = load_settings()
+        if "title" in data and data["title"] is not None:
+            settings["title"] = str(data["title"]).strip() or DEFAULT_SETTINGS["title"]
+        if "theme" in data and isinstance(data["theme"], dict):
+            settings["theme"].update(data["theme"])
+        if "visibility" in data and isinstance(data["visibility"], dict):
+            settings["visibility"].update(data["visibility"])
+        save_settings(settings)
+        return jsonify({"ok": True, "settings": settings})
+    return jsonify(load_settings())
 
 
 @app.route("/favicon.ico")
