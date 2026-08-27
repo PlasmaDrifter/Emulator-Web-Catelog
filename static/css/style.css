@@ -33,7 +33,7 @@ button {
   font-size: 0.85rem;
 }
 button:hover { background: #343a46; }
-#status { font-size: 0.8rem; color: #9aa4b2; min-width: 120px; }
+#status { font-size: 0.8rem; color: #9aa4b2; }
 
 .tabs {
   display: flex;
