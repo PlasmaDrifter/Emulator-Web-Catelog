@@ -1,15 +1,15 @@
 {
   "title": "ROM Catelog",
   "theme": {
-    "bg_body": "#1e1e2e",
-    "bg_header": "#181825",
-    "bg_tabs": "#11111b",
-    "bg_card": "#313244",
-    "accent_color": "#cba6f7",
-    "tab_active_text": "#11111b",
-    "favorite_color": "#fab387",
-    "text_primary": "#cdd6f4",
-    "text_muted": "#a6adc8",
+    "bg_body": "#14161a",
+    "bg_header": "#1c1f26",
+    "bg_tabs": "#181b21",
+    "bg_card": "#22262e",
+    "accent_color": "#3a7bd5",
+    "tab_active_text": "#ffffff",
+    "favorite_color": "#ff00ff",
+    "text_primary": "#e8e8e8",
+    "text_muted": "#9aa4b2",
     "border_color": "#2a2e37"
   },
   "visibility": {
