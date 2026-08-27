@@ -1,4 +1,4 @@
-# Nintendo & Retro Emulator Web Catalog (ROM Cat)
+# ROM Cat: Retro & Modern Emulator Web Catalog
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-Web%20Framework-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
@@ -6,25 +6,35 @@
 [![YAML](https://img.shields.io/badge/Config-YAML-CB171E?logo=yaml&logoColor=white)](https://yaml.org)
 [![Linux](https://img.shields.io/badge/Platform-Linux%20%2F%20Wayland%20%2F%20X11-FCC624?logo=linux&logoColor=black)](https://kernel.org)
 
-A fast, lightweight, self-hosted web catalog and remote launcher for your retro and modern ROM collection. It runs locally alongside your installed emulators (Flatpak or native binaries), providing an interactive web dashboard with cover art, system filtering, instant search, favorites tracking, and one-click game launching directly into native desktop emulator windows.
+A fast, lightweight, self-hosted web catalog and remote launcher for your retro and modern ROM collection. It runs locally alongside your installed emulators (Flatpak, AppImage, or native binaries), providing an interactive web dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching, and customizable themes.
 
 ---
 
-## Screenshot
+## Screenshots
 
-![Nintendo Catalog Dashboard](screenshots/catalog.jpg)
+### Main Dashboard (Catppuccin Theme)
+![ROM Catalog Dashboard](screenshots/catalog.jpg)
+
+### Settings & Customization Modal
+![Settings Modal](screenshots/settings.png)
+
+### Nord Frost Theme
+![Nord Theme](screenshots/nord.jpg)
 
 ---
 
 ## Features
 
 - **Direct Native Emulator Launching**: Games launch in your real desktop emulators (Flatpak, native binaries, or RetroArch cores) on the host machine. No slow or inaccurate in-browser emulation.
+- **Built-in Settings & Theme Customization**: Click the gear icon in the header to customize the catalog title, select from 6 built-in theme presets, or configure custom colors with live previews.
+- **Automatic High-Contrast Text**: Active tab text dynamically detects background color luminance to ensure legibility on both bright and dark themes.
+- **UI Visibility Controls**: Toggle visibility of the search bar, cover scraping buttons, rescan button, numeric ROM counts, and tabs.
 - **System Tabs & Live Counters**: Instant switching between systems (e.g. NES, SNES, N64, Gamecube, Wii U, Switch, Favorites, All, Hidden).
 - **Fast Search & Filtering**: Real-time title search across thousands of ROMs with automatic title normalization (stripping tags like `[!]`, `(USA)`, `(Rev 1)`, `.nkit`).
 - **Automated Cover Art Scraping**: One-click cover fetching from SteamGridDB with automatic image optimization and local caching in `static/covers/`.
 - **Manual Cover Art Override**: Drop custom cover art directly into the web UI or filesystem for unmatched or homebrew titles.
 - **Favorites & Visibility Management**: Toggle game favorites with custom glowing highlights, or hide unwanted duplicates/updates from the main catalog.
-- **Zero Heavy Databases**: Library state is indexed dynamically from your real directory structure, with cached metadata stored in lightweight JSON files.
+- **Zero Heavy Databases**: Library state is indexed dynamically from your real directory structure, with cached metadata and settings stored in lightweight JSON files.
 
 ---
 
@@ -67,6 +77,46 @@ Open your browser and navigate to:
 http://localhost:8420
 ```
 Or use your machine's local IP / Tailscale IP (e.g. `http://<server-ip>:8420`).
+
+---
+
+## Settings and Customization
+
+ROM Cat includes a Settings interface directly in the web UI (accessible via the gear icon in the top header).
+
+### 1. General Settings
+- **Catalog Title**: Update the dashboard title and browser tab title on the fly.
+
+### 2. Theme Presets
+- **Default Dark**: Slate dark background with blue accents and magenta favorite glow.
+- **Pure OLED**: Pitch black (`#000000`) background with cyan accents and gold favorite highlights.
+- **Catppuccin**: Soft purple pastel theme with lavender accents and peach borders.
+- **Cyberpunk**: Dark neon theme with bright yellow accents and hot pink glow.
+- **Nord Frost**: Arctic blue and slate gray palette with soft amber highlights.
+- **Emerald**: Forest dark green background with emerald accents and sky blue highlights.
+
+### 3. Custom Color Pickers
+Every color element can be fine-tuned individually with real-time live preview:
+- Body Background
+- Header Bar
+- Tabs Bar
+- Card Background
+- Primary Accent (Tabs & Focus rings)
+- Selected Tab Text Color (with automatic luminance contrast detection)
+- Favorite Star & Glowing Border
+- Primary Text
+- Muted Text & Details
+
+### 4. UI Visibility Toggles
+Customize which elements appear on your dashboard:
+- Show / Hide Search Bar
+- Show / Hide "Fetch Cover Art" Button
+- Show / Hide "Rescan Library" Button
+- Show / Hide ROM Count Badges (e.g. `(42)`)
+- Show / Hide "Favorites" Tab
+- Show / Hide "Hidden" Tab & Hide Controls
+
+Settings are stored on disk in `settings.json` and persist across all devices connected to your network.
 
 ---
 
@@ -171,101 +221,6 @@ To add a new console (for example, Game Boy Advance):
 
 ---
 
-## How to Edit Colors and Theme
-
-All styles, colors, active tabs, buttons, borders, and glow effects are managed in:
-`static/css/style.css`
-
-### Color Reference Table
-
-| UI Element | CSS Selector | Default Color | Description |
-|---|---|---|---|
-| **Main Background** | `body` | `#14161a` | Dark background for the whole page |
-| **Primary Text** | `body` | `#e8e8e8` | Base text color |
-| **Header Bar** | `header` | `#1c1f26` | Top navigation bar background |
-| **System Tabs Bar** | `.tabs` | `#181b21` | Category pill bar background |
-| **Borders & Dividers** | `header`, `.tabs`, `h2` | `#2a2e37` | Subtle section divider borders |
-| **Button Background** | `button` | `#2a2e37` | Standard button background |
-| **Button Border** | `button` | `#3a3f4b` | Standard button border |
-| **Button Hover** | `button:hover` | `#343a46` | Button background when hovered |
-| **Active Tab Background** | `.tab.active` | `#3a7bd5` | Blue accent on selected system tab |
-| **Tab Outline** | `.tab` | `#3a7bd5` | Inactive tab pill border |
-| **Search Input Box** | `#searchInput` | `#2a2e37` | Search input background |
-| **Search Focus Outline** | `#searchInput:focus` | `#3a7bd5` | Search box glowing highlight |
-| **Cover Card Box** | `.cover` | `#22262e` | Default cover background placeholder |
-| **Favorite Star (Inactive)** | `.star` | `#5a6270` | Gray inactive favorite star icon |
-| **Favorite Star (Hover)** | `.star:hover` | `#d5acd6` | Light magenta star on hover |
-| **Favorite Star (Active)** | `.star.active` | `#ff00ff` | Bright magenta star when favorited |
-| **Favorite Card Border** | `.card[data-favorite="true"] .cover` | `#ff00ff` | 3px magenta border on favorited cards |
-| **Favorite Card Glow** | `.card[data-favorite="true"] .cover` | `rgba(213, 172, 214, 0.4)` | Outer box-shadow glow on favorited cards |
-| **Hidden Item Toggle** | `.hide-toggle:hover` | `#e07a7a` | Red outline on hide button hover |
-
----
-
-### Customizing Key Color Elements
-
-#### 1. Changing the Primary Accent Color (Tabs & Focus)
-To change the blue accent color across the tabs and search box, update `#3a7bd5` in `static/css/style.css`:
-
-```css
-/* Inactive tab border */
-.tab {
-  border: 1px solid #3a7bd5; /* Replace with your color */
-}
-
-/* Active tab highlight */
-.tab.active {
-  background: #3a7bd5;     /* Replace with your color */
-  border-color: #3a7bd5; /* Replace with your color */
-  color: #fff;
-}
-
-/* Search bar focus ring */
-#searchInput:focus {
-  border-color: #3a7bd5;
-  box-shadow: 0 0 6px rgba(58, 123, 213, 0.3);
-}
-```
-
-#### 2. Changing the Favorite Star and Card Glow Color
-To change the bright magenta favorite glow to gold, green, cyan, or red, update lines 188-234 in `static/css/style.css`:
-
-```css
-/* Star icon active color */
-.star.active {
-  color: #f1c40f; /* e.g. Gold */
-  border-color: #f1c40f;
-}
-
-/* Favorite card glowing border */
-.card[data-favorite="true"] .cover {
-  border: 3px solid #f1c40f;
-  box-shadow: 0 0 12px rgba(241, 196, 15, 0.5);
-}
-```
-
-#### 3. Changing Dark Theme Backgrounds
-To adjust darkness levels (e.g. Pure OLED Black `#000000` or Catppuccin Mocha `#1e1e2e`):
-
-```css
-body {
-  background: #11111b;
-  color: #cdd6f4;
-}
-
-header {
-  background: #181825;
-  border-bottom: 1px solid #313244;
-}
-
-.tabs {
-  background: #181825;
-  border-bottom: 1px solid #313244;
-}
-```
-
----
-
 ## How Cover Art Scraping Works
 
 1. **Automatic Scraping with SteamGridDB**:
@@ -287,16 +242,19 @@ header {
 
 ```text
 Emulator-Web-Catelog/
-├── README.md                # Full documentation, emulator guides, and color customizations
+├── README.md                # Full documentation, configuration guides, and theme options
 ├── config.yaml              # System definitions, ROM folder paths, and emulator commands
 ├── app.py                   # Flask server, library scanner, SteamGridDB client, and launcher
 ├── requirements.txt         # Python dependencies (flask, pyyaml, requests, pillow, ujson)
+├── settings.json            # User customizable title, theme colors, and UI visibility options
 ├── favorites.json           # Saved user favorites list
 ├── hidden.json              # List of hidden ROM keys (updates, duplicates, DLCs)
 ├── library.json             # Cached library metadata for instant page load performance
 ├── .gitignore               # Ignore cache, logs, virtual environments, and scraped covers
 ├── screenshots/
-│   └── catalog.jpg          # Application dashboard screenshot
+│   ├── catalog.jpg          # Application dashboard screenshot (Catppuccin theme)
+│   ├── settings.png         # Settings and customization modal screenshot
+│   └── nord.jpg             # Application dashboard screenshot (Nord Frost theme)
 ├── static/
 │   ├── favicon.png          # Web browser favicon
 │   ├── covers/              # Local cache directory for game boxart
@@ -304,7 +262,7 @@ Emulator-Web-Catelog/
 │   └── css/
 │       └── style.css        # CSS styles, theme variables, grid layout, and glow animations
 └── templates/
-    └── index.html           # Main dashboard template with search, tabs, and launching modal
+    └── index.html           # Main dashboard template with search, tabs, settings, and launching modal
 ```
 
 ---
@@ -351,3 +309,4 @@ systemctl --user status romcat.service
 ## License
 
 Created and maintained by [PlasmaDrifter](https://github.com/PlasmaDrifter). Distributed for personal and self-hosted use.
+
