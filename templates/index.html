@@ -2,13 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ROM Catelog</title>
+<title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" type="image/png" href="/static/favicon.png">
-<link rel="stylesheet" href="/static/css/style.css?v=1.4">
+<link rel="stylesheet" href="/static/css/style.css?v=1.5">
+<style id="themeStyle">
+  :root {
+    --bg-body: {{ settings.theme.bg_body }};
+    --bg-header: {{ settings.theme.bg_header }};
+    --bg-tabs: {{ settings.theme.bg_tabs }};
+    --bg-card: {{ settings.theme.bg_card }};
+    --border-color: {{ settings.theme.border_color }};
+    --text-primary: {{ settings.theme.text_primary }};
+    --text-muted: {{ settings.theme.text_muted }};
+    --accent-color: {{ settings.theme.accent_color }};
+    --favorite-color: {{ settings.theme.favorite_color }};
+  }
+</style>
 </head>
-<body>
+<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_fetch_covers %}hide-fetch-covers {% endif %}{% if not settings.visibility.show_rescan %}hide-rescan {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}">
 <header>
-  <h1>ROM Catelog</h1>
+  <h1 id="headerTitle">{{ settings.title }}</h1>
   <div class="search-box">
     <input type="search" id="searchInput" placeholder="Search..." size="15" autocomplete="off">
     <button id="clearSearchBtn" title="Clear search" type="button">&times;</button>
@@ -17,6 +30,7 @@
     <span id="status"></span>
     <button id="fetchCoversBtn">Fetch cover art</button>
     <button id="rescanBtn">Rescan library</button>
+    <button id="settingsBtn" title="Settings" class="icon-btn" aria-label="Settings">⚙️</button>
   </div>
 </header>
 
@@ -63,6 +77,170 @@
   </section>
   {% endfor %}
 </main>
+
+<dialog id="settingsDialog" class="settings-dialog">
+  <div class="modal-header">
+    <h3>⚙️ Settings & Customization</h3>
+    <button id="closeSettingsBtn" class="close-modal-btn" type="button" aria-label="Close">&times;</button>
+  </div>
+  <div class="modal-body">
+    <!-- Catalog Title -->
+    <section class="settings-section">
+      <h4>General</h4>
+      <div class="settings-field">
+        <label for="catalogTitleInput">Catalog Title</label>
+        <input type="text" id="catalogTitleInput" class="settings-input" value="{{ settings.title }}" placeholder="ROM Catelog">
+      </div>
+    </section>
+
+    <!-- Theme Presets -->
+    <section class="settings-section">
+      <h4>Theme Presets</h4>
+      <div class="preset-grid">
+        <button type="button" class="preset-btn" data-preset="default">
+          <span class="preset-swatch" style="background: linear-gradient(135deg, #14161a 50%, #3a7bd5 50%);"></span>
+          Default Dark
+        </button>
+        <button type="button" class="preset-btn" data-preset="oled">
+          <span class="preset-swatch" style="background: linear-gradient(135deg, #000000 50%, #00f0ff 50%);"></span>
+          Pure OLED
+        </button>
+        <button type="button" class="preset-btn" data-preset="catppuccin">
+          <span class="preset-swatch" style="background: linear-gradient(135deg, #1e1e2e 50%, #cba6f7 50%);"></span>
+          Catppuccin
+        </button>
+        <button type="button" class="preset-btn" data-preset="cyberpunk">
+          <span class="preset-swatch" style="background: linear-gradient(135deg, #0b0410 50%, #ffe600 50%);"></span>
+          Cyberpunk
+        </button>
+        <button type="button" class="preset-btn" data-preset="nord">
+          <span class="preset-swatch" style="background: linear-gradient(135deg, #2e3440 50%, #88c0d0 50%);"></span>
+          Nord Frost
+        </button>
+        <button type="button" class="preset-btn" data-preset="emerald">
+          <span class="preset-swatch" style="background: linear-gradient(135deg, #0c1511 50%, #10b981 50%);"></span>
+          Emerald
+        </button>
+      </div>
+    </section>
+
+    <!-- Custom Colors -->
+    <section class="settings-section">
+      <h4>Custom Colors</h4>
+      <div class="color-picker-grid">
+        <div class="color-picker-row">
+          <span>Body Background</span>
+          <div class="color-inputs">
+            <input type="color" id="colBgBody" value="{{ settings.theme.bg_body }}">
+            <input type="text" class="color-hex" id="hexBgBody" value="{{ settings.theme.bg_body }}">
+          </div>
+        </div>
+        <div class="color-picker-row">
+          <span>Header Bar</span>
+          <div class="color-inputs">
+            <input type="color" id="colBgHeader" value="{{ settings.theme.bg_header }}">
+            <input type="text" class="color-hex" id="hexBgHeader" value="{{ settings.theme.bg_header }}">
+          </div>
+        </div>
+        <div class="color-picker-row">
+          <span>Tabs Bar</span>
+          <div class="color-inputs">
+            <input type="color" id="colBgTabs" value="{{ settings.theme.bg_tabs }}">
+            <input type="text" class="color-hex" id="hexBgTabs" value="{{ settings.theme.bg_tabs }}">
+          </div>
+        </div>
+        <div class="color-picker-row">
+          <span>Card Background</span>
+          <div class="color-inputs">
+            <input type="color" id="colBgCard" value="{{ settings.theme.bg_card }}">
+            <input type="text" class="color-hex" id="hexBgCard" value="{{ settings.theme.bg_card }}">
+          </div>
+        </div>
+        <div class="color-picker-row">
+          <span>Primary Accent (Tabs/Focus)</span>
+          <div class="color-inputs">
+            <input type="color" id="colAccent" value="{{ settings.theme.accent_color }}">
+            <input type="text" class="color-hex" id="hexAccent" value="{{ settings.theme.accent_color }}">
+          </div>
+        </div>
+        <div class="color-picker-row">
+          <span>Favorite Star & Glow</span>
+          <div class="color-inputs">
+            <input type="color" id="colFavorite" value="{{ settings.theme.favorite_color }}">
+            <input type="text" class="color-hex" id="hexFavorite" value="{{ settings.theme.favorite_color }}">
+          </div>
+        </div>
+        <div class="color-picker-row">
+          <span>Primary Text</span>
+          <div class="color-inputs">
+            <input type="color" id="colTextPrimary" value="{{ settings.theme.text_primary }}">
+            <input type="text" class="color-hex" id="hexTextPrimary" value="{{ settings.theme.text_primary }}">
+          </div>
+        </div>
+        <div class="color-picker-row">
+          <span>Muted Text & Details</span>
+          <div class="color-inputs">
+            <input type="color" id="colTextMuted" value="{{ settings.theme.text_muted }}">
+            <input type="text" class="color-hex" id="hexTextMuted" value="{{ settings.theme.text_muted }}">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- UI Element Visibility Toggles -->
+    <section class="settings-section">
+      <h4>UI Visibility</h4>
+      <div class="toggle-list">
+        <label class="toggle-row">
+          <span>Show Search Bar</span>
+          <div class="switch">
+            <input type="checkbox" id="toggleSearch" {% if settings.visibility.show_search %}checked{% endif %}>
+            <span class="slider"></span>
+          </div>
+        </label>
+        <label class="toggle-row">
+          <span>Show "Fetch Cover Art" Button</span>
+          <div class="switch">
+            <input type="checkbox" id="toggleFetchCovers" {% if settings.visibility.show_fetch_covers %}checked{% endif %}>
+            <span class="slider"></span>
+          </div>
+        </label>
+        <label class="toggle-row">
+          <span>Show "Rescan Library" Button</span>
+          <div class="switch">
+            <input type="checkbox" id="toggleRescan" {% if settings.visibility.show_rescan %}checked{% endif %}>
+            <span class="slider"></span>
+          </div>
+        </label>
+        <label class="toggle-row">
+          <span>Show ROM Count Badges</span>
+          <div class="switch">
+            <input type="checkbox" id="toggleCounts" {% if settings.visibility.show_counts %}checked{% endif %}>
+            <span class="slider"></span>
+          </div>
+        </label>
+        <label class="toggle-row">
+          <span>Show "★ Favorites" Tab</span>
+          <div class="switch">
+            <input type="checkbox" id="toggleFavoritesTab" {% if settings.visibility.show_favorites_tab %}checked{% endif %}>
+            <span class="slider"></span>
+          </div>
+        </label>
+        <label class="toggle-row">
+          <span>Show "Hidden" Tab & Hide Controls</span>
+          <div class="switch">
+            <input type="checkbox" id="toggleHiddenTab" {% if settings.visibility.show_hidden_tab %}checked{% endif %}>
+            <span class="slider"></span>
+          </div>
+        </label>
+      </div>
+    </section>
+  </div>
+  <div class="modal-footer">
+    <button type="button" id="resetDefaultsBtn" class="btn-danger">Reset to Defaults</button>
+    <button type="button" id="saveSettingsBtn" class="btn-primary">Save & Apply</button>
+  </div>
+</dialog>
 
 <script>
 document.querySelectorAll('.card').forEach(card => {
@@ -342,6 +520,231 @@ editModeToggle.addEventListener('change', () => {
     document.body.classList.remove('show-hide-controls');
     localStorage.setItem('showHideControls', 'false');
   }
+});
+
+// --- Settings & Themes Management ---
+const THEME_PRESETS = {
+  default: {
+    bg_body: '#14161a',
+    bg_header: '#1c1f26',
+    bg_tabs: '#181b21',
+    bg_card: '#22262e',
+    accent_color: '#3a7bd5',
+    favorite_color: '#ff00ff',
+    text_primary: '#e8e8e8',
+    text_muted: '#9aa4b2'
+  },
+  oled: {
+    bg_body: '#000000',
+    bg_header: '#0a0a0a',
+    bg_tabs: '#050505',
+    bg_card: '#121212',
+    accent_color: '#00f0ff',
+    favorite_color: '#ffd700',
+    text_primary: '#ffffff',
+    text_muted: '#888888'
+  },
+  catppuccin: {
+    bg_body: '#1e1e2e',
+    bg_header: '#181825',
+    bg_tabs: '#11111b',
+    bg_card: '#313244',
+    accent_color: '#cba6f7',
+    favorite_color: '#fab387',
+    text_primary: '#cdd6f4',
+    text_muted: '#a6adc8'
+  },
+  cyberpunk: {
+    bg_body: '#0b0410',
+    bg_header: '#180829',
+    bg_tabs: '#120520',
+    bg_card: '#250e3d',
+    accent_color: '#ffe600',
+    favorite_color: '#ff007f',
+    text_primary: '#fcee0a',
+    text_muted: '#00f0ff'
+  },
+  nord: {
+    bg_body: '#2e3440',
+    bg_header: '#3b4252',
+    bg_tabs: '#2e3440',
+    bg_card: '#434c5e',
+    accent_color: '#88c0d0',
+    favorite_color: '#ebcb8b',
+    text_primary: '#eceff4',
+    text_muted: '#d8dee9'
+  },
+  emerald: {
+    bg_body: '#0c1511',
+    bg_header: '#13231c',
+    bg_tabs: '#0f1c16',
+    bg_card: '#1a3328',
+    accent_color: '#10b981',
+    favorite_color: '#38bdf8',
+    text_primary: '#ecfdf5',
+    text_muted: '#6ee7b7'
+  }
+};
+
+const settingsDialog = document.getElementById('settingsDialog');
+const settingsBtn = document.getElementById('settingsBtn');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
+const catalogTitleInput = document.getElementById('catalogTitleInput');
+
+const colorInputs = {
+  bg_body: { picker: document.getElementById('colBgBody'), hex: document.getElementById('hexBgBody'), cssVar: '--bg-body' },
+  bg_header: { picker: document.getElementById('colBgHeader'), hex: document.getElementById('hexBgHeader'), cssVar: '--bg-header' },
+  bg_tabs: { picker: document.getElementById('colBgTabs'), hex: document.getElementById('hexBgTabs'), cssVar: '--bg-tabs' },
+  bg_card: { picker: document.getElementById('colBgCard'), hex: document.getElementById('hexBgCard'), cssVar: '--bg-card' },
+  accent_color: { picker: document.getElementById('colAccent'), hex: document.getElementById('hexAccent'), cssVar: '--accent-color' },
+  favorite_color: { picker: document.getElementById('colFavorite'), hex: document.getElementById('hexFavorite'), cssVar: '--favorite-color' },
+  text_primary: { picker: document.getElementById('colTextPrimary'), hex: document.getElementById('hexTextPrimary'), cssVar: '--text-primary' },
+  text_muted: { picker: document.getElementById('colTextMuted'), hex: document.getElementById('hexTextMuted'), cssVar: '--text-muted' }
+};
+
+const visibilityToggles = {
+  show_search: { el: document.getElementById('toggleSearch'), cls: 'hide-search' },
+  show_fetch_covers: { el: document.getElementById('toggleFetchCovers'), cls: 'hide-fetch-covers' },
+  show_rescan: { el: document.getElementById('toggleRescan'), cls: 'hide-rescan' },
+  show_counts: { el: document.getElementById('toggleCounts'), cls: 'hide-counts' },
+  show_favorites_tab: { el: document.getElementById('toggleFavoritesTab'), cls: 'hide-favorites-tab' },
+  show_hidden_tab: { el: document.getElementById('toggleHiddenTab'), cls: 'hide-hidden-tab' }
+};
+
+function applyLiveTheme() {
+  for (const [key, item] of Object.entries(colorInputs)) {
+    const val = item.hex.value.trim() || item.picker.value;
+    document.documentElement.style.setProperty(item.cssVar, val);
+  }
+}
+
+function applyLiveVisibility() {
+  for (const [key, item] of Object.entries(visibilityToggles)) {
+    if (item.el) {
+      document.body.classList.toggle(item.cls, !item.el.checked);
+    }
+  }
+}
+
+function applyLiveTitle() {
+  const title = catalogTitleInput.value.trim() || 'ROM Catelog';
+  document.title = title;
+  const headerEl = document.getElementById('headerTitle');
+  if (headerEl) headerEl.textContent = title;
+}
+
+// Bind Color inputs
+for (const [key, item] of Object.entries(colorInputs)) {
+  item.picker.addEventListener('input', () => {
+    item.hex.value = item.picker.value;
+    applyLiveTheme();
+  });
+  item.hex.addEventListener('input', () => {
+    if (/^#[0-9A-Fa-f]{6}$/.test(item.hex.value.trim())) {
+      item.picker.value = item.hex.value.trim();
+      applyLiveTheme();
+    }
+  });
+}
+
+// Bind Preset Buttons
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const presetKey = btn.dataset.preset;
+    const preset = THEME_PRESETS[presetKey];
+    if (!preset) return;
+    for (const [key, val] of Object.entries(preset)) {
+      if (colorInputs[key]) {
+        colorInputs[key].picker.value = val;
+        colorInputs[key].hex.value = val;
+      }
+    }
+    applyLiveTheme();
+  });
+});
+
+// Bind Live Title & Visibility
+catalogTitleInput.addEventListener('input', applyLiveTitle);
+for (const [key, item] of Object.entries(visibilityToggles)) {
+  if (item.el) item.el.addEventListener('change', applyLiveVisibility);
+}
+
+// Modal open/close
+settingsBtn.addEventListener('click', () => {
+  settingsDialog.showModal();
+});
+closeSettingsBtn.addEventListener('click', () => {
+  settingsDialog.close();
+});
+settingsDialog.addEventListener('click', (e) => {
+  if (e.target === settingsDialog) settingsDialog.close();
+});
+
+// Save settings to backend
+async function saveAllSettings() {
+  const theme = {};
+  for (const [key, item] of Object.entries(colorInputs)) {
+    theme[key] = item.hex.value.trim() || item.picker.value;
+  }
+  const visibility = {};
+  for (const [key, item] of Object.entries(visibilityToggles)) {
+    visibility[key] = item.el ? item.el.checked : true;
+  }
+  const title = catalogTitleInput.value.trim() || 'ROM Catelog';
+
+  saveSettingsBtn.textContent = 'Saving...';
+  saveSettingsBtn.disabled = true;
+
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, theme, visibility })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      saveSettingsBtn.textContent = 'Saved!';
+      setTimeout(() => {
+        saveSettingsBtn.textContent = 'Save & Apply';
+        saveSettingsBtn.disabled = false;
+        settingsDialog.close();
+      }, 700);
+    } else {
+      alert('Error saving settings: ' + data.error);
+      saveSettingsBtn.textContent = 'Save & Apply';
+      saveSettingsBtn.disabled = false;
+    }
+  } catch (err) {
+    alert('Failed to connect to server: ' + err);
+    saveSettingsBtn.textContent = 'Save & Apply';
+    saveSettingsBtn.disabled = false;
+  }
+}
+
+saveSettingsBtn.addEventListener('click', saveAllSettings);
+
+// Reset to Defaults
+resetDefaultsBtn.addEventListener('click', () => {
+  if (!confirm('Reset all title, colors, and visibility settings to default?')) return;
+  catalogTitleInput.value = 'ROM Catelog';
+  applyLiveTitle();
+
+  const defTheme = THEME_PRESETS.default;
+  for (const [key, val] of Object.entries(defTheme)) {
+    if (colorInputs[key]) {
+      colorInputs[key].picker.value = val;
+      colorInputs[key].hex.value = val;
+    }
+  }
+  applyLiveTheme();
+
+  for (const [key, item] of Object.entries(visibilityToggles)) {
+    if (item.el) item.el.checked = true;
+  }
+  applyLiveVisibility();
+  saveAllSettings();
 });
 
 applyFilters();
