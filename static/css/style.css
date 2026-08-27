@@ -209,23 +209,21 @@ main { padding: 12px 24px 24px; }
   border-radius: 50%;
   width: 26px;
   height: 26px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   line-height: 1;
   color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.15s, border-color 0.15s;
+  padding: 0;
+  transition: color 0.15s, border-color 0.15s, transform 0.1s ease;
 }
 .star:hover { color: #fff; border-color: var(--accent-color); }
 .star.active {
   color: var(--favorite-star-color);
-  border-color: var(--favorite-star-color);
-  background: rgba(14, 16, 20, 0.88);
-}
-.star.active svg {
-  filter: drop-shadow(0 0 3px var(--favorite-star-color));
+  border-color: var(--border-input);
+  background: rgba(20, 22, 26, 0.7);
 }
 
 .hide-toggle {
