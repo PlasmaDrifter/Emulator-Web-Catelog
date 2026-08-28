@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="90" height="90" x="5" y="5" rx="12" fill="#003791" stroke="#0070d1" stroke-width="3"/>
+  <text x="28" y="60" fill="#ffffff" font-family="sans-serif" font-size="32" font-weight="bold">PS4</text>
+  <path d="M20 72h60" stroke="#00f0ff" stroke-width="3" stroke-linecap="round"/>
+</svg>

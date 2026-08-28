@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="92" height="52" x="4" y="24" rx="10" fill="#18181b" stroke="#ca8a04" stroke-width="2.5"/>
+  <rect width="44" height="34" x="28" y="33" rx="3" fill="#84cc16"/>
+  <path d="M16 43v14M9 50h14" stroke="#71717a" stroke-width="3" stroke-linecap="square"/>
+  <circle cx="83" cy="46" r="3.5" fill="#ca8a04"/>
+  <circle cx="75" cy="54" r="3.5" fill="#ca8a04"/>
+  <text x="50" y="20" fill="#eab308" font-family="sans-serif" font-size="9" font-weight="bold" text-anchor="middle">ATARI LYNX</text>
+</svg>

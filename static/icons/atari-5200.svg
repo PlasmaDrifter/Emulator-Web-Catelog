@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="90" height="90" x="5" y="5" rx="10" fill="#18181b" stroke="#94a3b8" stroke-width="3"/>
+  <rect width="90" height="12" x="5" y="38" fill="#475569"/>
+  <text x="50" y="32" fill="#ef4444" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">ATARI</text>
+  <text x="50" y="72" fill="#f8fafc" font-family="sans-serif" font-size="20" font-weight="900" text-anchor="middle">5200</text>
+</svg>
