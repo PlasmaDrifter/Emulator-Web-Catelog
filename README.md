@@ -86,6 +86,15 @@ ROM Cat includes a Settings interface directly in the web UI (accessible via the
 
 ### 1. General Settings
 - **Catalog Title**: Update the dashboard title and browser tab title on the fly.
+- **Webpage & Tab Icon**: Select from 35+ retro and modern console icons to customize your browser tab favicon and header brand icon:
+  - **Nintendo**: NES, SNES, Nintendo 64, GameCube, Wii, Wii U, Switch, Game Boy, GBA, DS, 3DS.
+  - **PlayStation**: PlayStation 1, PS2, PS3, PS4, PS5, PSP, PS Vita.
+  - **Xbox**: Xbox (Original), Xbox 360, Xbox One, Xbox Series X/S.
+  - **Sega**: Master System, Genesis / Mega Drive, Sega CD, 32X, Saturn, Dreamcast, Game Gear.
+  - **Atari**: Atari 2600, 5200, 7800, Lynx, Jaguar.
+  - **Commodore**: Commodore 64, Amiga, VIC-20.
+  - **Retro & Other**: Retro Gamepad, Arcade Cabinet, Neo Geo, Default Favicon.
+  - **Custom URL & File Upload**: Paste any image URL or upload any custom PNG/SVG/ICO/JPG directly.
 
 ### 2. Theme Presets
 - **Default Dark**: Slate dark background with blue accents and magenta favorite glow.
@@ -259,6 +268,7 @@ Emulator-Web-Catelog/
 │   ├── favicon.png          # Web browser favicon
 │   ├── covers/              # Local cache directory for game boxart
 │   │   └── .gitkeep
+│   ├── icons/               # System SVG icons (Nintendo, PlayStation, Xbox, Sega, Atari, Commodore)
 │   └── css/
 │       └── style.css        # CSS styles, theme variables, grid layout, and glow animations
 └── templates/

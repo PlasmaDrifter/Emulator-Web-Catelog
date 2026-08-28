@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="92" height="60" x="4" y="20" rx="14" fill="#111827" stroke="#00a8e8" stroke-width="3"/>
+  <rect width="52" height="34" x="24" y="33" rx="4" fill="#1f2937" stroke="#374151" stroke-width="2"/>
+  <circle cx="14" cy="36" r="5" fill="#4b5563"/>
+  <path d="M14 47v8M10 51h8" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="square"/>
+  <circle cx="86" cy="36" r="5" fill="#4b5563"/>
+  <circle cx="86" cy="47" r="2.5" fill="#00a8e8"/>
+  <circle cx="91" cy="52" r="2.5" fill="#00a8e8"/>
+  <circle cx="81" cy="52" r="2.5" fill="#00a8e8"/>
+  <circle cx="86" cy="57" r="2.5" fill="#00a8e8"/>
+  <text x="50" y="28" fill="#00a8e8" font-family="sans-serif" font-size="8" font-weight="bold" text-anchor="middle">Wii U</text>
+</svg>

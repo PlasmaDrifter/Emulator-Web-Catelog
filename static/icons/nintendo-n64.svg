@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <g transform="translate(10, 10) scale(0.8)">
+    <path d="M20 75V25l25 15v50L20 75z" fill="#22c55e"/>
+    <path d="M45 40l35-20v50l-35 20V40z" fill="#3b82f6"/>
+    <path d="M20 25l35-15 25 10-35 20L20 25z" fill="#dc2626"/>
+    <path d="M45 40l35 20-25 15-35-20 25-15z" fill="#eab308"/>
+    <path d="M55 10v50l25 15V20L55 10z" fill="#16a34a"/>
+    <path d="M20 75l35-20v50L20 75z" fill="#2563eb"/>
+  </g>
+</svg>

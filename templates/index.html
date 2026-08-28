@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
-<link rel="icon" type="image/png" href="/static/favicon.png">
-<link rel="stylesheet" href="/static/css/style.css?v=1.8">
+<link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
+<link rel="stylesheet" href="/static/css/style.css?v=1.9">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -23,7 +23,10 @@
 </head>
 <body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_fetch_covers %}hide-fetch-covers {% endif %}{% if not settings.visibility.show_rescan %}hide-rescan {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}">
 <header>
-  <h1 id="headerTitle">{{ settings.title }}</h1>
+  <div class="header-brand">
+    <img id="headerIcon" src="{{ settings.icon or '/static/favicon.png' }}" class="header-icon" alt="">
+    <h1 id="headerTitle">{{ settings.title }}</h1>
+  </div>
   <div class="search-box">
     <input type="search" id="searchInput" placeholder="Search..." size="15" autocomplete="off">
     <button id="clearSearchBtn" title="Clear search" type="button">&times;</button>
@@ -86,12 +89,35 @@
     <button id="closeSettingsBtn" class="close-modal-btn" type="button" aria-label="Close">&times;</button>
   </div>
   <div class="modal-body">
-    <!-- Catalog Title -->
+    <!-- General -->
     <section class="settings-section">
       <h4>General</h4>
       <div class="settings-field">
         <label for="catalogTitleInput">Catalog Title</label>
         <input type="text" id="catalogTitleInput" class="settings-input" value="{{ settings.title }}" placeholder="ROM Catelog">
+      </div>
+      <div class="settings-field">
+        <label>Webpage & Tab Icon</label>
+        <div class="icon-selector-container">
+          <div class="icon-category-tabs" id="iconCatTabs">
+            <button type="button" class="icon-cat-btn active" data-cat="all">All</button>
+            <button type="button" class="icon-cat-btn" data-cat="nintendo">Nintendo</button>
+            <button type="button" class="icon-cat-btn" data-cat="playstation">PlayStation</button>
+            <button type="button" class="icon-cat-btn" data-cat="xbox">Xbox</button>
+            <button type="button" class="icon-cat-btn" data-cat="sega">Sega</button>
+            <button type="button" class="icon-cat-btn" data-cat="atari">Atari</button>
+            <button type="button" class="icon-cat-btn" data-cat="commodore">Commodore</button>
+            <button type="button" class="icon-cat-btn" data-cat="retro">Retro</button>
+          </div>
+          <div class="icon-grid" id="iconGrid"></div>
+          <div class="custom-icon-row">
+            <input type="text" id="customIconUrl" class="settings-input" placeholder="Custom Icon URL / path" value="{{ settings.icon or '/static/favicon.png' }}">
+            <label class="btn-file-upload">
+              Upload
+              <input type="file" id="iconFileInput" accept=".png,.svg,.ico,.jpg,.jpeg,.webp" style="display:none">
+            </label>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -720,6 +746,137 @@ for (const [key, item] of Object.entries(visibilityToggles)) {
   if (item.el) item.el.addEventListener('change', applyLiveVisibility);
 }
 
+// --- Icon Management ---
+const SYSTEM_ICONS = [
+  // Nintendo
+  { id: 'nintendo-switch', name: 'Switch', cat: 'nintendo', src: '/static/icons/nintendo-switch.svg' },
+  { id: 'nintendo-nes', name: 'NES', cat: 'nintendo', src: '/static/icons/nintendo-nes.svg' },
+  { id: 'nintendo-snes', name: 'SNES', cat: 'nintendo', src: '/static/icons/nintendo-snes.svg' },
+  { id: 'nintendo-n64', name: 'Nintendo 64', cat: 'nintendo', src: '/static/icons/nintendo-n64.svg' },
+  { id: 'nintendo-gamecube', name: 'GameCube', cat: 'nintendo', src: '/static/icons/nintendo-gamecube.svg' },
+  { id: 'nintendo-wii', name: 'Wii', cat: 'nintendo', src: '/static/icons/nintendo-wii.svg' },
+  { id: 'nintendo-wiiu', name: 'Wii U', cat: 'nintendo', src: '/static/icons/nintendo-wiiu.svg' },
+  { id: 'nintendo-gameboy', name: 'Game Boy', cat: 'nintendo', src: '/static/icons/nintendo-gameboy.svg' },
+  { id: 'nintendo-gba', name: 'GBA', cat: 'nintendo', src: '/static/icons/nintendo-gba.svg' },
+  { id: 'nintendo-ds', name: 'Nintendo DS', cat: 'nintendo', src: '/static/icons/nintendo-ds.svg' },
+  { id: 'nintendo-3ds', name: 'Nintendo 3DS', cat: 'nintendo', src: '/static/icons/nintendo-3ds.svg' },
+  // PlayStation
+  { id: 'playstation-ps1', name: 'PlayStation 1', cat: 'playstation', src: '/static/icons/playstation-ps1.svg' },
+  { id: 'playstation-ps2', name: 'PS2', cat: 'playstation', src: '/static/icons/playstation-ps2.svg' },
+  { id: 'playstation-ps3', name: 'PS3', cat: 'playstation', src: '/static/icons/playstation-ps3.svg' },
+  { id: 'playstation-ps4', name: 'PS4', cat: 'playstation', src: '/static/icons/playstation-ps4.svg' },
+  { id: 'playstation-ps5', name: 'PS5', cat: 'playstation', src: '/static/icons/playstation-ps5.svg' },
+  { id: 'playstation-psp', name: 'PSP', cat: 'playstation', src: '/static/icons/playstation-psp.svg' },
+  { id: 'playstation-psvita', name: 'PS Vita', cat: 'playstation', src: '/static/icons/playstation-psvita.svg' },
+  // Xbox
+  { id: 'xbox-original', name: 'Xbox', cat: 'xbox', src: '/static/icons/xbox-original.svg' },
+  { id: 'xbox-360', name: 'Xbox 360', cat: 'xbox', src: '/static/icons/xbox-360.svg' },
+  { id: 'xbox-one', name: 'Xbox One', cat: 'xbox', src: '/static/icons/xbox-one.svg' },
+  { id: 'xbox-series', name: 'Xbox Series', cat: 'xbox', src: '/static/icons/xbox-series.svg' },
+  // Sega
+  { id: 'sega-genesis', name: 'Genesis / MD', cat: 'sega', src: '/static/icons/sega-genesis.svg' },
+  { id: 'sega-dreamcast', name: 'Dreamcast', cat: 'sega', src: '/static/icons/sega-dreamcast.svg' },
+  { id: 'sega-saturn', name: 'Saturn', cat: 'sega', src: '/static/icons/sega-saturn.svg' },
+  { id: 'sega-master-system', name: 'Master System', cat: 'sega', src: '/static/icons/sega-master-system.svg' },
+  { id: 'sega-cd', name: 'Sega CD', cat: 'sega', src: '/static/icons/sega-cd.svg' },
+  { id: 'sega-32x', name: 'Sega 32X', cat: 'sega', src: '/static/icons/sega-32x.svg' },
+  { id: 'sega-gamegear', name: 'Game Gear', cat: 'sega', src: '/static/icons/sega-gamegear.svg' },
+  // Atari
+  { id: 'atari-2600', name: 'Atari 2600', cat: 'atari', src: '/static/icons/atari-2600.svg' },
+  { id: 'atari-5200', name: 'Atari 5200', cat: 'atari', src: '/static/icons/atari-5200.svg' },
+  { id: 'atari-7800', name: 'Atari 7800', cat: 'atari', src: '/static/icons/atari-7800.svg' },
+  { id: 'atari-lynx', name: 'Atari Lynx', cat: 'atari', src: '/static/icons/atari-lynx.svg' },
+  { id: 'atari-jaguar', name: 'Atari Jaguar', cat: 'atari', src: '/static/icons/atari-jaguar.svg' },
+  // Commodore
+  { id: 'commodore-64', name: 'Commodore 64', cat: 'commodore', src: '/static/icons/commodore-64.svg' },
+  { id: 'commodore-amiga', name: 'Amiga', cat: 'commodore', src: '/static/icons/commodore-amiga.svg' },
+  { id: 'commodore-vic20', name: 'VIC-20', cat: 'commodore', src: '/static/icons/commodore-vic20.svg' },
+  // Retro
+  { id: 'retro-gamepad', name: 'Gamepad', cat: 'retro', src: '/static/icons/retro-gamepad.svg' },
+  { id: 'retro-arcade', name: 'Arcade', cat: 'retro', src: '/static/icons/retro-arcade.svg' },
+  { id: 'neogeo', name: 'Neo Geo', cat: 'retro', src: '/static/icons/neogeo.svg' },
+  { id: 'default-favicon', name: 'Default', cat: 'retro', src: '/static/favicon.png' }
+];
+
+const iconGrid = document.getElementById('iconGrid');
+const iconCatTabs = document.getElementById('iconCatTabs');
+const customIconUrl = document.getElementById('customIconUrl');
+const iconFileInput = document.getElementById('iconFileInput');
+let selectedIconUrl = "{{ settings.icon or '/static/favicon.png' }}";
+
+function renderIconGrid(filterCat = 'all') {
+  if (!iconGrid) return;
+  iconGrid.innerHTML = '';
+  const filtered = filterCat === 'all' ? SYSTEM_ICONS : SYSTEM_ICONS.filter(i => i.cat === filterCat);
+  filtered.forEach(icon => {
+    const tile = document.createElement('div');
+    tile.className = 'icon-tile' + (selectedIconUrl === icon.src ? ' selected' : '');
+    tile.dataset.src = icon.src;
+    tile.innerHTML = `
+      <img src="${icon.src}" alt="${icon.name}" loading="lazy">
+      <span>${icon.name}</span>
+    `;
+    tile.addEventListener('click', () => {
+      setLiveIcon(icon.src);
+    });
+    iconGrid.appendChild(tile);
+  });
+}
+
+function setLiveIcon(src) {
+  selectedIconUrl = src;
+  const favLink = document.getElementById('faviconLink');
+  if (favLink) favLink.href = src;
+  const headerIcon = document.getElementById('headerIcon');
+  if (headerIcon) headerIcon.src = src;
+  if (customIconUrl) customIconUrl.value = src;
+  document.querySelectorAll('.icon-tile').forEach(t => {
+    t.classList.toggle('selected', t.dataset.src === src);
+  });
+}
+
+if (iconCatTabs) {
+  iconCatTabs.querySelectorAll('.icon-cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      iconCatTabs.querySelectorAll('.icon-cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderIconGrid(btn.dataset.cat);
+    });
+  });
+}
+
+if (customIconUrl) {
+  customIconUrl.addEventListener('input', () => {
+    const url = customIconUrl.value.trim();
+    if (url) setLiveIcon(url);
+  });
+}
+
+if (iconFileInput) {
+  iconFileInput.addEventListener('change', async () => {
+    if (!iconFileInput.files || iconFileInput.files.length === 0) return;
+    const file = iconFileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch('/api/upload_icon', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.ok && data.icon) {
+        setLiveIcon(data.icon);
+      } else {
+        alert('Icon upload failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Failed to upload icon: ' + err);
+    }
+  });
+}
+
+renderIconGrid('all');
+
 // Modal open/close
 settingsBtn.addEventListener('click', () => {
   settingsDialog.showModal();
@@ -742,6 +899,7 @@ async function saveAllSettings() {
     visibility[key] = item.el ? item.el.checked : true;
   }
   const title = catalogTitleInput.value.trim() || 'ROM Catelog';
+  const icon = selectedIconUrl || customIconUrl.value.trim() || '/static/favicon.png';
 
   saveSettingsBtn.textContent = 'Saving...';
   saveSettingsBtn.disabled = true;
@@ -750,7 +908,7 @@ async function saveAllSettings() {
     const res = await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, theme, visibility })
+      body: JSON.stringify({ title, icon, theme, visibility })
     });
     const data = await res.json();
     if (data.ok) {
@@ -776,9 +934,10 @@ saveSettingsBtn.addEventListener('click', saveAllSettings);
 
 // Reset to Defaults
 resetDefaultsBtn.addEventListener('click', () => {
-  if (!confirm('Reset all title, colors, and visibility settings to default?')) return;
+  if (!confirm('Reset all title, icon, colors, and visibility settings to default?')) return;
   catalogTitleInput.value = 'ROM Catelog';
   applyLiveTitle();
+  setLiveIcon('/static/favicon.png');
 
   const defTheme = THEME_PRESETS.default;
   for (const [key, val] of Object.entries(defTheme)) {

@@ -40,6 +40,17 @@ header h1 {
   letter-spacing: 0.02em;
   color: var(--text-primary);
 }
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+}
 .actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 
 button {
@@ -595,4 +606,113 @@ body.hide-hidden-tab .hide-toggle { display: none !important; }
 }
 .btn-danger:hover {
   background: rgba(224, 122, 122, 0.15);
+}
+
+/* Icon Selector in Settings */
+.icon-selector-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+}
+.icon-category-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.icon-cat-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-input);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.icon-cat-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+.icon-cat-btn.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: var(--tab-active-text);
+  font-weight: 500;
+}
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--bg-body);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+.icon-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 4px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.icon-tile:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-input);
+}
+.icon-tile.selected {
+  border-color: var(--accent-color);
+  background: rgba(58, 123, 213, 0.15);
+  box-shadow: 0 0 6px var(--accent-color);
+}
+.icon-tile img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+.icon-tile span {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.icon-tile.selected span {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.custom-icon-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.btn-file-upload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--border-color);
+  color: var(--text-primary);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.btn-file-upload:hover {
+  background: var(--border-input);
 }

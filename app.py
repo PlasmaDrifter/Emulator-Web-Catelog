@@ -27,6 +27,7 @@ COVERS_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_SETTINGS = {
     "title": "ROM Catelog",
+    "icon": "/static/favicon.png",
     "theme": {
         "bg_body": "#14161a",
         "bg_header": "#1c1f26",
@@ -60,6 +61,7 @@ def load_settings() -> dict:
     if not SETTINGS_PATH.exists():
         return {
             "title": DEFAULT_SETTINGS["title"],
+            "icon": DEFAULT_SETTINGS["icon"],
             "theme": dict(DEFAULT_SETTINGS["theme"]),
             "visibility": dict(DEFAULT_SETTINGS["visibility"]),
         }
@@ -67,12 +69,15 @@ def load_settings() -> dict:
         data = json.loads(SETTINGS_PATH.read_text())
         settings = {
             "title": DEFAULT_SETTINGS["title"],
+            "icon": DEFAULT_SETTINGS["icon"],
             "theme": dict(DEFAULT_SETTINGS["theme"]),
             "visibility": dict(DEFAULT_SETTINGS["visibility"]),
         }
         if isinstance(data, dict):
             if "title" in data and data["title"]:
                 settings["title"] = str(data["title"])
+            if "icon" in data and data["icon"]:
+                settings["icon"] = str(data["icon"])
             if "theme" in data and isinstance(data["theme"], dict):
                 settings["theme"].update(data["theme"])
             if "visibility" in data and isinstance(data["visibility"], dict):
@@ -81,6 +86,7 @@ def load_settings() -> dict:
     except Exception:
         return {
             "title": DEFAULT_SETTINGS["title"],
+            "icon": DEFAULT_SETTINGS["icon"],
             "theme": dict(DEFAULT_SETTINGS["theme"]),
             "visibility": dict(DEFAULT_SETTINGS["visibility"]),
         }
@@ -280,6 +286,8 @@ def api_settings():
         settings = load_settings()
         if "title" in data and data["title"] is not None:
             settings["title"] = str(data["title"]).strip() or DEFAULT_SETTINGS["title"]
+        if "icon" in data and data["icon"] is not None:
+            settings["icon"] = str(data["icon"]).strip() or DEFAULT_SETTINGS["icon"]
         if "theme" in data and isinstance(data["theme"], dict):
             settings["theme"].update(data["theme"])
         if "visibility" in data and isinstance(data["visibility"], dict):
@@ -289,12 +297,41 @@ def api_settings():
     return jsonify(load_settings())
 
 
+@app.route("/api/upload_icon", methods=["POST"])
+def api_upload_icon():
+    if "file" not in request.files:
+        return jsonify({"ok": False, "error": "No file uploaded"}), 400
+    file = request.files["file"]
+    if not file or not file.filename:
+        return jsonify({"ok": False, "error": "Empty filename"}), 400
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".png", ".svg", ".ico", ".jpg", ".jpeg", ".webp"]:
+        return jsonify({"ok": False, "error": "Invalid image format"}), 400
+
+    icons_dir = BASE_DIR / "static" / "icons"
+    icons_dir.mkdir(parents=True, exist_ok=True)
+    clean_stem = re.sub(r"[^a-zA-Z0-9_-]", "_", Path(file.filename).stem)
+    filename = f"custom_{clean_stem}{ext}"
+    target_path = icons_dir / filename
+    file.save(str(target_path))
+
+    icon_url = f"/static/icons/{filename}"
+    settings = load_settings()
+    settings["icon"] = icon_url
+    save_settings(settings)
+    return jsonify({"ok": True, "icon": icon_url})
+
+
 @app.route("/favicon.ico")
 def favicon():
+    settings = load_settings()
+    icon_path = settings.get("icon", "/static/favicon.png")
+    if icon_path.startswith("/static/"):
+        rel_path = icon_path[len("/static/"):]
+        return send_from_directory(os.path.join(app.root_path, "static"), rel_path)
     return send_from_directory(
         os.path.join(app.root_path, "static"),
-        "favicon.jpg",
-        mimetype="image/jpeg"
+        "favicon.png"
     )
 
 
