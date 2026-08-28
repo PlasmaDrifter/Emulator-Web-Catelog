@@ -13,13 +13,13 @@ A fast, lightweight, self-hosted web catalog and remote launcher for your retro 
 ## Screenshots
 
 ### Main Dashboard (Favorites & Custom Glowing Borders)
-![ROM Catalog Dashboard](screenshots/catalog.jpg)
+![ROM Catalog Dashboard](screenshots/catalog.jpg?raw=true&v=2)
 
 ### Settings & Customization Modal
-![Settings Modal](screenshots/settings.png)
+![Settings Modal](screenshots/settings.png?raw=true&v=2)
 
 ### Nord Frost Theme
-![Nord Theme](screenshots/theme.jpg)
+![Nord Theme](screenshots/theme.jpg?raw=true&v=2)
 
 ---
 
