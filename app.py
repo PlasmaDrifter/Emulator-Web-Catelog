@@ -631,6 +631,31 @@ def api_save_config():
         if not isinstance(parsed, dict) or "systems" not in parsed:
             return jsonify({"ok": False, "error": "Invalid configuration: 'systems' block is required."}), 400
 
+        systems = parsed.get("systems")
+        if not isinstance(systems, dict) or not systems:
+            return jsonify({"ok": False, "error": "Configuration must define at least one console under 'systems'."}), 400
+
+        errors = []
+        for sys_id, sys_cfg in systems.items():
+            if not isinstance(sys_cfg, dict):
+                errors.append(f"Console '{sys_id}' configuration must be a mapping.")
+                continue
+            name = sys_cfg.get("name", sys_id)
+            folder = sys_cfg.get("folder")
+            if not folder:
+                errors.append(f"Console '{name}': ROM folder path is required.")
+            command = sys_cfg.get("command", "")
+            if not command:
+                errors.append(f"Console '{name}': Emulator launch command is required.")
+            elif "{rom}" not in command:
+                errors.append(f"Console '{name}': Emulator command must include the '{{rom}}' token.")
+            exts = sys_cfg.get("extensions")
+            if not exts:
+                errors.append(f"Console '{name}': At least one allowed file extension is required.")
+
+        if errors:
+            return jsonify({"ok": False, "error": "Validation failed", "errors": errors}), 400
+
         CONFIG_PATH.write_text(raw_yaml)
         _library_cache = None
         library = scan_library()
