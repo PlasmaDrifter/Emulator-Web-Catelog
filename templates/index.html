@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=1.9">
+<link rel="stylesheet" href="/static/css/style.css?v=2.0">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -21,7 +21,7 @@
   }
 </style>
 </head>
-<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_fetch_covers %}hide-fetch-covers {% endif %}{% if not settings.visibility.show_rescan %}hide-rescan {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}">
+<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_fetch_covers %}hide-fetch-covers {% endif %}{% if not settings.visibility.show_rescan %}hide-rescan {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}">
 <header>
   <div class="header-brand">
     <img id="headerIcon" src="{{ settings.icon or '/static/favicon.png' }}" class="header-icon" alt="">
@@ -45,9 +45,6 @@
   {% for sys_id, sys_data in library.items() %}
   <button class="tab" data-target="{{ sys_id }}">{{ sys_data.name }} <span class="count">({{ sys_data.games|length }})</span></button>
   {% endfor %}
-  <label class="toggle-edit-mode" title="Toggle hide buttons">
-    <input type="checkbox" id="editModeToggle">
-  </label>
   <button class="tab" data-target="hidden">Hidden</button>
 </nav>
 
@@ -241,40 +238,79 @@
           </div>
         </label>
         <label class="toggle-row">
-          <span>Show "Fetch Cover Art" Button</span>
+          <div class="toggle-info">
+            <span class="toggle-title">Show Search Bar</span>
+            <span class="toggle-desc">Quickly filter ROMs by title in real-time</span>
+          </div>
+          <div class="switch">
+            <input type="checkbox" id="toggleSearch" {% if settings.visibility.show_search %}checked{% endif %}>
+            <span class="slider"></span>
+          </div>
+        </label>
+        <label class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Show "Fetch Cover Art" Button</span>
+            <span class="toggle-desc">Automatically download box art from SteamGridDB</span>
+          </div>
           <div class="switch">
             <input type="checkbox" id="toggleFetchCovers" {% if settings.visibility.show_fetch_covers %}checked{% endif %}>
             <span class="slider"></span>
           </div>
         </label>
         <label class="toggle-row">
-          <span>Show "Rescan Library" Button</span>
+          <div class="toggle-info">
+            <span class="toggle-title">Show "Rescan Library" Button</span>
+            <span class="toggle-desc">Scan storage folders for newly added ROM files</span>
+          </div>
           <div class="switch">
             <input type="checkbox" id="toggleRescan" {% if settings.visibility.show_rescan %}checked{% endif %}>
             <span class="slider"></span>
           </div>
         </label>
         <label class="toggle-row">
-          <span>Show ROM Count Badges</span>
+          <div class="toggle-info">
+            <span class="toggle-title">Show ROM Count Badges</span>
+            <span class="toggle-desc">Display numeric count next to system titles</span>
+          </div>
           <div class="switch">
             <input type="checkbox" id="toggleCounts" {% if settings.visibility.show_counts %}checked{% endif %}>
             <span class="slider"></span>
           </div>
         </label>
         <label class="toggle-row">
-          <span>Show "Favorites" Tab</span>
+          <div class="toggle-info">
+            <span class="toggle-title">Show "Favorites" Tab</span>
+            <span class="toggle-desc">Category pill to view all favorited titles</span>
+          </div>
           <div class="switch">
             <input type="checkbox" id="toggleFavoritesTab" {% if settings.visibility.show_favorites_tab %}checked{% endif %}>
             <span class="slider"></span>
           </div>
         </label>
         <label class="toggle-row">
-          <span>Show "Hidden" Tab & Hide Controls</span>
+          <div class="toggle-info">
+            <span class="toggle-title">Show "Hidden" Tab in Navigation</span>
+            <span class="toggle-desc">Adds a "Hidden" pill to the main tabs bar to browse hidden ROMs</span>
+          </div>
           <div class="switch">
             <input type="checkbox" id="toggleHiddenTab" {% if settings.visibility.show_hidden_tab %}checked{% endif %}>
             <span class="slider"></span>
           </div>
         </label>
+        <label class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Show Card Hide Buttons (Edit Mode)</span>
+            <span class="toggle-desc">Displays eye buttons on game cards allowing you to hide/unhide duplicates and unwanted ROMs</span>
+          </div>
+          <div class="switch">
+            <input type="checkbox" id="toggleCardHideButtons" {% if settings.visibility.show_card_hide_buttons %}checked{% endif %}>
+            <span class="slider"></span>
+          </div>
+        </label>
+        <button type="button" id="viewHiddenBtn" class="btn-secondary" style="margin-top: 6px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          <span>View Hidden ROMs</span>
+        </button>
       </div>
     </section>
   </div>
@@ -546,23 +582,6 @@ clearSearchBtn.addEventListener('click', () => {
   searchInput.focus();
 });
 
-const editModeToggle = document.getElementById('editModeToggle');
-const showHideControls = localStorage.getItem('showHideControls') === 'true';
-editModeToggle.checked = showHideControls;
-if (showHideControls) {
-  document.body.classList.add('show-hide-controls');
-}
-
-editModeToggle.addEventListener('change', () => {
-  if (editModeToggle.checked) {
-    document.body.classList.add('show-hide-controls');
-    localStorage.setItem('showHideControls', 'true');
-  } else {
-    document.body.classList.remove('show-hide-controls');
-    localStorage.setItem('showHideControls', 'false');
-  }
-});
-
 // --- Settings & Themes Management ---
 const THEME_PRESETS = {
   default: {
@@ -675,7 +694,8 @@ const visibilityToggles = {
   show_rescan: { el: document.getElementById('toggleRescan'), cls: 'hide-rescan' },
   show_counts: { el: document.getElementById('toggleCounts'), cls: 'hide-counts' },
   show_favorites_tab: { el: document.getElementById('toggleFavoritesTab'), cls: 'hide-favorites-tab' },
-  show_hidden_tab: { el: document.getElementById('toggleHiddenTab'), cls: 'hide-hidden-tab' }
+  show_hidden_tab: { el: document.getElementById('toggleHiddenTab'), cls: 'hide-hidden-tab' },
+  show_card_hide_buttons: { el: document.getElementById('toggleCardHideButtons'), cls: 'show-hide-controls', invert: true }
 };
 
 function applyLiveTheme() {
@@ -688,7 +708,11 @@ function applyLiveTheme() {
 function applyLiveVisibility() {
   for (const [key, item] of Object.entries(visibilityToggles)) {
     if (item.el) {
-      document.body.classList.toggle(item.cls, !item.el.checked);
+      if (item.invert) {
+        document.body.classList.toggle(item.cls, item.el.checked);
+      } else {
+        document.body.classList.toggle(item.cls, !item.el.checked);
+      }
     }
   }
 }
@@ -954,6 +978,19 @@ resetDefaultsBtn.addEventListener('click', () => {
   applyLiveVisibility();
   saveAllSettings();
 });
+
+const viewHiddenBtn = document.getElementById('viewHiddenBtn');
+if (viewHiddenBtn) {
+  viewHiddenBtn.addEventListener('click', () => {
+    settingsDialog.close();
+    activeTarget = 'hidden';
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.target === 'hidden');
+    });
+    applyFilters();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
 
 applyFilters();
 </script>

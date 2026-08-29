@@ -116,14 +116,16 @@ Every color element can be fine-tuned individually with real-time live preview:
 - Primary Text
 - Muted Text & Details
 
-### 4. UI Visibility Toggles
-Customize which elements appear on your dashboard:
-- Show / Hide Search Bar
-- Show / Hide "Fetch Cover Art" Button
-- Show / Hide "Rescan Library" Button
-- Show / Hide ROM Count Badges (e.g. `(42)`)
-- Show / Hide "Favorites" Tab
-- Show / Hide "Hidden" Tab & Hide Controls
+### 4. UI Visibility & Hidden Games Controls
+Customize which elements appear on your dashboard from the Settings modal:
+- **Show Search Bar**: Real-time ROM title search input in the header.
+- **Show "Fetch Cover Art" Button**: One-click SteamGridDB automated art scraping.
+- **Show "Rescan Library" Button**: Scan storage paths for newly added game files.
+- **Show ROM Count Badges**: Display numeric game counts on system tabs (e.g. `(42)`).
+- **Show "Favorites" Tab**: Category tab in navigation to view all favorited games.
+- **Show "Hidden" Tab in Navigation**: Adds a "Hidden" tab to the top navigation bar.
+- **Show Card Hide Buttons (Edit Mode)**: Displays eye buttons on individual game cards to hide duplicates, DLCs, and unwanted ROMs.
+- **View Hidden ROMs Button**: One-click action button inside Settings to instantly jump to hidden ROMs.
 
 Settings are stored on disk in `settings.json` and persist across all devices connected to your network.
 
