@@ -18,6 +18,7 @@ from PIL import Image
 
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = BASE_DIR / "config.yaml"
+CONFIG_EXAMPLE_PATH = BASE_DIR / "config.example.yaml"
 COVERS_DIR = BASE_DIR / "static" / "covers"
 FAVORITES_PATH = BASE_DIR / "favorites.json"
 HIDDEN_PATH = BASE_DIR / "hidden.json"
@@ -124,8 +125,17 @@ def save_hidden(hidden: set):
 
 
 def load_config():
-    with open(CONFIG_PATH, "r") as f:
-        return yaml.safe_load(f)
+    if not CONFIG_PATH.exists():
+        if CONFIG_EXAMPLE_PATH.exists():
+            import shutil
+            shutil.copy(CONFIG_EXAMPLE_PATH, CONFIG_PATH)
+        else:
+            return {"systems": {}, "steamgriddb": {"api_key": ""}}
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            return yaml.safe_load(f) or {"systems": {}, "steamgriddb": {"api_key": ""}}
+    except Exception:
+        return {"systems": {}, "steamgriddb": {"api_key": ""}}
 
 
 def clean_title(filename: str) -> str:

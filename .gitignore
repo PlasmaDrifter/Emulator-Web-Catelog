@@ -9,3 +9,10 @@ venv/
 app copy.py
 static/covers/*
 !static/covers/.gitkeep
+
+# User-specific runtime data and configs
+config.yaml
+settings.json
+favorites.json
+hidden.json
+library.json
