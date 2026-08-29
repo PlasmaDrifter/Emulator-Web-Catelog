@@ -497,17 +497,6 @@ document.querySelectorAll('.hide-toggle').forEach(btn => {
   });
 });
 
-document.getElementById('rescanBtn').addEventListener('click', async () => {
-  const statusEl = document.getElementById('status');
-  statusEl.textContent = 'Rescanning storage...';
-  try {
-    await fetch('/api/rescan');
-    location.reload();
-  } catch(e) {
-    location.reload();
-  }
-});
-
 let activeTarget = 'all';
 
 function applyFilters() {
@@ -601,23 +590,6 @@ document.querySelectorAll('.tab').forEach(tab => {
     activeTarget = tab.dataset.target;
     applyFilters();
   });
-});
-
-document.getElementById('fetchCoversBtn').addEventListener('click', async () => {
-  const statusEl = document.getElementById('status');
-  statusEl.textContent = 'Fetching and compressing covers, this can take a while...';
-  try {
-    const res = await fetch('/api/fetch_covers', {method: 'POST'});
-    const data = await res.json();
-    if (data.ok) {
-      statusEl.textContent = `Fetched ${data.fetched}, skipped ${data.skipped}, failed ${data.failed}. Rescanning...`;
-      setTimeout(() => location.reload(), 1500);
-    } else {
-      statusEl.textContent = 'Error: ' + data.error;
-    }
-  } catch (e) {
-    statusEl.textContent = 'Error: ' + e;
-  }
 });
 
 const searchInput = document.getElementById('searchInput');
