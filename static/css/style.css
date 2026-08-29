@@ -764,6 +764,106 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
   display: none !important;
 }
 
+.systems-form-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.system-config-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.15s ease;
+}
+
+.system-config-card:hover {
+  border-color: var(--border-input);
+}
+
+.system-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.system-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.system-card-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.system-card-id-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent-color);
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-remove-system {
+  background: transparent;
+  color: #e07a7a;
+  border: 1px solid rgba(224, 122, 122, 0.3);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-remove-system:hover {
+  background: rgba(224, 122, 122, 0.15);
+  border-color: #e07a7a;
+}
+
+.system-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .form-row-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-hint {
+  font-size: 0.74rem;
+  opacity: 0.7;
+  font-weight: normal;
+  margin-left: 4px;
+}
+
+.advanced-yaml-details {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
 .config-guide-box {
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border-color);
@@ -806,7 +906,7 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
 }
 .yaml-editor-textarea {
   width: 100%;
-  height: 360px;
+  height: 240px;
   background: var(--bg-body);
   color: var(--text-primary);
   border: 1px solid var(--border-input);

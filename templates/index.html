@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=2.5">
+<link rel="stylesheet" href="/static/css/style.css?v=2.6">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -327,52 +327,60 @@
 
   <!-- Consoles & Emulators Tab -->
   <div id="tabConsoles" class="settings-tab-pane hidden">
-    <!-- How to Edit Emulators and Systems Guide -->
+    <!-- SteamGridDB API Key Section -->
     <section class="settings-section">
-      <h4>How to Edit Emulators and Systems</h4>
-      <div class="config-guide-box">
-        <p style="margin-top: 0;">All emulator execution commands, system definitions, ROM paths, and allowed file extensions are configured inside <code>config.yaml</code>.</p>
-        <h5>Configuration Structure</h5>
-        <p>Each system entry in <code>config.yaml</code> is structured under the <code>systems:</code> block:</p>
-        <pre>systems:
-  &lt;system_identifier&gt;:
-    name: "Display Name"
-    folder: "/path/to/rom/directory/"
-    extensions: [".ext1", ".ext2"]
-    command: "&lt;command_template&gt; {rom}"</pre>
-        <h5>Understanding Parameters</h5>
-        <ul>
-          <li><code>system_identifier</code>: Lowercase or camelCase key used internally (e.g. <code>nes</code>, <code>snes</code>, <code>n64</code>, <code>gamecube</code>, <code>wiiu</code>, <code>switch</code>).</li>
-          <li><code>name</code>: The user-facing name shown in the top navigation tab and header.</li>
-          <li><code>folder</code>: Path to the ROM directory on your host filesystem. Can be a single directory path or a YAML list of multiple paths:
-            <pre>folder:
-  - "/path/to/primary/roms/WiiU/"
-  - "/path/to/secondary/storage/WiiU/"</pre>
-          </li>
-          <li><code>extensions</code>: List of file extensions to include in the scan.</li>
-          <li><code>command</code>: The exact shell command used to start the emulator.
-            <code>{rom}</code> is automatically replaced by app.py with the full, shell-quoted path to the selected ROM file.
-            Environment variables such as <code>DISPLAY=:0</code> and <code>WAYLAND_DISPLAY=wayland-0</code> can be prepended if needed.
-          </li>
-        </ul>
+      <h4>SteamGridDB Integration</h4>
+      <div class="settings-field">
+        <label for="steamgriddbApiKeyInput">
+          SteamGridDB API Key
+          <span class="field-hint">(Used for automated box art fetching)</span>
+        </label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="password" id="steamgriddbApiKeyInput" class="settings-input" placeholder="Paste your SteamGridDB API Key" style="flex: 1;">
+          <button type="button" id="toggleApiKeyVisibilityBtn" class="btn-secondary" style="font-size: 0.8rem; padding: 7px 12px; white-space: nowrap;">Show</button>
+        </div>
+        <small style="color: var(--text-muted); font-size: 0.76rem; margin-top: 2px;">
+          Get a free API key from <a href="https://www.steamgriddb.com/profile/preferences/api" target="_blank" rel="noopener" style="color: var(--accent-color);">steamgriddb.com</a>.
+        </small>
       </div>
     </section>
 
-    <!-- config.yaml Editor -->
+    <!-- Configured Systems Section -->
     <section class="settings-section">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-        <h4>config.yaml Editor</h4>
-        <div style="display: flex; gap: 8px;">
-          <button type="button" id="insertSystemTemplateBtn" class="btn-secondary" style="font-size: 0.78rem; padding: 4px 8px;">+ Add System Template</button>
-          <button type="button" id="reloadConfigBtn" class="btn-secondary" style="font-size: 0.78rem; padding: 4px 8px;">Reload</button>
-        </div>
+        <h4>Configured Consoles & Systems</h4>
+        <button type="button" id="addNewSystemCardBtn" class="btn-secondary" style="font-size: 0.82rem; padding: 6px 14px; font-weight: 600;">
+          + Add Console
+        </button>
       </div>
-      <textarea id="yamlConfigEditor" class="yaml-editor-textarea" spellcheck="false" placeholder="Loading config.yaml..."></textarea>
-      <div id="configStatusAlert" class="config-status-msg"></div>
-      <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
-        <button type="button" id="saveConfigBtn" class="btn-primary" style="padding: 8px 18px;">Save & Rescan Library</button>
+
+      <div id="systemsListContainer" class="systems-form-list">
+        <!-- Dynamically populated system cards -->
       </div>
     </section>
+
+    <!-- Advanced / Raw YAML Editor (Collapsible) -->
+    <section class="settings-section">
+      <details class="advanced-yaml-details" id="advancedYamlDetails">
+        <summary style="cursor: pointer; font-size: 0.84rem; color: var(--text-muted); font-weight: 600; padding: 4px 0;">
+          Advanced: View / Edit Raw config.yaml
+        </summary>
+        <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+          <textarea id="yamlConfigEditor" class="yaml-editor-textarea" spellcheck="false" placeholder="Loading config.yaml..."></textarea>
+          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" id="syncFormToYamlBtn" class="btn-secondary" style="font-size: 0.78rem; padding: 5px 10px;">Update YAML from Form</button>
+            <button type="button" id="syncYamlToFormBtn" class="btn-secondary" style="font-size: 0.78rem; padding: 5px 10px;">Parse YAML to Form</button>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- Actions & Status Alert -->
+    <div id="configStatusAlert" class="config-status-msg"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--border-color); gap: 10px; flex-wrap: wrap;">
+      <button type="button" id="reloadConfigBtn" class="btn-secondary" style="font-size: 0.82rem; padding: 8px 14px;">Reload From Disk</button>
+      <button type="button" id="saveConfigBtn" class="btn-primary" style="padding: 9px 20px; font-weight: 600;">Save & Rescan Library</button>
+    </div>
   </div>
 </div>
 <div class="modal-footer" id="generalModalFooter">
@@ -1029,9 +1037,16 @@ const tabAppearance = document.getElementById('tabAppearance');
 const tabUI = document.getElementById('tabUI');
 const tabConsoles = document.getElementById('tabConsoles');
 const generalModalFooter = document.getElementById('generalModalFooter');
+
+const steamgriddbApiKeyInput = document.getElementById('steamgriddbApiKeyInput');
+const toggleApiKeyVisibilityBtn = document.getElementById('toggleApiKeyVisibilityBtn');
+const addNewSystemCardBtn = document.getElementById('addNewSystemCardBtn');
+const systemsListContainer = document.getElementById('systemsListContainer');
+const advancedYamlDetails = document.getElementById('advancedYamlDetails');
 const yamlConfigEditor = document.getElementById('yamlConfigEditor');
+const syncFormToYamlBtn = document.getElementById('syncFormToYamlBtn');
+const syncYamlToFormBtn = document.getElementById('syncYamlToFormBtn');
 const configStatusAlert = document.getElementById('configStatusAlert');
-const insertSystemTemplateBtn = document.getElementById('insertSystemTemplateBtn');
 const reloadConfigBtn = document.getElementById('reloadConfigBtn');
 const saveConfigBtn = document.getElementById('saveConfigBtn');
 const modalFetchCoversBtn = document.getElementById('modalFetchCoversBtn');
@@ -1058,7 +1073,7 @@ modalNavTabs.forEach(tab => {
       tabUI.classList.add('hidden');
       tabConsoles.classList.remove('hidden');
       if (generalModalFooter) generalModalFooter.style.display = 'none';
-      loadYamlConfig();
+      loadConfigData();
     }
   });
 });
@@ -1125,46 +1140,271 @@ if (modalRescanBtn) {
   });
 }
 
-async function loadYamlConfig() {
-  if (!yamlConfigEditor) return;
+function escapeHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function renderSystemCard(sysId, sysData) {
+  const card = document.createElement('div');
+  card.className = 'system-config-card';
+
+  const name = sysData.name || '';
+  const key = sysId || '';
+  let folderStr = '';
+  if (Array.isArray(sysData.folder)) {
+    folderStr = sysData.folder.join('\n');
+  } else if (typeof sysData.folder === 'string') {
+    folderStr = sysData.folder;
+  }
+  let extsStr = '';
+  if (Array.isArray(sysData.extensions)) {
+    extsStr = sysData.extensions.join(', ');
+  } else if (typeof sysData.extensions === 'string') {
+    extsStr = sysData.extensions;
+  }
+  const cmd = sysData.command || '';
+
+  card.innerHTML = `
+    <div class="system-card-header">
+      <div class="system-card-title-group">
+        <span class="system-card-name">${escapeHtml(name || 'New Console')}</span>
+        <span class="system-card-id-badge">${escapeHtml(key || 'unassigned')}</span>
+      </div>
+      <button type="button" class="btn-remove-system" title="Remove Console">&times; Remove</button>
+    </div>
+    <div class="system-card-body">
+      <div class="form-row-2">
+        <div class="settings-field">
+          <label>Display Name</label>
+          <input type="text" class="settings-input sys-name-input" value="${escapeHtml(name)}" placeholder="e.g. NES, GameCube, Switch">
+        </div>
+        <div class="settings-field">
+          <label>System Identifier (ID)</label>
+          <input type="text" class="settings-input sys-id-input" value="${escapeHtml(key)}" placeholder="e.g. nes, gamecube, switch">
+        </div>
+      </div>
+      <div class="settings-field">
+        <label>ROM Folder Path(s) <span class="field-hint">(Single directory or one path per line)</span></label>
+        <textarea class="settings-input sys-folder-input" rows="2" placeholder="/path/to/rom/directory/">${escapeHtml(folderStr)}</textarea>
+      </div>
+      <div class="form-row-2">
+        <div class="settings-field">
+          <label>Allowed File Extensions <span class="field-hint">(comma separated)</span></label>
+          <input type="text" class="settings-input sys-exts-input" value="${escapeHtml(extsStr)}" placeholder=".nes, .zip, .7z">
+        </div>
+        <div class="settings-field">
+          <label>Emulator Launch Command <span class="field-hint">(use {rom} for file path)</span></label>
+          <input type="text" class="settings-input sys-cmd-input" value="${escapeHtml(cmd)}" placeholder="emulator-command {rom}">
+        </div>
+      </div>
+    </div>
+  `;
+
+  const nameInput = card.querySelector('.sys-name-input');
+  const idInput = card.querySelector('.sys-id-input');
+  const nameDisplay = card.querySelector('.system-card-name');
+  const idBadge = card.querySelector('.system-card-id-badge');
+  const removeBtn = card.querySelector('.btn-remove-system');
+
+  nameInput.addEventListener('input', () => {
+    nameDisplay.textContent = nameInput.value.trim() || 'New Console';
+    if (!idInput.value.trim()) {
+      const autoId = nameInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      idBadge.textContent = autoId || 'unassigned';
+    }
+  });
+
+  idInput.addEventListener('input', () => {
+    idBadge.textContent = idInput.value.trim().toLowerCase() || 'unassigned';
+  });
+
+  removeBtn.addEventListener('click', () => {
+    const displayName = nameInput.value.trim() || idInput.value.trim() || 'this console';
+    if (confirm(`Remove console definition for "${displayName}"?`)) {
+      card.remove();
+    }
+  });
+
+  return card;
+}
+
+function renderSystemsForm(systemsObj) {
+  if (!systemsListContainer) return;
+  systemsListContainer.innerHTML = '';
+  const entries = Object.entries(systemsObj || {});
+  if (entries.length === 0) {
+    systemsListContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; margin: 6px 0;">No consoles configured yet. Click "+ Add Console" above to define your first emulator system.</p>';
+    return;
+  }
+  entries.forEach(([sysId, sysData]) => {
+    const card = renderSystemCard(sysId, sysData);
+    systemsListContainer.appendChild(card);
+  });
+}
+
+function collectConfigFromForm() {
+  const apiKey = steamgriddbApiKeyInput ? steamgriddbApiKeyInput.value.trim() : '';
+  const systems = {};
+
+  if (systemsListContainer) {
+    const cards = systemsListContainer.querySelectorAll('.system-config-card');
+    cards.forEach(card => {
+      const name = card.querySelector('.sys-name-input').value.trim();
+      let sysId = card.querySelector('.sys-id-input').value.trim();
+      if (!sysId && name) {
+        sysId = name.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      }
+      if (!sysId) return;
+
+      const rawFolder = card.querySelector('.sys-folder-input').value.trim();
+      const folderLines = rawFolder.split('\n').map(l => l.trim()).filter(Boolean);
+      let folder = folderLines.length > 1 ? folderLines : (folderLines[0] || '');
+
+      const rawExts = card.querySelector('.sys-exts-input').value.trim();
+      const exts = rawExts.split(/[,;\s]+/).map(e => e.trim()).filter(Boolean).map(e => e.startsWith('.') ? e : '.' + e);
+
+      const command = card.querySelector('.sys-cmd-input').value.trim();
+
+      systems[sysId] = {
+        name: name || sysId,
+        folder: folder,
+        extensions: exts,
+        command: command
+      };
+    });
+  }
+
+  return {
+    systems: systems,
+    steamgriddb: {
+      api_key: apiKey
+    }
+  };
+}
+
+async function loadConfigData() {
   try {
     const res = await fetch('/api/config');
     const data = await res.json();
     if (data.ok) {
-      yamlConfigEditor.value = data.raw_yaml;
-      configStatusAlert.className = 'config-status-msg';
-      configStatusAlert.textContent = '';
-      configStatusAlert.style.display = 'none';
+      if (steamgriddbApiKeyInput) {
+        steamgriddbApiKeyInput.value = data.config?.steamgriddb?.api_key || '';
+      }
+      if (yamlConfigEditor) {
+        yamlConfigEditor.value = data.raw_yaml || '';
+      }
+      renderSystemsForm(data.config?.systems || {});
+      if (configStatusAlert) {
+        configStatusAlert.className = 'config-status-msg';
+        configStatusAlert.textContent = '';
+        configStatusAlert.style.display = 'none';
+      }
     } else {
-      configStatusAlert.className = 'config-status-msg error';
-      configStatusAlert.textContent = 'Failed to load config: ' + data.error;
-      configStatusAlert.style.display = 'block';
+      if (configStatusAlert) {
+        configStatusAlert.className = 'config-status-msg error';
+        configStatusAlert.textContent = 'Failed to load configuration: ' + data.error;
+        configStatusAlert.style.display = 'block';
+      }
     }
   } catch (err) {
-    configStatusAlert.className = 'config-status-msg error';
-    configStatusAlert.textContent = 'Error fetching config: ' + err;
-    configStatusAlert.style.display = 'block';
+    if (configStatusAlert) {
+      configStatusAlert.className = 'config-status-msg error';
+      configStatusAlert.textContent = 'Error fetching config: ' + err;
+      configStatusAlert.style.display = 'block';
+    }
   }
+}
+
+if (toggleApiKeyVisibilityBtn && steamgriddbApiKeyInput) {
+  toggleApiKeyVisibilityBtn.addEventListener('click', () => {
+    if (steamgriddbApiKeyInput.type === 'password') {
+      steamgriddbApiKeyInput.type = 'text';
+      toggleApiKeyVisibilityBtn.textContent = 'Hide';
+    } else {
+      steamgriddbApiKeyInput.type = 'password';
+      toggleApiKeyVisibilityBtn.textContent = 'Show';
+    }
+  });
+}
+
+if (addNewSystemCardBtn && systemsListContainer) {
+  addNewSystemCardBtn.addEventListener('click', () => {
+    if (!systemsListContainer.querySelector('.system-config-card')) {
+      systemsListContainer.innerHTML = '';
+    }
+    const newCard = renderSystemCard('', {
+      name: '',
+      folder: '',
+      extensions: ['.zip', '.iso'],
+      command: 'emulator-command {rom}'
+    });
+    systemsListContainer.appendChild(newCard);
+    const nameInput = newCard.querySelector('.sys-name-input');
+    if (nameInput) nameInput.focus();
+    newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
 }
 
 if (reloadConfigBtn) {
   reloadConfigBtn.addEventListener('click', () => {
-    loadYamlConfig();
+    loadConfigData();
   });
 }
 
-if (insertSystemTemplateBtn) {
-  insertSystemTemplateBtn.addEventListener('click', () => {
-    const template = `
-  new_system:
-    name: "System Name"
-    folder: "/path/to/rom/directory/"
-    extensions: [".ext1", ".ext2"]
-    command: "emulator-command {rom}"
-`;
-    yamlConfigEditor.value = yamlConfigEditor.value.trimEnd() + '\n' + template;
-    yamlConfigEditor.scrollTop = yamlConfigEditor.scrollHeight;
-    yamlConfigEditor.focus();
+if (syncFormToYamlBtn && yamlConfigEditor) {
+  syncFormToYamlBtn.addEventListener('click', async () => {
+    const configObj = collectConfigFromForm();
+    try {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: configObj })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const getRes = await fetch('/api/config');
+        const getData = await getRes.json();
+        if (getData.ok) yamlConfigEditor.value = getData.raw_yaml;
+        configStatusAlert.className = 'config-status-msg success';
+        configStatusAlert.textContent = 'YAML editor updated from form!';
+        configStatusAlert.style.display = 'block';
+      }
+    } catch(err) {
+      configStatusAlert.className = 'config-status-msg error';
+      configStatusAlert.textContent = 'Error updating YAML: ' + err;
+      configStatusAlert.style.display = 'block';
+    }
+  });
+}
+
+if (syncYamlToFormBtn && yamlConfigEditor) {
+  syncYamlToFormBtn.addEventListener('click', async () => {
+    try {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw_yaml: yamlConfigEditor.value })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        if (steamgriddbApiKeyInput) {
+          steamgriddbApiKeyInput.value = data.config?.steamgriddb?.api_key || '';
+        }
+        renderSystemsForm(data.config?.systems || {});
+        configStatusAlert.className = 'config-status-msg success';
+        configStatusAlert.textContent = 'Form updated from YAML!';
+        configStatusAlert.style.display = 'block';
+      } else {
+        configStatusAlert.className = 'config-status-msg error';
+        configStatusAlert.textContent = 'YAML parse error: ' + data.error;
+        configStatusAlert.style.display = 'block';
+      }
+    } catch(err) {
+      configStatusAlert.className = 'config-status-msg error';
+      configStatusAlert.textContent = 'Error parsing YAML: ' + err;
+      configStatusAlert.style.display = 'block';
+    }
   });
 }
 
@@ -1176,10 +1416,21 @@ if (saveConfigBtn) {
     configStatusAlert.style.display = 'none';
 
     try {
+      let payload;
+      if (advancedYamlDetails && advancedYamlDetails.open) {
+        payload = { raw_yaml: yamlConfigEditor.value };
+      } else {
+        const configObj = collectConfigFromForm();
+        if (Object.keys(configObj.systems).length === 0) {
+          throw new Error('Please configure at least one console before saving.');
+        }
+        payload = { config: configObj };
+      }
+
       const res = await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raw_yaml: yamlConfigEditor.value })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.ok) {
@@ -1199,7 +1450,7 @@ if (saveConfigBtn) {
       }
     } catch (err) {
       configStatusAlert.className = 'config-status-msg error';
-      configStatusAlert.textContent = 'Error connecting to server: ' + err;
+      configStatusAlert.textContent = 'Error: ' + err.message;
       configStatusAlert.style.display = 'block';
       saveConfigBtn.textContent = 'Save & Rescan Library';
       saveConfigBtn.disabled = false;
