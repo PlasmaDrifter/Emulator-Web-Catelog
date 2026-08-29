@@ -316,9 +316,9 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
   border-radius: 12px;
   padding: 0;
   width: min(680px, 94vw);
-  height: 82vh;
-  max-height: 820px;
-  min-height: 540px;
+  height: min(90vh, 980px);
+  max-height: 94vh;
+  min-height: 560px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
@@ -806,7 +806,7 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
 }
 .yaml-editor-textarea {
   width: 100%;
-  height: 280px;
+  height: 360px;
   background: var(--bg-body);
   color: var(--text-primary);
   border: 1px solid var(--border-input);
