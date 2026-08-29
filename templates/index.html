@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=2.9">
+<link rel="stylesheet" href="/static/css/style.css?v=3.0">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -366,11 +366,18 @@
       <!-- Command Line Help Box -->
       <div id="commandHelpBox" class="command-help-box hidden">
         <div class="command-help-header">
-          <h5>How to Format Emulator Launch Commands</h5>
+          <h5>Consoles & Commands Configuration Guide</h5>
           <button type="button" class="btn-close-help" id="closeCommandHelpBtn" title="Close guide">&times;</button>
         </div>
         <div class="command-help-content">
-          <p style="margin: 0;">The <strong>Emulator Launch Command</strong> is the exact shell command used to start the emulator with your selected game.</p>
+          <div class="help-callout" style="border-left-color: #10b981;">
+            <strong>System Identifier (ID) &mdash; When is it needed?</strong>
+            <p style="margin: 4px 0 0 0;">
+              <strong>Only needed if:</strong> you want a custom short key in your configuration (for example, typing <code>n64</code> or <code>snes</code> instead of a long name). If you leave this field blank, ROM Cat will automatically create a safe identifier from your <strong>Display Name</strong>.
+            </p>
+          </div>
+
+          <p style="margin: 4px 0 0 0;">The <strong>Emulator Launch Command</strong> is the exact shell command used to start the emulator with your selected game.</p>
           <div class="help-callout">
             <strong>Key Token: <code>{rom}</code></strong>
             <p style="margin: 4px 0 0 0;">ROM Cat automatically replaces <code>{rom}</code> with the full, shell-quoted path to the selected ROM file on disk (e.g. <code>"/home/user/ROMs/NES/Mario.nes"</code>).</p>
@@ -1267,8 +1274,12 @@ function renderSystemCard(sysId, sysData) {
           <input type="text" class="settings-input sys-name-input" value="${escapeHtml(name)}" placeholder="e.g. NES, GameCube, Switch">
         </div>
         <div class="settings-field">
-          <label>System Identifier (ID)</label>
-          <input type="text" class="settings-input sys-id-input" value="${escapeHtml(key)}" placeholder="e.g. nes, gamecube, switch">
+          <label>
+            System Identifier (ID)
+            <button type="button" class="btn-inline-help btn-id-help" title="Only needed if you want a custom short key (e.g. 'n64' or 'switch'). If left blank, it is automatically generated from your Display Name.">?</button>
+            <span class="field-hint">(optional)</span>
+          </label>
+          <input type="text" class="settings-input sys-id-input" value="${escapeHtml(key)}" placeholder="Auto-generated if blank (e.g. nes)">
         </div>
       </div>
       <div class="settings-field">
@@ -1298,9 +1309,17 @@ function renderSystemCard(sysId, sysData) {
   const idBadge = card.querySelector('.system-card-id-badge');
   const removeBtn = card.querySelector('.btn-remove-system');
   const inlineHelpBtn = card.querySelector('.btn-inline-help');
+  const idHelpBtn = card.querySelector('.btn-id-help');
 
   if (inlineHelpBtn && commandHelpBox) {
     inlineHelpBtn.addEventListener('click', () => {
+      commandHelpBox.classList.remove('hidden');
+      commandHelpBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  if (idHelpBtn && commandHelpBox) {
+    idHelpBtn.addEventListener('click', () => {
       commandHelpBox.classList.remove('hidden');
       commandHelpBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
