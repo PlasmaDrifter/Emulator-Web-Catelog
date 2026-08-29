@@ -707,3 +707,130 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
 .btn-file-upload:hover {
   background: var(--border-input);
 }
+
+/* Modal Nav Tabs (Themes vs Consoles/Emulators) */
+.modal-nav-tabs {
+  display: flex;
+  gap: 12px;
+  padding: 0 20px;
+  background: var(--bg-tabs);
+  border-bottom: 1px solid var(--border-color);
+}
+.modal-nav-tab {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 10px 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.modal-nav-tab:hover {
+  color: var(--text-primary);
+  background: transparent;
+}
+.modal-nav-tab.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+  font-weight: 600;
+}
+
+/* Systems & Emulators Tab Content */
+.settings-tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.settings-tab-pane.hidden {
+  display: none !important;
+}
+
+.config-guide-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.config-guide-box h5 {
+  margin: 0 0 6px 0;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+.config-guide-box pre {
+  background: var(--bg-body);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.config-guide-box ul {
+  margin: 6px 0 0 0;
+  padding-left: 18px;
+}
+.config-guide-box li {
+  margin-bottom: 4px;
+}
+.config-guide-box code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: monospace;
+  font-size: 0.82em;
+}
+.yaml-editor-textarea {
+  width: 100%;
+  height: 280px;
+  background: var(--bg-body);
+  color: var(--text-primary);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  resize: vertical;
+  white-space: pre;
+  tab-size: 2;
+  outline: none;
+  box-sizing: border-box;
+}
+.yaml-editor-textarea:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 6px var(--accent-color);
+}
+.config-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.config-status-msg {
+  font-size: 0.8rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: none;
+}
+.config-status-msg.error {
+  display: block;
+  background: rgba(224, 122, 122, 0.15);
+  border: 1px solid #8b3434;
+  color: #e07a7a;
+}
+.config-status-msg.success {
+  display: block;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid #10b981;
+  color: #10b981;
+}

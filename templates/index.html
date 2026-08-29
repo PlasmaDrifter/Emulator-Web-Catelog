@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=2.1">
+<link rel="stylesheet" href="/static/css/style.css?v=2.2">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -85,14 +85,20 @@
     <h3>Settings & Customization</h3>
     <button id="closeSettingsBtn" class="close-modal-btn" type="button" aria-label="Close">&times;</button>
   </div>
+  <div class="modal-nav-tabs">
+    <button type="button" class="modal-nav-tab active" data-tab-target="tabGeneral">General & Appearance</button>
+    <button type="button" class="modal-nav-tab" data-tab-target="tabConsoles">Consoles & Emulators</button>
+  </div>
   <div class="modal-body">
-    <!-- General -->
-    <section class="settings-section">
-      <h4>General</h4>
-      <div class="settings-field">
-        <label for="catalogTitleInput">Catalog Title</label>
-        <input type="text" id="catalogTitleInput" class="settings-input" value="{{ settings.title }}" placeholder="ROM Catelog">
-      </div>
+    <!-- General & Appearance Tab -->
+    <div id="tabGeneral" class="settings-tab-pane">
+      <!-- General -->
+      <section class="settings-section">
+        <h4>General</h4>
+        <div class="settings-field">
+          <label for="catalogTitleInput">Catalog Title</label>
+          <input type="text" id="catalogTitleInput" class="settings-input" value="{{ settings.title }}" placeholder="ROM Catelog">
+        </div>
       <div class="settings-field">
         <label>Webpage & Tab Icon</label>
         <div class="icon-selector-container">
@@ -314,10 +320,61 @@
       </div>
     </section>
   </div>
-  <div class="modal-footer">
-    <button type="button" id="resetDefaultsBtn" class="btn-danger">Reset to Defaults</button>
-    <button type="button" id="saveSettingsBtn" class="btn-primary">Save & Apply</button>
+
+  <!-- Consoles & Emulators Tab -->
+  <div id="tabConsoles" class="settings-tab-pane hidden">
+    <!-- How to Edit Emulators and Systems Guide -->
+    <section class="settings-section">
+      <h4>How to Edit Emulators and Systems</h4>
+      <div class="config-guide-box">
+        <p style="margin-top: 0;">All emulator execution commands, system definitions, ROM paths, and allowed file extensions are configured inside <code>config.yaml</code>.</p>
+        <h5>Configuration Structure</h5>
+        <p>Each system entry in <code>config.yaml</code> is structured under the <code>systems:</code> block:</p>
+        <pre>systems:
+  &lt;system_identifier&gt;:
+    name: "Display Name"
+    folder: "/path/to/rom/directory/"
+    extensions: [".ext1", ".ext2"]
+    command: "&lt;command_template&gt; {rom}"</pre>
+        <h5>Understanding Parameters</h5>
+        <ul>
+          <li><code>system_identifier</code>: Lowercase or camelCase key used internally (e.g. <code>nes</code>, <code>snes</code>, <code>n64</code>, <code>gamecube</code>, <code>wiiu</code>, <code>switch</code>).</li>
+          <li><code>name</code>: The user-facing name shown in the top navigation tab and header.</li>
+          <li><code>folder</code>: Path to the ROM directory on your host filesystem. Can be a single directory path or a YAML list of multiple paths:
+            <pre>folder:
+  - "/path/to/primary/roms/WiiU/"
+  - "/path/to/secondary/storage/WiiU/"</pre>
+          </li>
+          <li><code>extensions</code>: List of file extensions to include in the scan.</li>
+          <li><code>command</code>: The exact shell command used to start the emulator.
+            <code>{rom}</code> is automatically replaced by app.py with the full, shell-quoted path to the selected ROM file.
+            Environment variables such as <code>DISPLAY=:0</code> and <code>WAYLAND_DISPLAY=wayland-0</code> can be prepended if needed.
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- config.yaml Editor -->
+    <section class="settings-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <h4>config.yaml Editor</h4>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" id="insertSystemTemplateBtn" class="btn-secondary" style="font-size: 0.78rem; padding: 4px 8px;">+ Add System Template</button>
+          <button type="button" id="reloadConfigBtn" class="btn-secondary" style="font-size: 0.78rem; padding: 4px 8px;">Reload</button>
+        </div>
+      </div>
+      <textarea id="yamlConfigEditor" class="yaml-editor-textarea" spellcheck="false" placeholder="Loading config.yaml..."></textarea>
+      <div id="configStatusAlert" class="config-status-msg"></div>
+      <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+        <button type="button" id="saveConfigBtn" class="btn-primary" style="padding: 8px 18px;">Save & Rescan Library</button>
+      </div>
+    </section>
   </div>
+</div>
+<div class="modal-footer" id="generalModalFooter">
+  <button type="button" id="resetDefaultsBtn" class="btn-danger">Reset to Defaults</button>
+  <button type="button" id="saveSettingsBtn" class="btn-primary">Save & Apply</button>
+</div>
 </dialog>
 
 <script>
@@ -989,6 +1046,117 @@ if (viewHiddenBtn) {
     });
     applyFilters();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+// --- Modal Nav Tabs & Config Management ---
+const modalNavTabs = document.querySelectorAll('.modal-nav-tab');
+const tabGeneral = document.getElementById('tabGeneral');
+const tabConsoles = document.getElementById('tabConsoles');
+const generalModalFooter = document.getElementById('generalModalFooter');
+const yamlConfigEditor = document.getElementById('yamlConfigEditor');
+const configStatusAlert = document.getElementById('configStatusAlert');
+const insertSystemTemplateBtn = document.getElementById('insertSystemTemplateBtn');
+const reloadConfigBtn = document.getElementById('reloadConfigBtn');
+const saveConfigBtn = document.getElementById('saveConfigBtn');
+
+modalNavTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    modalNavTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const target = tab.dataset.tabTarget;
+    if (target === 'tabGeneral') {
+      tabGeneral.classList.remove('hidden');
+      tabConsoles.classList.add('hidden');
+      if (generalModalFooter) generalModalFooter.style.display = 'flex';
+    } else {
+      tabGeneral.classList.add('hidden');
+      tabConsoles.classList.remove('hidden');
+      if (generalModalFooter) generalModalFooter.style.display = 'none';
+      loadYamlConfig();
+    }
+  });
+});
+
+async function loadYamlConfig() {
+  if (!yamlConfigEditor) return;
+  try {
+    const res = await fetch('/api/config');
+    const data = await res.json();
+    if (data.ok) {
+      yamlConfigEditor.value = data.raw_yaml;
+      configStatusAlert.className = 'config-status-msg';
+      configStatusAlert.textContent = '';
+      configStatusAlert.style.display = 'none';
+    } else {
+      configStatusAlert.className = 'config-status-msg error';
+      configStatusAlert.textContent = 'Failed to load config: ' + data.error;
+      configStatusAlert.style.display = 'block';
+    }
+  } catch (err) {
+    configStatusAlert.className = 'config-status-msg error';
+    configStatusAlert.textContent = 'Error fetching config: ' + err;
+    configStatusAlert.style.display = 'block';
+  }
+}
+
+if (reloadConfigBtn) {
+  reloadConfigBtn.addEventListener('click', () => {
+    loadYamlConfig();
+  });
+}
+
+if (insertSystemTemplateBtn) {
+  insertSystemTemplateBtn.addEventListener('click', () => {
+    const template = `
+  new_system:
+    name: "System Name"
+    folder: "/path/to/rom/directory/"
+    extensions: [".ext1", ".ext2"]
+    command: "emulator-command {rom}"
+`;
+    yamlConfigEditor.value = yamlConfigEditor.value.trimEnd() + '\n' + template;
+    yamlConfigEditor.scrollTop = yamlConfigEditor.scrollHeight;
+    yamlConfigEditor.focus();
+  });
+}
+
+if (saveConfigBtn) {
+  saveConfigBtn.addEventListener('click', async () => {
+    saveConfigBtn.textContent = 'Saving & Rescanning...';
+    saveConfigBtn.disabled = true;
+    configStatusAlert.className = 'config-status-msg';
+    configStatusAlert.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw_yaml: yamlConfigEditor.value })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        configStatusAlert.className = 'config-status-msg success';
+        configStatusAlert.textContent = 'Configuration saved and library rescanned successfully! Refreshing dashboard...';
+        configStatusAlert.style.display = 'block';
+        saveConfigBtn.textContent = 'Saved!';
+        setTimeout(() => {
+          location.reload();
+        }, 1200);
+      } else {
+        configStatusAlert.className = 'config-status-msg error';
+        configStatusAlert.textContent = data.error || 'Failed to save configuration';
+        configStatusAlert.style.display = 'block';
+        saveConfigBtn.textContent = 'Save & Rescan Library';
+        saveConfigBtn.disabled = false;
+      }
+    } catch (err) {
+      configStatusAlert.className = 'config-status-msg error';
+      configStatusAlert.textContent = 'Error connecting to server: ' + err;
+      configStatusAlert.style.display = 'block';
+      saveConfigBtn.textContent = 'Save & Rescan Library';
+      saveConfigBtn.disabled = false;
+    }
   });
 }
 
