@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=2.6">
+<link rel="stylesheet" href="/static/css/style.css?v=2.7">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -349,9 +349,49 @@
     <section class="settings-section">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <h4>Configured Consoles & Systems</h4>
-        <button type="button" id="addNewSystemCardBtn" class="btn-secondary" style="font-size: 0.82rem; padding: 6px 14px; font-weight: 600;">
-          + Add Console
-        </button>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" id="toggleCommandHelpBtn" class="btn-secondary help-pill-btn" title="View Command Line Guide">
+            <span class="help-circle-icon">?</span> Command Guide
+          </button>
+          <button type="button" id="addNewSystemCardBtn" class="btn-secondary" style="font-size: 0.82rem; padding: 6px 14px; font-weight: 600;">
+            + Add Console
+          </button>
+        </div>
+      </div>
+
+      <!-- Command Line Help Box -->
+      <div id="commandHelpBox" class="command-help-box hidden">
+        <div class="command-help-header">
+          <h5>How to Format Emulator Launch Commands</h5>
+          <button type="button" class="btn-close-help" id="closeCommandHelpBtn" title="Close guide">&times;</button>
+        </div>
+        <div class="command-help-content">
+          <p style="margin: 0;">The <strong>Emulator Launch Command</strong> is the exact shell command used to start the emulator with your selected game.</p>
+          <div class="help-callout">
+            <strong>Key Token: <code>{rom}</code></strong>
+            <p style="margin: 4px 0 0 0;">ROM Cat automatically replaces <code>{rom}</code> with the full, shell-quoted path to the selected ROM file on disk (e.g. <code>"/home/user/ROMs/NES/Mario.nes"</code>).</p>
+          </div>
+
+          <h6>Common Flatpak Emulator Commands:</h6>
+          <div class="code-examples-grid">
+            <div class="example-row"><span class="ex-sys">NES:</span> <code>flatpak run ca._0ldsk00l.Nestopia {rom}</code></div>
+            <div class="example-row"><span class="ex-sys">SNES:</span> <code>flatpak run com.snes9x.Snes9x {rom}</code></div>
+            <div class="example-row"><span class="ex-sys">Nintendo 64:</span> <code>flatpak run io.github.gopher64.gopher64 {rom}</code></div>
+            <div class="example-row"><span class="ex-sys">GameCube / Wii:</span> <code>flatpak run org.DolphinEmu.dolphin-emu {rom}</code></div>
+            <div class="example-row"><span class="ex-sys">Wii U:</span> <code>flatpak run info.cemu.Cemu -g {rom}</code></div>
+            <div class="example-row"><span class="ex-sys">Switch:</span> <code>flatpak run org.yuzu_emu.yuzu -g {rom}</code></div>
+            <div class="example-row"><span class="ex-sys">PlayStation 1:</span> <code>flatpak run org.duckstation.DuckStation {rom}</code></div>
+            <div class="example-row"><span class="ex-sys">PlayStation 2:</span> <code>flatpak run net.pcsx2.PCSX2 {rom}</code></div>
+            <div class="example-row"><span class="ex-sys">PlayStation 3:</span> <code>flatpak run net.rpcs3.RPCS3 {rom}</code></div>
+          </div>
+
+          <h6>Native Binaries, RetroArch & Environment Variables:</h6>
+          <div class="code-examples-grid">
+            <div class="example-row"><span class="ex-sys">RetroArch (Core):</span> <code>retroarch -L /path/to/core_libretro.so {rom}</code></div>
+            <div class="example-row"><span class="ex-sys">AppImage / Binary:</span> <code>/home/user/Applications/emulator.AppImage {rom}</code></div>
+            <div class="example-row"><span class="ex-sys">Display Variables:</span> <code>env DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 flatpak run ... {rom}</code></div>
+          </div>
+        </div>
       </div>
 
       <div id="systemsListContainer" class="systems-form-list">
@@ -1052,6 +1092,24 @@ const saveConfigBtn = document.getElementById('saveConfigBtn');
 const modalFetchCoversBtn = document.getElementById('modalFetchCoversBtn');
 const modalRescanBtn = document.getElementById('modalRescanBtn');
 const modalStatusAlert = document.getElementById('modalStatusAlert');
+const toggleCommandHelpBtn = document.getElementById('toggleCommandHelpBtn');
+const closeCommandHelpBtn = document.getElementById('closeCommandHelpBtn');
+const commandHelpBox = document.getElementById('commandHelpBox');
+
+if (toggleCommandHelpBtn && commandHelpBox) {
+  toggleCommandHelpBtn.addEventListener('click', () => {
+    commandHelpBox.classList.toggle('hidden');
+    if (!commandHelpBox.classList.contains('hidden')) {
+      commandHelpBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  });
+}
+
+if (closeCommandHelpBtn && commandHelpBox) {
+  closeCommandHelpBtn.addEventListener('click', () => {
+    commandHelpBox.classList.add('hidden');
+  });
+}
 
 modalNavTabs.forEach(tab => {
   tab.addEventListener('click', () => {
@@ -1194,7 +1252,11 @@ function renderSystemCard(sysId, sysData) {
           <input type="text" class="settings-input sys-exts-input" value="${escapeHtml(extsStr)}" placeholder=".nes, .zip, .7z">
         </div>
         <div class="settings-field">
-          <label>Emulator Launch Command <span class="field-hint">(use {rom} for file path)</span></label>
+          <label>
+            Emulator Launch Command
+            <button type="button" class="btn-inline-help" title="Click for command syntax guide and examples">?</button>
+            <span class="field-hint">(use {rom} for file path)</span>
+          </label>
           <input type="text" class="settings-input sys-cmd-input" value="${escapeHtml(cmd)}" placeholder="emulator-command {rom}">
         </div>
       </div>
@@ -1206,6 +1268,14 @@ function renderSystemCard(sysId, sysData) {
   const nameDisplay = card.querySelector('.system-card-name');
   const idBadge = card.querySelector('.system-card-id-badge');
   const removeBtn = card.querySelector('.btn-remove-system');
+  const inlineHelpBtn = card.querySelector('.btn-inline-help');
+
+  if (inlineHelpBtn && commandHelpBox) {
+    inlineHelpBtn.addEventListener('click', () => {
+      commandHelpBox.classList.remove('hidden');
+      commandHelpBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
 
   nameInput.addEventListener('input', () => {
     nameDisplay.textContent = nameInput.value.trim() || 'New Console';
@@ -1468,6 +1538,9 @@ if (autoSettingsTab) {
   } else if (autoSettingsTab === 'consoles') {
     const tabEl = document.querySelector('[data-tab-target="tabConsoles"]');
     if (tabEl) tabEl.click();
+    if (urlParams.get('help') && commandHelpBox) {
+      commandHelpBox.classList.remove('hidden');
+    }
   } else {
     const tabEl = document.querySelector('[data-tab-target="tabAppearance"]');
     if (tabEl) tabEl.click();

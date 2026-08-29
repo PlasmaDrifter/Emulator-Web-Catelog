@@ -864,6 +864,154 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
   padding: 10px 14px;
 }
 
+/* Command Help Guide Box & ? Buttons */
+.help-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.help-circle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: var(--tab-active-text, #ffffff);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.btn-inline-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--accent-color);
+  border: 1px solid var(--border-color);
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+  vertical-align: middle;
+  transition: all 0.15s ease;
+}
+.btn-inline-help:hover {
+  background: var(--accent-color);
+  color: var(--tab-active-text, #ffffff);
+  border-color: var(--accent-color);
+}
+
+.command-help-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1.5px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeInHelp 0.2s ease;
+}
+.command-help-box.hidden {
+  display: none !important;
+}
+
+@keyframes fadeInHelp {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.command-help-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 6px;
+}
+.command-help-header h5 {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.btn-close-help {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.btn-close-help:hover {
+  color: var(--text-primary);
+}
+
+.command-help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+.command-help-content h6 {
+  margin: 6px 0 2px 0;
+  font-size: 0.84rem;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.help-callout {
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid var(--accent-color);
+  padding: 8px 12px;
+  border-radius: 0 6px 6px 0;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+}
+.help-callout code, .code-examples-grid code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82em;
+}
+
+.code-examples-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: var(--bg-body);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+}
+.example-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.ex-sys {
+  font-weight: 700;
+  color: var(--accent-color);
+  min-width: 110px;
+}
+
 .config-guide-box {
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border-color);
