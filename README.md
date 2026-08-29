@@ -122,18 +122,20 @@ Customize which elements appear on your dashboard from the Settings modal:
 - **Show "Fetch Cover Art" Button**: One-click SteamGridDB automated art scraping.
 - **Show "Rescan Library" Button**: Scan storage paths for newly added game files.
 - **Show ROM Count Badges**: Display numeric game counts on system tabs (e.g. `(42)`).
-- **Show "Favorites" Tab**: Category tab in navigation to view all favorited games.
-- **Show "Hidden" Tab in Navigation**: Adds a "Hidden" tab to the top navigation bar.
-- **Show Card Hide Buttons (Edit Mode)**: Displays eye buttons on individual game cards to hide duplicates, DLCs, and unwanted ROMs.
-- **View Hidden ROMs Button**: One-click action button inside Settings to instantly jump to hidden ROMs.
+### 5. Consoles & Emulators Editor (In-App)
+Edit your systems, storage paths, and emulator commands directly in the web UI under the **Consoles & Emulators** tab in Settings:
+- **Built-in Reference & Parameter Guide**: Clear explanations for `system_identifier`, `name`, `folder` (single or multi-path lists), `extensions`, and `command` with `{rom}` tokens.
+- **Interactive config.yaml Editor**: Live YAML editor with syntax validation.
+- **One-Click Template Generator**: Quickly insert scaffold blocks for newly added consoles.
+- **Instant Save & Rescan**: Saves directly to `config.yaml` and reloads/rescans your library in real-time.
 
-Settings are stored on disk in `settings.json` and persist across all devices connected to your network.
+Settings and theme configurations are stored on disk in `settings.json` and persist across all devices connected to your network.
 
 ---
 
 ## How to Edit Emulators and Systems
 
-All emulator execution commands, system definitions, ROM paths, and allowed file extensions are configured inside `config.yaml`.
+All emulator execution commands, system definitions, ROM paths, and allowed file extensions are configured inside `config.yaml` (either directly on disk or via the **Consoles & Emulators** tab in Settings).
 
 ### Configuration Structure
 

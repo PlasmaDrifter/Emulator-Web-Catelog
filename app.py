@@ -586,6 +586,38 @@ def api_fetch_covers():
     return jsonify({"ok": True, "fetched": fetched, "skipped": skipped, "failed": failed})
 
 
+@app.route("/api/config", methods=["GET"])
+def api_get_config():
+    try:
+        raw_yaml = CONFIG_PATH.read_text() if CONFIG_PATH.exists() else ""
+        parsed = yaml.safe_load(raw_yaml) if raw_yaml else {}
+        return jsonify({"ok": True, "raw_yaml": raw_yaml, "config": parsed})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/config", methods=["POST"])
+def api_save_config():
+    global _library_cache
+    try:
+        data = request.get_json(force=True)
+        raw_yaml = data.get("raw_yaml", "")
+        if not raw_yaml and "config" in data:
+            raw_yaml = yaml.dump(data["config"], sort_keys=False)
+
+        parsed = yaml.safe_load(raw_yaml)
+        if not isinstance(parsed, dict) or "systems" not in parsed:
+            return jsonify({"ok": False, "error": "Invalid configuration: 'systems' block is required."}), 400
+
+        CONFIG_PATH.write_text(raw_yaml)
+        _library_cache = None
+        library = scan_library()
+        save_library_cache(library)
+        return jsonify({"ok": True, "config": parsed, "library": library})
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"YAML Error: {str(e)}"}), 400
+
+
 @app.route('/static/covers/<path:filename>')
 def serve_covers(filename):
     return send_from_directory(COVERS_DIR, filename)
