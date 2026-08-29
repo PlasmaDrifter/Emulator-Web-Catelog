@@ -82,48 +82,29 @@ Or use your machine's local IP / Tailscale IP (e.g. `http://<server-ip>:8420`).
 
 ## Settings and Customization
 
-ROM Cat includes a Settings interface directly in the web UI (accessible via the gear icon in the top header).
+ROM Cat includes a tabbed Settings interface directly in the web UI (accessible via the gear icon in the top header).
 
-### 1. General Settings
-- **Catalog Title**: Update the dashboard title and browser tab title on the fly.
-- **Webpage & Tab Icon**: Select from 35+ retro and modern console icons to customize your browser tab favicon and header brand icon:
-  - **Nintendo**: NES, SNES, Nintendo 64, GameCube, Wii, Wii U, Switch, Game Boy, GBA, DS, 3DS.
-  - **PlayStation**: PlayStation 1, PS2, PS3, PS4, PS5, PSP, PS Vita.
-  - **Xbox**: Xbox (Original), Xbox 360, Xbox One, Xbox Series X/S.
-  - **Sega**: Master System, Genesis / Mega Drive, Sega CD, 32X, Saturn, Dreamcast, Game Gear.
-  - **Atari**: Atari 2600, 5200, 7800, Lynx, Jaguar.
-  - **Commodore**: Commodore 64, Amiga, VIC-20.
-  - **Retro & Other**: Retro Gamepad, Arcade Cabinet, Neo Geo, Default Favicon.
-  - **Custom URL & File Upload**: Paste any image URL or upload any custom PNG/SVG/ICO/JPG directly.
+### 1. Appearance Tab
+- **General Settings**:
+  - **Catalog Title**: Update the dashboard title and browser tab title on the fly.
+  - **Webpage & Tab Icon**: Select from 35+ retro and modern console icons (Nintendo, PlayStation, Xbox, Sega, Atari, Commodore, Retro) or upload a custom image.
+- **Theme Presets**: Switch instantly between 6 presets: Default Dark, Pure OLED, Catppuccin, Cyberpunk, Nord Frost, and Emerald.
+- **Custom Color Pickers**: Fine-tune every color element individually with real-time live preview (backgrounds, accents, glowing borders, active tab text, favorite star).
 
-### 2. Theme Presets
-- **Default Dark**: Slate dark background with blue accents and magenta favorite glow.
-- **Pure OLED**: Pitch black (`#000000`) background with cyan accents and gold favorite highlights.
-- **Catppuccin**: Soft purple pastel theme with lavender accents and peach borders.
-- **Cyberpunk**: Dark neon theme with bright yellow accents and hot pink glow.
-- **Nord Frost**: Arctic blue and slate gray palette with soft amber highlights.
-- **Emerald**: Forest dark green background with emerald accents and sky blue highlights.
+### 2. UI Tab
+- **Library Actions**:
+  - **Fetch Cover Art**: One-click automated cover scraping from SteamGridDB with live status feedback.
+  - **Rescan Library**: Scan storage paths for newly added, moved, or deleted ROM files.
+- **Hidden Games & Edit Mode**:
+  - **Show Card Hide Buttons (Edit Mode)**: Displays eye buttons on individual game cards to hide duplicates, DLCs, and unwanted ROMs.
+  - **Show "Hidden" Tab in Navigation**: Adds a "Hidden" tab to the top navigation bar.
+  - **View Hidden ROMs Button**: Jump straight to hidden ROMs with a single click.
+- **UI Visibility Controls**:
+  - **Show Search Bar**: Toggle real-time search input in the header.
+  - **Show ROM Count Badges**: Display numeric game counts on system tabs (e.g. `(42)`).
+  - **Show "Favorites" Tab**: Toggle favorites tab on the navigation bar.
 
-### 3. Custom Color Pickers
-Every color element can be fine-tuned individually with real-time live preview:
-- Body Background
-- Header Bar
-- Tabs Bar
-- Card Background
-- Primary Accent (Tabs & Focus rings)
-- Selected Tab Text Color (with automatic luminance contrast detection)
-- Favorite Star & Glowing Border
-- Primary Text
-- Muted Text & Details
-
-### 4. UI Visibility & Hidden Games Controls
-Customize which elements appear on your dashboard from the Settings modal:
-- **Show Search Bar**: Real-time ROM title search input in the header.
-- **Show "Fetch Cover Art" Button**: One-click SteamGridDB automated art scraping.
-- **Show "Rescan Library" Button**: Scan storage paths for newly added game files.
-- **Show ROM Count Badges**: Display numeric game counts on system tabs (e.g. `(42)`).
-### 5. Consoles & Emulators Editor (In-App)
-Edit your systems, storage paths, and emulator commands directly in the web UI under the **Consoles & Emulators** tab in Settings:
+### 3. Consoles & Emulators Tab
 - **Built-in Reference & Parameter Guide**: Clear explanations for `system_identifier`, `name`, `folder` (single or multi-path lists), `extensions`, and `command` with `{rom}` tokens.
 - **Interactive config.yaml Editor**: Live YAML editor with syntax validation.
 - **One-Click Template Generator**: Quickly insert scaffold blocks for newly added consoles.

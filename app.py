@@ -44,8 +44,6 @@ DEFAULT_SETTINGS = {
     },
     "visibility": {
         "show_search": True,
-        "show_fetch_covers": True,
-        "show_rescan": True,
         "show_counts": True,
         "show_favorites_tab": True,
         "show_hidden_tab": False,

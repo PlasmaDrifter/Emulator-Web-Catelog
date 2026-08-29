@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=2.2">
+<link rel="stylesheet" href="/static/css/style.css?v=2.3">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -21,7 +21,7 @@
   }
 </style>
 </head>
-<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_fetch_covers %}hide-fetch-covers {% endif %}{% if not settings.visibility.show_rescan %}hide-rescan {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}">
+<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}">
 <header>
   <div class="header-brand">
     <img id="headerIcon" src="{{ settings.icon or '/static/favicon.png' }}" class="header-icon" alt="">
@@ -33,8 +33,6 @@
   </div>
   <div class="actions">
     <span id="status"></span>
-    <button id="fetchCoversBtn">Fetch cover art</button>
-    <button id="rescanBtn">Rescan library</button>
     <button id="settingsBtn" title="Settings" class="icon-btn" aria-label="Settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
   </div>
 </header>
@@ -86,12 +84,13 @@
     <button id="closeSettingsBtn" class="close-modal-btn" type="button" aria-label="Close">&times;</button>
   </div>
   <div class="modal-nav-tabs">
-    <button type="button" class="modal-nav-tab active" data-tab-target="tabGeneral">General & Appearance</button>
+    <button type="button" class="modal-nav-tab active" data-tab-target="tabAppearance">Appearance</button>
+    <button type="button" class="modal-nav-tab" data-tab-target="tabUI">UI</button>
     <button type="button" class="modal-nav-tab" data-tab-target="tabConsoles">Consoles & Emulators</button>
   </div>
   <div class="modal-body">
-    <!-- General & Appearance Tab -->
-    <div id="tabGeneral" class="settings-tab-pane">
+    <!-- Tab 1: Appearance -->
+    <div id="tabAppearance" class="settings-tab-pane">
       <!-- General -->
       <section class="settings-section">
         <h4>General</h4>
@@ -99,227 +98,232 @@
           <label for="catalogTitleInput">Catalog Title</label>
           <input type="text" id="catalogTitleInput" class="settings-input" value="{{ settings.title }}" placeholder="ROM Catelog">
         </div>
-      <div class="settings-field">
-        <label>Webpage & Tab Icon</label>
-        <div class="icon-selector-container">
-          <div class="icon-category-tabs" id="iconCatTabs">
-            <button type="button" class="icon-cat-btn active" data-cat="all">All</button>
-            <button type="button" class="icon-cat-btn" data-cat="nintendo">Nintendo</button>
-            <button type="button" class="icon-cat-btn" data-cat="playstation">PlayStation</button>
-            <button type="button" class="icon-cat-btn" data-cat="xbox">Xbox</button>
-            <button type="button" class="icon-cat-btn" data-cat="sega">Sega</button>
-            <button type="button" class="icon-cat-btn" data-cat="atari">Atari</button>
-            <button type="button" class="icon-cat-btn" data-cat="commodore">Commodore</button>
-            <button type="button" class="icon-cat-btn" data-cat="retro">Retro</button>
-          </div>
-          <div class="icon-grid" id="iconGrid"></div>
-          <div class="custom-icon-row">
-            <input type="text" id="customIconUrl" class="settings-input" placeholder="Custom Icon URL / path" value="{{ settings.icon or '/static/favicon.png' }}">
-            <label class="btn-file-upload">
-              Upload
-              <input type="file" id="iconFileInput" accept=".png,.svg,.ico,.jpg,.jpeg,.webp" style="display:none">
-            </label>
+        <div class="settings-field">
+          <label>Webpage & Tab Icon</label>
+          <div class="icon-selector-container">
+            <div class="icon-category-tabs" id="iconCatTabs">
+              <button type="button" class="icon-cat-btn active" data-cat="all">All</button>
+              <button type="button" class="icon-cat-btn" data-cat="nintendo">Nintendo</button>
+              <button type="button" class="icon-cat-btn" data-cat="playstation">PlayStation</button>
+              <button type="button" class="icon-cat-btn" data-cat="xbox">Xbox</button>
+              <button type="button" class="icon-cat-btn" data-cat="sega">Sega</button>
+              <button type="button" class="icon-cat-btn" data-cat="atari">Atari</button>
+              <button type="button" class="icon-cat-btn" data-cat="commodore">Commodore</button>
+              <button type="button" class="icon-cat-btn" data-cat="retro">Retro</button>
+            </div>
+            <div class="icon-grid" id="iconGrid"></div>
+            <div class="custom-icon-row">
+              <input type="text" id="customIconUrl" class="settings-input" placeholder="Custom Icon URL / path" value="{{ settings.icon or '/static/favicon.png' }}">
+              <label class="btn-file-upload">
+                Upload
+                <input type="file" id="iconFileInput" accept=".png,.svg,.ico,.jpg,.jpeg,.webp" style="display:none">
+              </label>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Hidden Games & Edit Mode -->
-    <section class="settings-section">
-      <h4>Hidden Games & Edit Mode</h4>
-      <div class="toggle-list">
-        <label class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-title">Show Card Hide Buttons (Edit Mode)</span>
-            <span class="toggle-desc">Displays eye buttons on game cards allowing you to hide/unhide duplicates and unwanted ROMs</span>
-          </div>
-          <div class="switch">
-            <input type="checkbox" id="toggleCardHideButtons" {% if settings.visibility.show_card_hide_buttons %}checked{% endif %}>
-            <span class="slider"></span>
-          </div>
-        </label>
-        <label class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-title">Show "Hidden" Tab in Navigation</span>
-            <span class="toggle-desc">Adds a "Hidden" pill to the main tabs bar to browse hidden ROMs</span>
-          </div>
-          <div class="switch">
-            <input type="checkbox" id="toggleHiddenTab" {% if settings.visibility.show_hidden_tab %}checked{% endif %}>
-            <span class="slider"></span>
-          </div>
-        </label>
-        <button type="button" id="viewHiddenBtn" class="btn-secondary" style="margin-top: 6px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-          <span>View Hidden ROMs</span>
-        </button>
-      </div>
-    </section>
+      <!-- Theme Presets -->
+      <section class="settings-section">
+        <h4>Theme Presets</h4>
+        <div class="preset-grid">
+          <button type="button" class="preset-btn" data-preset="default">
+            <span class="preset-swatch" style="background: linear-gradient(135deg, #14161a 50%, #3a7bd5 50%);"></span>
+            Default Dark
+          </button>
+          <button type="button" class="preset-btn" data-preset="oled">
+            <span class="preset-swatch" style="background: linear-gradient(135deg, #000000 50%, #00f0ff 50%);"></span>
+            Pure OLED
+          </button>
+          <button type="button" class="preset-btn" data-preset="catppuccin">
+            <span class="preset-swatch" style="background: linear-gradient(135deg, #1e1e2e 50%, #cba6f7 50%);"></span>
+            Catppuccin
+          </button>
+          <button type="button" class="preset-btn" data-preset="cyberpunk">
+            <span class="preset-swatch" style="background: linear-gradient(135deg, #0b0410 50%, #ffe600 50%);"></span>
+            Cyberpunk
+          </button>
+          <button type="button" class="preset-btn" data-preset="nord">
+            <span class="preset-swatch" style="background: linear-gradient(135deg, #2e3440 50%, #88c0d0 50%);"></span>
+            Nord Frost
+          </button>
+          <button type="button" class="preset-btn" data-preset="emerald">
+            <span class="preset-swatch" style="background: linear-gradient(135deg, #0c1511 50%, #10b981 50%);"></span>
+            Emerald
+          </button>
+        </div>
+      </section>
 
-    <!-- Theme Presets -->
-    <section class="settings-section">
-      <h4>Theme Presets</h4>
-      <div class="preset-grid">
-        <button type="button" class="preset-btn" data-preset="default">
-          <span class="preset-swatch" style="background: linear-gradient(135deg, #14161a 50%, #3a7bd5 50%);"></span>
-          Default Dark
-        </button>
-        <button type="button" class="preset-btn" data-preset="oled">
-          <span class="preset-swatch" style="background: linear-gradient(135deg, #000000 50%, #00f0ff 50%);"></span>
-          Pure OLED
-        </button>
-        <button type="button" class="preset-btn" data-preset="catppuccin">
-          <span class="preset-swatch" style="background: linear-gradient(135deg, #1e1e2e 50%, #cba6f7 50%);"></span>
-          Catppuccin
-        </button>
-        <button type="button" class="preset-btn" data-preset="cyberpunk">
-          <span class="preset-swatch" style="background: linear-gradient(135deg, #0b0410 50%, #ffe600 50%);"></span>
-          Cyberpunk
-        </button>
-        <button type="button" class="preset-btn" data-preset="nord">
-          <span class="preset-swatch" style="background: linear-gradient(135deg, #2e3440 50%, #88c0d0 50%);"></span>
-          Nord Frost
-        </button>
-        <button type="button" class="preset-btn" data-preset="emerald">
-          <span class="preset-swatch" style="background: linear-gradient(135deg, #0c1511 50%, #10b981 50%);"></span>
-          Emerald
-        </button>
-      </div>
-    </section>
+      <!-- Custom Colors -->
+      <section class="settings-section">
+        <h4>Custom Colors</h4>
+        <div class="color-picker-grid">
+          <div class="color-picker-row">
+            <span>Body Background</span>
+            <div class="color-inputs">
+              <input type="color" id="colBgBody" value="{{ settings.theme.bg_body }}">
+              <input type="text" class="color-hex" id="hexBgBody" value="{{ settings.theme.bg_body }}">
+            </div>
+          </div>
+          <div class="color-picker-row">
+            <span>Header Bar</span>
+            <div class="color-inputs">
+              <input type="color" id="colBgHeader" value="{{ settings.theme.bg_header }}">
+              <input type="text" class="color-hex" id="hexBgHeader" value="{{ settings.theme.bg_header }}">
+            </div>
+          </div>
+          <div class="color-picker-row">
+            <span>Tabs Bar</span>
+            <div class="color-inputs">
+              <input type="color" id="colBgTabs" value="{{ settings.theme.bg_tabs }}">
+              <input type="text" class="color-hex" id="hexBgTabs" value="{{ settings.theme.bg_tabs }}">
+            </div>
+          </div>
+          <div class="color-picker-row">
+            <span>Card Background</span>
+            <div class="color-inputs">
+              <input type="color" id="colBgCard" value="{{ settings.theme.bg_card }}">
+              <input type="text" class="color-hex" id="hexBgCard" value="{{ settings.theme.bg_card }}">
+            </div>
+          </div>
+          <div class="color-picker-row">
+            <span>Primary Accent</span>
+            <div class="color-inputs">
+              <input type="color" id="colAccent" value="{{ settings.theme.accent_color }}">
+              <input type="text" class="color-hex" id="hexAccent" value="{{ settings.theme.accent_color }}">
+            </div>
+          </div>
+          <div class="color-picker-row">
+            <span>Selected Tab Text</span>
+            <div class="color-inputs">
+              <input type="color" id="colTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
+              <input type="text" class="color-hex" id="hexTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
+            </div>
+          </div>
+          <div class="color-picker-row">
+            <span>Favorite Star Color</span>
+            <div class="color-inputs">
+              <input type="color" id="colFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
+              <input type="text" class="color-hex" id="hexFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
+            </div>
+          </div>
+          <div class="color-picker-row">
+            <span>Favorite Card Border & Glow</span>
+            <div class="color-inputs">
+              <input type="color" id="colFavorite" value="{{ settings.theme.favorite_color }}">
+              <input type="text" class="color-hex" id="hexFavorite" value="{{ settings.theme.favorite_color }}">
+            </div>
+          </div>
+          <div class="color-picker-row">
+            <span>Primary Text</span>
+            <div class="color-inputs">
+              <input type="color" id="colTextPrimary" value="{{ settings.theme.text_primary }}">
+              <input type="text" class="color-hex" id="hexTextPrimary" value="{{ settings.theme.text_primary }}">
+            </div>
+          </div>
+          <div class="color-picker-row">
+            <span>Muted Text</span>
+            <div class="color-inputs">
+              <input type="color" id="colTextMuted" value="{{ settings.theme.text_muted }}">
+              <input type="text" class="color-hex" id="hexTextMuted" value="{{ settings.theme.text_muted }}">
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
 
-    <!-- Custom Colors -->
-    <section class="settings-section">
-      <h4>Custom Colors</h4>
-      <div class="color-picker-grid">
-        <div class="color-picker-row">
-          <span>Body Background</span>
-          <div class="color-inputs">
-            <input type="color" id="colBgBody" value="{{ settings.theme.bg_body }}">
-            <input type="text" class="color-hex" id="hexBgBody" value="{{ settings.theme.bg_body }}">
+    <!-- Tab 2: UI -->
+    <div id="tabUI" class="settings-tab-pane hidden">
+      <!-- Library Actions -->
+      <section class="settings-section">
+        <h4>Library Actions</h4>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="toggle-row" style="cursor: default;">
+            <div class="toggle-info">
+              <span class="toggle-title">Fetch Cover Art</span>
+              <span class="toggle-desc">Automatically download box art from SteamGridDB for games missing covers.</span>
+            </div>
+            <button type="button" id="modalFetchCoversBtn" class="btn-secondary" style="white-space: nowrap;">Fetch Covers</button>
           </div>
-        </div>
-        <div class="color-picker-row">
-          <span>Header Bar</span>
-          <div class="color-inputs">
-            <input type="color" id="colBgHeader" value="{{ settings.theme.bg_header }}">
-            <input type="text" class="color-hex" id="hexBgHeader" value="{{ settings.theme.bg_header }}">
+          <div class="toggle-row" style="cursor: default;">
+            <div class="toggle-info">
+              <span class="toggle-title">Rescan Library</span>
+              <span class="toggle-desc">Scan storage folders for newly added, moved, or deleted ROM files.</span>
+            </div>
+            <button type="button" id="modalRescanBtn" class="btn-secondary" style="white-space: nowrap;">Rescan</button>
           </div>
+          <div id="modalStatusAlert" class="config-status-msg"></div>
         </div>
-        <div class="color-picker-row">
-          <span>Tabs Bar</span>
-          <div class="color-inputs">
-            <input type="color" id="colBgTabs" value="{{ settings.theme.bg_tabs }}">
-            <input type="text" class="color-hex" id="hexBgTabs" value="{{ settings.theme.bg_tabs }}">
-          </div>
-        </div>
-        <div class="color-picker-row">
-          <span>Card Background</span>
-          <div class="color-inputs">
-            <input type="color" id="colBgCard" value="{{ settings.theme.bg_card }}">
-            <input type="text" class="color-hex" id="hexBgCard" value="{{ settings.theme.bg_card }}">
-          </div>
-        </div>
-        <div class="color-picker-row">
-          <span>Primary Accent (Tabs/Focus)</span>
-          <div class="color-inputs">
-            <input type="color" id="colAccent" value="{{ settings.theme.accent_color }}">
-            <input type="text" class="color-hex" id="hexAccent" value="{{ settings.theme.accent_color }}">
-          </div>
-        </div>
-        <div class="color-picker-row">
-          <span>Selected Tab Text Color</span>
-          <div class="color-inputs">
-            <input type="color" id="colTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
-            <input type="text" class="color-hex" id="hexTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
-          </div>
-        </div>
-        <div class="color-picker-row">
-          <span>Favorite Star Color</span>
-          <div class="color-inputs">
-            <input type="color" id="colFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
-            <input type="text" class="color-hex" id="hexFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
-          </div>
-        </div>
-        <div class="color-picker-row">
-          <span>Favorite Card Border & Glow</span>
-          <div class="color-inputs">
-            <input type="color" id="colFavorite" value="{{ settings.theme.favorite_color }}">
-            <input type="text" class="color-hex" id="hexFavorite" value="{{ settings.theme.favorite_color }}">
-          </div>
-        </div>
-        <div class="color-picker-row">
-          <span>Primary Text</span>
-          <div class="color-inputs">
-            <input type="color" id="colTextPrimary" value="{{ settings.theme.text_primary }}">
-            <input type="text" class="color-hex" id="hexTextPrimary" value="{{ settings.theme.text_primary }}">
-          </div>
-        </div>
-        <div class="color-picker-row">
-          <span>Muted Text & Details</span>
-          <div class="color-inputs">
-            <input type="color" id="colTextMuted" value="{{ settings.theme.text_muted }}">
-            <input type="text" class="color-hex" id="hexTextMuted" value="{{ settings.theme.text_muted }}">
-          </div>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- UI Element Visibility Toggles -->
-    <section class="settings-section">
-      <h4>UI Visibility</h4>
-      <div class="toggle-list">
-        <label class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-title">Show Search Bar</span>
-            <span class="toggle-desc">Quickly filter ROMs by title in real-time</span>
-          </div>
-          <div class="switch">
-            <input type="checkbox" id="toggleSearch" {% if settings.visibility.show_search %}checked{% endif %}>
-            <span class="slider"></span>
-          </div>
-        </label>
-        <label class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-title">Show "Fetch Cover Art" Button</span>
-            <span class="toggle-desc">Automatically download box art from SteamGridDB</span>
-          </div>
-          <div class="switch">
-            <input type="checkbox" id="toggleFetchCovers" {% if settings.visibility.show_fetch_covers %}checked{% endif %}>
-            <span class="slider"></span>
-          </div>
-        </label>
-        <label class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-title">Show "Rescan Library" Button</span>
-            <span class="toggle-desc">Scan storage folders for newly added ROM files</span>
-          </div>
-          <div class="switch">
-            <input type="checkbox" id="toggleRescan" {% if settings.visibility.show_rescan %}checked{% endif %}>
-            <span class="slider"></span>
-          </div>
-        </label>
-        <label class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-title">Show ROM Count Badges</span>
-            <span class="toggle-desc">Display numeric count next to system titles</span>
-          </div>
-          <div class="switch">
-            <input type="checkbox" id="toggleCounts" {% if settings.visibility.show_counts %}checked{% endif %}>
-            <span class="slider"></span>
-          </div>
-        </label>
-        <label class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-title">Show "Favorites" Tab</span>
-            <span class="toggle-desc">Category pill to view all favorited titles</span>
-          </div>
-          <div class="switch">
-            <input type="checkbox" id="toggleFavoritesTab" {% if settings.visibility.show_favorites_tab %}checked{% endif %}>
-            <span class="slider"></span>
-          </div>
-        </label>
-      </div>
-    </section>
-  </div>
+      <!-- Hidden Games & Edit Mode -->
+      <section class="settings-section">
+        <h4>Hidden Games & Edit Mode</h4>
+        <div class="toggle-list">
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Show Card Hide Buttons (Edit Mode)</span>
+              <span class="toggle-desc">Displays eye buttons on game cards allowing you to hide/unhide duplicates and unwanted ROMs</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleCardHideButtons" {% if settings.visibility.show_card_hide_buttons %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Show "Hidden" Tab in Navigation</span>
+              <span class="toggle-desc">Adds a "Hidden" pill to the main tabs bar to browse hidden ROMs</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleHiddenTab" {% if settings.visibility.show_hidden_tab %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+          <button type="button" id="viewHiddenBtn" class="btn-secondary" style="margin-top: 6px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+            <span>View Hidden ROMs</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- UI Visibility -->
+      <section class="settings-section">
+        <h4>UI Visibility</h4>
+        <div class="toggle-list">
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Show Search Bar</span>
+              <span class="toggle-desc">Quickly filter ROMs by title in real-time</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleSearch" {% if settings.visibility.show_search %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Show ROM Count Badges</span>
+              <span class="toggle-desc">Display numeric count next to system titles</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleCounts" {% if settings.visibility.show_counts %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Show "Favorites" Tab</span>
+              <span class="toggle-desc">Category pill to view all favorited titles</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleFavoritesTab" {% if settings.visibility.show_favorites_tab %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+        </div>
+      </section>
+    </div>
 
   <!-- Consoles & Emulators Tab -->
   <div id="tabConsoles" class="settings-tab-pane hidden">
@@ -747,8 +751,6 @@ function getContrastColor(hexColor) {
 
 const visibilityToggles = {
   show_search: { el: document.getElementById('toggleSearch'), cls: 'hide-search' },
-  show_fetch_covers: { el: document.getElementById('toggleFetchCovers'), cls: 'hide-fetch-covers' },
-  show_rescan: { el: document.getElementById('toggleRescan'), cls: 'hide-rescan' },
   show_counts: { el: document.getElementById('toggleCounts'), cls: 'hide-counts' },
   show_favorites_tab: { el: document.getElementById('toggleFavoritesTab'), cls: 'hide-favorites-tab' },
   show_hidden_tab: { el: document.getElementById('toggleHiddenTab'), cls: 'hide-hidden-tab' },
@@ -1051,7 +1053,8 @@ if (viewHiddenBtn) {
 
 // --- Modal Nav Tabs & Config Management ---
 const modalNavTabs = document.querySelectorAll('.modal-nav-tab');
-const tabGeneral = document.getElementById('tabGeneral');
+const tabAppearance = document.getElementById('tabAppearance');
+const tabUI = document.getElementById('tabUI');
 const tabConsoles = document.getElementById('tabConsoles');
 const generalModalFooter = document.getElementById('generalModalFooter');
 const yamlConfigEditor = document.getElementById('yamlConfigEditor');
@@ -1059,24 +1062,96 @@ const configStatusAlert = document.getElementById('configStatusAlert');
 const insertSystemTemplateBtn = document.getElementById('insertSystemTemplateBtn');
 const reloadConfigBtn = document.getElementById('reloadConfigBtn');
 const saveConfigBtn = document.getElementById('saveConfigBtn');
+const modalFetchCoversBtn = document.getElementById('modalFetchCoversBtn');
+const modalRescanBtn = document.getElementById('modalRescanBtn');
+const modalStatusAlert = document.getElementById('modalStatusAlert');
 
 modalNavTabs.forEach(tab => {
   tab.addEventListener('click', () => {
     modalNavTabs.forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     const target = tab.dataset.tabTarget;
-    if (target === 'tabGeneral') {
-      tabGeneral.classList.remove('hidden');
+    if (target === 'tabAppearance') {
+      tabAppearance.classList.remove('hidden');
+      tabUI.classList.add('hidden');
+      tabConsoles.classList.add('hidden');
+      if (generalModalFooter) generalModalFooter.style.display = 'flex';
+    } else if (target === 'tabUI') {
+      tabAppearance.classList.add('hidden');
+      tabUI.classList.remove('hidden');
       tabConsoles.classList.add('hidden');
       if (generalModalFooter) generalModalFooter.style.display = 'flex';
     } else {
-      tabGeneral.classList.add('hidden');
+      tabAppearance.classList.add('hidden');
+      tabUI.classList.add('hidden');
       tabConsoles.classList.remove('hidden');
       if (generalModalFooter) generalModalFooter.style.display = 'none';
       loadYamlConfig();
     }
   });
 });
+
+if (modalFetchCoversBtn) {
+  modalFetchCoversBtn.addEventListener('click', async () => {
+    modalFetchCoversBtn.textContent = 'Fetching...';
+    modalFetchCoversBtn.disabled = true;
+    modalStatusAlert.className = 'config-status-msg';
+    modalStatusAlert.style.display = 'block';
+    modalStatusAlert.textContent = 'Fetching and compressing covers from SteamGridDB...';
+
+    try {
+      const res = await fetch('/api/fetch_covers', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        modalStatusAlert.className = 'config-status-msg success';
+        modalStatusAlert.textContent = `Fetched ${data.fetched}, skipped ${data.skipped}, failed ${data.failed}. Reloading...`;
+        modalFetchCoversBtn.textContent = 'Done!';
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        modalStatusAlert.className = 'config-status-msg error';
+        modalStatusAlert.textContent = 'Error: ' + data.error;
+        modalFetchCoversBtn.textContent = 'Fetch Covers';
+        modalFetchCoversBtn.disabled = false;
+      }
+    } catch (err) {
+      modalStatusAlert.className = 'config-status-msg error';
+      modalStatusAlert.textContent = 'Network error: ' + err;
+      modalFetchCoversBtn.textContent = 'Fetch Covers';
+      modalFetchCoversBtn.disabled = false;
+    }
+  });
+}
+
+if (modalRescanBtn) {
+  modalRescanBtn.addEventListener('click', async () => {
+    modalRescanBtn.textContent = 'Rescanning...';
+    modalRescanBtn.disabled = true;
+    modalStatusAlert.className = 'config-status-msg';
+    modalStatusAlert.style.display = 'block';
+    modalStatusAlert.textContent = 'Scanning storage directories on host...';
+
+    try {
+      const res = await fetch('/api/rescan', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        modalStatusAlert.className = 'config-status-msg success';
+        modalStatusAlert.textContent = 'Library rescanned successfully! Reloading...';
+        modalRescanBtn.textContent = 'Done!';
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        modalStatusAlert.className = 'config-status-msg error';
+        modalStatusAlert.textContent = 'Rescan error: ' + data.error;
+        modalRescanBtn.textContent = 'Rescan';
+        modalRescanBtn.disabled = false;
+      }
+    } catch (err) {
+      modalStatusAlert.className = 'config-status-msg error';
+      modalStatusAlert.textContent = 'Network error: ' + err;
+      modalRescanBtn.textContent = 'Rescan';
+      modalRescanBtn.disabled = false;
+    }
+  });
+}
 
 async function loadYamlConfig() {
   if (!yamlConfigEditor) return;
