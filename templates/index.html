@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=2.8">
+<link rel="stylesheet" href="/static/css/style.css?v=2.9">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -97,29 +97,6 @@
         <div class="settings-field">
           <label for="catalogTitleInput">Catalog Title</label>
           <input type="text" id="catalogTitleInput" class="settings-input" value="{{ settings.title }}" placeholder="ROM Catelog">
-        </div>
-        <div class="settings-field">
-          <label>Webpage & Tab Icon</label>
-          <div class="icon-selector-container">
-            <div class="icon-category-tabs" id="iconCatTabs">
-              <button type="button" class="icon-cat-btn active" data-cat="all">All</button>
-              <button type="button" class="icon-cat-btn" data-cat="nintendo">Nintendo</button>
-              <button type="button" class="icon-cat-btn" data-cat="playstation">PlayStation</button>
-              <button type="button" class="icon-cat-btn" data-cat="xbox">Xbox</button>
-              <button type="button" class="icon-cat-btn" data-cat="sega">Sega</button>
-              <button type="button" class="icon-cat-btn" data-cat="atari">Atari</button>
-              <button type="button" class="icon-cat-btn" data-cat="commodore">Commodore</button>
-              <button type="button" class="icon-cat-btn" data-cat="retro">Retro</button>
-            </div>
-            <div class="icon-grid" id="iconGrid"></div>
-            <div class="custom-icon-row">
-              <input type="text" id="customIconUrl" class="settings-input" placeholder="Custom Icon URL / path" value="{{ settings.icon or '/static/favicon.png' }}">
-              <label class="btn-file-upload">
-                Upload
-                <input type="file" id="iconFileInput" accept=".png,.svg,.ico,.jpg,.jpeg,.webp" style="display:none">
-              </label>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -230,10 +207,55 @@
           </div>
         </div>
       </section>
+
+      <!-- Webpage & Tab Icon -->
+      <section class="settings-section">
+        <h4>Webpage & Tab Icon</h4>
+        <div class="settings-field">
+          <div class="icon-selector-container">
+            <div class="icon-category-tabs" id="iconCatTabs">
+              <button type="button" class="icon-cat-btn active" data-cat="all">All</button>
+              <button type="button" class="icon-cat-btn" data-cat="nintendo">Nintendo</button>
+              <button type="button" class="icon-cat-btn" data-cat="playstation">PlayStation</button>
+              <button type="button" class="icon-cat-btn" data-cat="xbox">Xbox</button>
+              <button type="button" class="icon-cat-btn" data-cat="sega">Sega</button>
+              <button type="button" class="icon-cat-btn" data-cat="atari">Atari</button>
+              <button type="button" class="icon-cat-btn" data-cat="commodore">Commodore</button>
+              <button type="button" class="icon-cat-btn" data-cat="retro">Retro</button>
+            </div>
+            <div class="icon-grid" id="iconGrid"></div>
+            <div class="custom-icon-row">
+              <input type="text" id="customIconUrl" class="settings-input" placeholder="Custom Icon URL / path" value="{{ settings.icon or '/static/favicon.png' }}">
+              <label class="btn-file-upload">
+                Upload
+                <input type="file" id="iconFileInput" accept=".png,.svg,.ico,.jpg,.jpeg,.webp" style="display:none">
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- Tab 2: UI -->
     <div id="tabUI" class="settings-tab-pane hidden">
+      <!-- SteamGridDB Integration -->
+      <section class="settings-section">
+        <h4>SteamGridDB Integration</h4>
+        <div class="settings-field">
+          <label for="steamgriddbApiKeyInput">
+            SteamGridDB API Key
+            <span class="field-hint">(Used for automated box art fetching)</span>
+          </label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="password" id="steamgriddbApiKeyInput" class="settings-input" placeholder="Paste your SteamGridDB API Key" style="flex: 1;">
+            <button type="button" id="toggleApiKeyVisibilityBtn" class="btn-secondary" style="font-size: 0.8rem; padding: 7px 12px; white-space: nowrap;">Show</button>
+          </div>
+          <small style="color: var(--text-muted); font-size: 0.76rem; margin-top: 2px;">
+            Get a free API key from <a href="https://www.steamgriddb.com/profile/preferences/api" target="_blank" rel="noopener" style="color: var(--accent-color);">steamgriddb.com</a>.
+          </small>
+        </div>
+      </section>
+
       <!-- Library Actions -->
       <section class="settings-section">
         <h4>Library Actions</h4>
@@ -327,24 +349,6 @@
 
   <!-- Consoles & Emulators Tab -->
   <div id="tabConsoles" class="settings-tab-pane hidden">
-    <!-- SteamGridDB API Key Section -->
-    <section class="settings-section">
-      <h4>SteamGridDB Integration</h4>
-      <div class="settings-field">
-        <label for="steamgriddbApiKeyInput">
-          SteamGridDB API Key
-          <span class="field-hint">(Used for automated box art fetching)</span>
-        </label>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <input type="password" id="steamgriddbApiKeyInput" class="settings-input" placeholder="Paste your SteamGridDB API Key" style="flex: 1;">
-          <button type="button" id="toggleApiKeyVisibilityBtn" class="btn-secondary" style="font-size: 0.8rem; padding: 7px 12px; white-space: nowrap;">Show</button>
-        </div>
-        <small style="color: var(--text-muted); font-size: 0.76rem; margin-top: 2px;">
-          Get a free API key from <a href="https://www.steamgriddb.com/profile/preferences/api" target="_blank" rel="noopener" style="color: var(--accent-color);">steamgriddb.com</a>.
-        </small>
-      </div>
-    </section>
-
     <!-- Configured Systems Section -->
     <section class="settings-section">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
@@ -984,6 +988,7 @@ renderIconGrid('all');
 // Modal open/close
 settingsBtn.addEventListener('click', () => {
   settingsDialog.showModal();
+  loadConfigData();
 });
 closeSettingsBtn.addEventListener('click', () => {
   settingsDialog.close();
@@ -1015,6 +1020,29 @@ async function saveAllSettings() {
       body: JSON.stringify({ title, icon, theme, visibility })
     });
     const data = await res.json();
+
+    // Sync SteamGridDB API key from UI tab if edited
+    if (steamgriddbApiKeyInput) {
+      const currentApiKey = steamgriddbApiKeyInput.value.trim();
+      try {
+        const cfgRes = await fetch('/api/config');
+        const cfgData = await cfgRes.json();
+        if (cfgData.ok && cfgData.config) {
+          if (!cfgData.config.steamgriddb) cfgData.config.steamgriddb = {};
+          if (cfgData.config.steamgriddb.api_key !== currentApiKey) {
+            cfgData.config.steamgriddb.api_key = currentApiKey;
+            await fetch('/api/config', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ config: cfgData.config })
+            });
+          }
+        }
+      } catch(e) {
+        console.warn('Could not sync steamgriddb api key', e);
+      }
+    }
+
     if (data.ok) {
       saveSettingsBtn.textContent = 'Saved!';
       setTimeout(() => {
