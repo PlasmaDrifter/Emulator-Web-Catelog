@@ -256,14 +256,10 @@ To add a new console (for example, Game Boy Advance):
 ```text
 Emulator-Web-Catelog/
 ├── README.md                # Full documentation, configuration guides, and theme options
-├── config.yaml              # System definitions, ROM folder paths, and emulator commands
+├── config.example.yaml      # Clean configuration template (systems, paths, commands, SteamGridDB)
 ├── app.py                   # Flask server, library scanner, SteamGridDB client, and launcher
 ├── requirements.txt         # Python dependencies (flask, pyyaml, requests, pillow, ujson)
-├── settings.json            # User customizable title, theme colors, and UI visibility options
-├── favorites.json           # Saved user favorites list
-├── hidden.json              # List of hidden ROM keys (updates, duplicates, DLCs)
-├── library.json             # Cached library metadata for instant page load performance
-├── .gitignore               # Ignore cache, logs, virtual environments, and scraped covers
+├── .gitignore               # Ignore cache, logs, virtual environments, covers, and local user data
 ├── screenshots/
 │   ├── catalog.jpg          # Application dashboard screenshot (Default theme with glowing borders)
 │   ├── settings.png         # Settings and customization modal screenshot

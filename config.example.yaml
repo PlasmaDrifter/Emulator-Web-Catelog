@@ -1,0 +1,47 @@
+# romcat config
+# Edit "folder" to point at your real ROM directories.
+# Edit "command" to whatever launches that ROM on your machine.
+# {rom} is replaced with the full path to the ROM file (already quoted).
+
+systems:
+  nes:
+    name: "NES"
+    folder: "/path/to/rom/directory/NES/"
+    extensions: [".nes", ".zip"]
+    command: "flatpak run ca._0ldsk00l.Nestopia {rom}"
+
+  snes:
+    name: "SNES"
+    folder: "/path/to/rom/directory/SNES/"
+    extensions: [".sfc", ".smc", ".zip"]
+    command: "flatpak run com.snes9x.Snes9x {rom}"
+
+  n64:
+    name: "N64"
+    folder: "/path/to/rom/directory/N64/"
+    extensions: [".n64", ".z64", ".v64", ".zip"]
+    command: "flatpak run io.github.gopher64.gopher64 {rom}"
+
+  gamecube:
+    name: "GameCube"
+    folder: "/path/to/rom/directory/Gamecube/"
+    extensions: [".iso", ".gcm", ".gcz", ".rvz", ".wbfs", ".ciso"]
+    command: "flatpak run org.DolphinEmu.dolphin-emu {rom}"
+
+  wiiu:
+    name: "Wii U"
+    folder:
+      - "/path/to/primary/roms/WiiU/"
+      - "/path/to/secondary/storage/WiiU/"
+    extensions: [".rpx", ".wud", ".wux", ".wua"]
+    command: "flatpak run info.cemu.Cemu -g {rom}"
+
+  switch:
+    name: "Switch"
+    folder: "/path/to/rom/directory/Switch/"
+    extensions: [".nsp", ".xci"]
+    command: "env DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 emulator-command -g {rom}"
+
+# Get a free API key at https://www.steamgriddb.com/profile/preferences/api
+steamgriddb:
+  api_key: "YOUR_STEAMGRIDDB_API_KEY_HERE"
