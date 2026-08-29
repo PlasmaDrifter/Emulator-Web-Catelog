@@ -373,7 +373,10 @@
           <div class="help-callout" style="border-left-color: #10b981;">
             <strong>System Identifier (ID) &mdash; When is it needed?</strong>
             <p style="margin: 4px 0 0 0;">
-              <strong>Only needed if:</strong> you want a custom short key in your configuration (for example, typing <code>n64</code> or <code>snes</code> instead of a long name). If you leave this field blank, ROM Cat will automatically create a safe identifier from your <strong>Display Name</strong>.
+              <strong>You can leave this box empty.</strong> When you fill in the <strong>Display Name</strong> (such as <code>Nintendo 64</code>), ROM Cat automatically creates the internal system ID for you behind the scenes.
+            </p>
+            <p style="margin: 4px 0 0 0;">
+              <strong>Only type in this box if:</strong> you specifically want a custom short nickname (like <code>n64</code>) instead of the automatic name.
             </p>
           </div>
 
@@ -1276,10 +1279,10 @@ function renderSystemCard(sysId, sysData) {
         <div class="settings-field">
           <label>
             System Identifier (ID)
-            <button type="button" class="btn-inline-help btn-id-help" title="Only needed if you want a custom short key (e.g. 'n64' or 'switch'). If left blank, it is automatically generated from your Display Name.">?</button>
+            <button type="button" class="btn-inline-help btn-id-help" title="Optional: You can leave this empty! ROM Cat will automatically create the internal ID from your Display Name unless you want to type a custom short nickname like 'n64'.">?</button>
             <span class="field-hint">(optional)</span>
           </label>
-          <input type="text" class="settings-input sys-id-input" value="${escapeHtml(key)}" placeholder="Auto-generated if blank (e.g. nes)">
+          <input type="text" class="settings-input sys-id-input" value="${escapeHtml(key)}" placeholder="Leave blank to auto-generate (e.g. nes)">
         </div>
       </div>
       <div class="settings-field">
