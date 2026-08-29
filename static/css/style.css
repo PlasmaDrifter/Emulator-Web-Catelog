@@ -319,12 +319,17 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
   height: min(90vh, 980px);
   max-height: 94vh;
   min-height: 560px;
-  display: flex;
-  flex-direction: column;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
   outline: none;
   z-index: 100;
   box-sizing: border-box;
+}
+.settings-dialog:not([open]) {
+  display: none !important;
+}
+.settings-dialog[open] {
+  display: flex;
+  flex-direction: column;
 }
 .settings-dialog::backdrop {
   background: rgba(0, 0, 0, 0.7);
