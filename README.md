@@ -105,10 +105,16 @@ ROM Cat includes a tabbed Settings interface directly in the web UI (accessible 
   - **Show "Favorites" Tab**: Toggle favorites tab on the navigation bar.
 
 ### 3. Consoles & Emulators Tab
-- **Built-in Reference & Parameter Guide**: Clear explanations for `system_identifier`, `name`, `folder` (single or multi-path lists), `extensions`, and `command` with `{rom}` tokens.
-- **Interactive config.yaml Editor**: Live YAML editor with syntax validation.
-- **One-Click Template Generator**: Quickly insert scaffold blocks for newly added consoles.
-- **Instant Save & Rescan**: Saves directly to `config.yaml` and reloads/rescans your library in real-time.
+- **Visual Console Form Cards**: Add, configure, and remove consoles through clean input fields without manually formatting YAML:
+  - **Display Name**: User-facing name shown in tabs and headers.
+  - **System Identifier**: Lowercase key used internally (e.g. `nes`, `switch`).
+  - **ROM Folder Path(s)**: Host directory path (or multiple lines for multi-folder scanning).
+  - **Allowed Extensions**: Comma-separated list (e.g. `.iso, .rvz, .zip`).
+  - **Emulator Command**: Full command line template with `{rom}` token.
+- **SteamGridDB API Key Field**: Direct input with show/hide password toggle.
+- **+ Add Console**: Instantly append a new console configuration card.
+- **Advanced Raw YAML Editor (Collapsible)**: Optional raw editor with two-way sync for advanced users.
+- **Instant Save & Rescan**: Automatically compiles the form into `config.yaml`, validates structure, and rescans your library immediately.
 
 Settings and theme configurations are stored on disk in `settings.json` and persist across all devices connected to your network.
 
@@ -116,7 +122,7 @@ Settings and theme configurations are stored on disk in `settings.json` and pers
 
 ## How to Edit Emulators and Systems
 
-All emulator execution commands, system definitions, ROM paths, and allowed file extensions are configured inside `config.yaml` (either directly on disk or via the **Consoles & Emulators** tab in Settings).
+All emulator execution commands, system definitions, ROM paths, and allowed file extensions can be configured directly in the web UI under the **Consoles & Emulators** tab, or edited manually inside `config.yaml`.
 
 ### Configuration Structure
 
