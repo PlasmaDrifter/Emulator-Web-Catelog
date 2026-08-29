@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=3.0">
+<link rel="stylesheet" href="/static/css/style.css?v=3.1">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -446,6 +446,26 @@
   <button type="button" id="resetDefaultsBtn" class="btn-danger">Reset to Defaults</button>
   <button type="button" id="saveSettingsBtn" class="btn-primary">Save & Apply</button>
 </div>
+</dialog>
+
+<!-- Validation Error Popup Dialog -->
+<dialog id="validationErrorDialog" class="validation-dialog">
+  <div class="validation-dialog-content">
+    <div class="validation-dialog-header">
+      <div class="validation-header-title">
+        <span class="validation-icon-badge">!</span>
+        <h4 id="validationDialogTitle">Configuration Error</h4>
+      </div>
+      <button type="button" class="close-modal-btn" id="closeValidationErrorBtn" aria-label="Close">&times;</button>
+    </div>
+    <div class="validation-dialog-body">
+      <p id="validationDialogMsg" style="margin: 0 0 8px 0; font-weight: 600;">Please correct the following errors before saving:</p>
+      <ul id="validationErrorList" class="validation-error-list"></ul>
+    </div>
+    <div class="validation-dialog-footer">
+      <button type="button" class="btn-primary" id="dismissValidationErrorBtn" style="padding: 7px 20px; font-size: 0.85rem; font-weight: 600;">OK</button>
+    </div>
+  </div>
 </dialog>
 
 <script>
@@ -1503,6 +1523,76 @@ if (syncFormToYamlBtn && yamlConfigEditor) {
   });
 }
 
+// Validation Error Dialog handlers
+const validationErrorDialog = document.getElementById('validationErrorDialog');
+const validationDialogTitle = document.getElementById('validationDialogTitle');
+const validationDialogMsg = document.getElementById('validationDialogMsg');
+const validationErrorList = document.getElementById('validationErrorList');
+const closeValidationErrorBtn = document.getElementById('closeValidationErrorBtn');
+const dismissValidationErrorBtn = document.getElementById('dismissValidationErrorBtn');
+
+function showValidationErrorPopup(title, errors, message) {
+  if (validationDialogTitle) validationDialogTitle.textContent = title || 'Configuration Error';
+  if (validationDialogMsg) validationDialogMsg.textContent = message || 'Please correct the following issues before saving:';
+  if (validationErrorList) {
+    validationErrorList.innerHTML = '';
+    const errArray = Array.isArray(errors) ? errors : (errors ? [errors] : []);
+    errArray.forEach(err => {
+      const li = document.createElement('li');
+      li.textContent = err;
+      validationErrorList.appendChild(li);
+    });
+  }
+  if (validationErrorDialog) {
+    validationErrorDialog.showModal();
+  }
+}
+
+if (closeValidationErrorBtn && validationErrorDialog) {
+  closeValidationErrorBtn.addEventListener('click', () => validationErrorDialog.close());
+}
+if (dismissValidationErrorBtn && validationErrorDialog) {
+  dismissValidationErrorBtn.addEventListener('click', () => validationErrorDialog.close());
+}
+if (validationErrorDialog) {
+  validationErrorDialog.addEventListener('click', (e) => {
+    if (e.target === validationErrorDialog) validationErrorDialog.close();
+  });
+}
+
+if (syncFormToYamlBtn && yamlConfigEditor) {
+  syncFormToYamlBtn.addEventListener('click', async () => {
+    const configObj = collectConfigFromForm();
+    try {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: configObj })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const getRes = await fetch('/api/config');
+        const getData = await getRes.json();
+        if (getData.ok) yamlConfigEditor.value = getData.raw_yaml;
+        configStatusAlert.className = 'config-status-msg success';
+        configStatusAlert.textContent = 'YAML editor updated from form!';
+        configStatusAlert.style.display = 'block';
+      } else {
+        const errList = data.errors || [data.error || 'Failed to update YAML.'];
+        showValidationErrorPopup('Validation Error', errList, 'Could not update YAML from form:');
+        configStatusAlert.className = 'config-status-msg error';
+        configStatusAlert.textContent = data.error || 'Validation error';
+        configStatusAlert.style.display = 'block';
+      }
+    } catch(err) {
+      showValidationErrorPopup('Connection Error', [err.message], 'Error connecting to server:');
+      configStatusAlert.className = 'config-status-msg error';
+      configStatusAlert.textContent = 'Error updating YAML: ' + err;
+      configStatusAlert.style.display = 'block';
+    }
+  });
+}
+
 if (syncYamlToFormBtn && yamlConfigEditor) {
   syncYamlToFormBtn.addEventListener('click', async () => {
     try {
@@ -1521,11 +1611,14 @@ if (syncYamlToFormBtn && yamlConfigEditor) {
         configStatusAlert.textContent = 'Form updated from YAML!';
         configStatusAlert.style.display = 'block';
       } else {
+        const errList = data.errors || [data.error || 'Invalid YAML format.'];
+        showValidationErrorPopup('YAML Syntax / Validation Error', errList, 'Could not parse YAML into form:');
         configStatusAlert.className = 'config-status-msg error';
         configStatusAlert.textContent = 'YAML parse error: ' + data.error;
         configStatusAlert.style.display = 'block';
       }
     } catch(err) {
+      showValidationErrorPopup('Connection Error', [err.message], 'Error connecting to server:');
       configStatusAlert.className = 'config-status-msg error';
       configStatusAlert.textContent = 'Error parsing YAML: ' + err;
       configStatusAlert.style.display = 'block';
@@ -1535,22 +1628,61 @@ if (syncYamlToFormBtn && yamlConfigEditor) {
 
 if (saveConfigBtn) {
   saveConfigBtn.addEventListener('click', async () => {
-    saveConfigBtn.textContent = 'Saving & Rescanning...';
-    saveConfigBtn.disabled = true;
     configStatusAlert.className = 'config-status-msg';
     configStatusAlert.style.display = 'none';
 
     try {
       let payload;
       if (advancedYamlDetails && advancedYamlDetails.open) {
-        payload = { raw_yaml: yamlConfigEditor.value };
-      } else {
-        const configObj = collectConfigFromForm();
-        if (Object.keys(configObj.systems).length === 0) {
-          throw new Error('Please configure at least one console before saving.');
+        const raw = yamlConfigEditor.value.trim();
+        if (!raw) {
+          showValidationErrorPopup('YAML Validation Error', ['Configuration cannot be empty. Please enter valid YAML.'], 'YAML syntax error:');
+          return;
         }
+        payload = { raw_yaml: raw };
+      } else {
+        // Validate visual form cards
+        const cards = systemsListContainer ? systemsListContainer.querySelectorAll('.system-config-card') : [];
+        if (cards.length === 0) {
+          showValidationErrorPopup('Console Validation Error', ['Please click "+ Add Console" to configure at least one console before saving.'], 'No consoles defined:');
+          return;
+        }
+
+        const errors = [];
+        cards.forEach((card, idx) => {
+          const name = card.querySelector('.sys-name-input').value.trim();
+          const folder = card.querySelector('.sys-folder-input').value.trim();
+          const exts = card.querySelector('.sys-exts-input').value.trim();
+          const cmd = card.querySelector('.sys-cmd-input').value.trim();
+          const label = name ? `Console "${name}"` : `Console #${idx + 1}`;
+
+          if (!name) {
+            errors.push(`${label}: Display Name is required.`);
+          }
+          if (!folder) {
+            errors.push(`${label}: ROM folder path is required.`);
+          }
+          if (!exts) {
+            errors.push(`${label}: Allowed file extensions are required (e.g. .zip, .iso).`);
+          }
+          if (!cmd) {
+            errors.push(`${label}: Emulator launch command is required.`);
+          } else if (!cmd.includes('{rom}')) {
+            errors.push(`${label}: Launch command must include the '{rom}' token.`);
+          }
+        });
+
+        if (errors.length > 0) {
+          showValidationErrorPopup('Console Configuration Error', errors, 'Please correct the following issues before saving:');
+          return;
+        }
+
+        const configObj = collectConfigFromForm();
         payload = { config: configObj };
       }
+
+      saveConfigBtn.textContent = 'Saving & Rescanning...';
+      saveConfigBtn.disabled = true;
 
       const res = await fetch('/api/config', {
         method: 'POST',
@@ -1567,18 +1699,21 @@ if (saveConfigBtn) {
           location.reload();
         }, 1200);
       } else {
+        saveConfigBtn.textContent = 'Save & Rescan Library';
+        saveConfigBtn.disabled = false;
+        const errList = data.errors || [data.error || 'Failed to save configuration'];
+        showValidationErrorPopup('Configuration Validation Error', errList, 'Server rejected the configuration:');
         configStatusAlert.className = 'config-status-msg error';
         configStatusAlert.textContent = data.error || 'Failed to save configuration';
         configStatusAlert.style.display = 'block';
-        saveConfigBtn.textContent = 'Save & Rescan Library';
-        saveConfigBtn.disabled = false;
       }
     } catch (err) {
+      saveConfigBtn.textContent = 'Save & Rescan Library';
+      saveConfigBtn.disabled = false;
+      showValidationErrorPopup('Error', [err.message], 'An error occurred while communicating with the server:');
       configStatusAlert.className = 'config-status-msg error';
       configStatusAlert.textContent = 'Error: ' + err.message;
       configStatusAlert.style.display = 'block';
-      saveConfigBtn.textContent = 'Save & Rescan Library';
-      saveConfigBtn.disabled = false;
     }
   });
 }
@@ -1599,6 +1734,13 @@ if (autoSettingsTab) {
   } else {
     const tabEl = document.querySelector('[data-tab-target="tabAppearance"]');
     if (tabEl) tabEl.click();
+  }
+  if (urlParams.get('test_error')) {
+    showValidationErrorPopup('Console Validation Error', [
+      'Console #3: Display Name is required.',
+      'Console "GameCube": ROM folder path is required.',
+      'Console "Switch": Launch command must include the \'{rom}\' token.'
+    ], 'Please correct the following fields before saving:');
   }
 }
 
