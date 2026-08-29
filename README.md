@@ -82,7 +82,7 @@ Open your browser and navigate to:
 ```text
 http://localhost:8420
 ```
-Or use your machine's local IP / Tailscale IP (e.g. `http://<server-ip>:8420`).
+Or use your machine's local IP (e.g. `http://<server-ip>:8420`).
 
 ---
 
