@@ -6,7 +6,9 @@
 [![YAML](https://img.shields.io/badge/Config-YAML-CB171E?logo=yaml&logoColor=white)](https://yaml.org)
 [![Linux](https://img.shields.io/badge/Platform-Linux%20%2F%20Wayland%20%2F%20X11-FCC624?logo=linux&logoColor=black)](https://kernel.org)
 
-A fast, lightweight, self-hosted web-based catalog and launcher for your retro and modern ROM collection. It runs entirely inside any modern web browser (accessible locally on your host or over your home network from any PC, phone, tablet, or handheld), providing an interactive web dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, or native binaries), and customizable themes.
+A fast, lightweight, self-hosted web catalog and remote launcher for your retro and modern ROM collection. It runs in your web browser, serving as a dashboard and remote control for the host computer where your ROMs and desktop emulators (Flatpak, AppImage, or native binaries) are installed. 
+
+When you browse the catalog and click a game from any browser on your local network (such as a phone, tablet, or laptop), ROM Cat executes the emulator command on the host computer to launch the game directly on the host's screen and sound setup. Perfect for living room PCs, TV console setups, arcade cabinets, and desktop gaming rigs.
 
 ---
 
