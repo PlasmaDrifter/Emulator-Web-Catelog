@@ -118,6 +118,37 @@
       </div>
     </section>
 
+    <!-- Hidden Games & Edit Mode -->
+    <section class="settings-section">
+      <h4>Hidden Games & Edit Mode</h4>
+      <div class="toggle-list">
+        <label class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Show Card Hide Buttons (Edit Mode)</span>
+            <span class="toggle-desc">Displays eye buttons on game cards allowing you to hide/unhide duplicates and unwanted ROMs</span>
+          </div>
+          <div class="switch">
+            <input type="checkbox" id="toggleCardHideButtons" {% if settings.visibility.show_card_hide_buttons %}checked{% endif %}>
+            <span class="slider"></span>
+          </div>
+        </label>
+        <label class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Show "Hidden" Tab in Navigation</span>
+            <span class="toggle-desc">Adds a "Hidden" pill to the main tabs bar to browse hidden ROMs</span>
+          </div>
+          <div class="switch">
+            <input type="checkbox" id="toggleHiddenTab" {% if settings.visibility.show_hidden_tab %}checked{% endif %}>
+            <span class="slider"></span>
+          </div>
+        </label>
+        <button type="button" id="viewHiddenBtn" class="btn-secondary" style="margin-top: 6px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          <span>View Hidden ROMs</span>
+        </button>
+      </div>
+    </section>
+
     <!-- Theme Presets -->
     <section class="settings-section">
       <h4>Theme Presets</h4>
@@ -231,13 +262,6 @@
       <h4>UI Visibility</h4>
       <div class="toggle-list">
         <label class="toggle-row">
-          <span>Show Search Bar</span>
-          <div class="switch">
-            <input type="checkbox" id="toggleSearch" {% if settings.visibility.show_search %}checked{% endif %}>
-            <span class="slider"></span>
-          </div>
-        </label>
-        <label class="toggle-row">
           <div class="toggle-info">
             <span class="toggle-title">Show Search Bar</span>
             <span class="toggle-desc">Quickly filter ROMs by title in real-time</span>
@@ -287,30 +311,6 @@
             <span class="slider"></span>
           </div>
         </label>
-        <label class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-title">Show "Hidden" Tab in Navigation</span>
-            <span class="toggle-desc">Adds a "Hidden" pill to the main tabs bar to browse hidden ROMs</span>
-          </div>
-          <div class="switch">
-            <input type="checkbox" id="toggleHiddenTab" {% if settings.visibility.show_hidden_tab %}checked{% endif %}>
-            <span class="slider"></span>
-          </div>
-        </label>
-        <label class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-title">Show Card Hide Buttons (Edit Mode)</span>
-            <span class="toggle-desc">Displays eye buttons on game cards allowing you to hide/unhide duplicates and unwanted ROMs</span>
-          </div>
-          <div class="switch">
-            <input type="checkbox" id="toggleCardHideButtons" {% if settings.visibility.show_card_hide_buttons %}checked{% endif %}>
-            <span class="slider"></span>
-          </div>
-        </label>
-        <button type="button" id="viewHiddenBtn" class="btn-secondary" style="margin-top: 6px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-          <span>View Hidden ROMs</span>
-        </button>
       </div>
     </section>
   </div>
