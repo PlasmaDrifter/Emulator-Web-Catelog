@@ -6,9 +6,7 @@
 [![YAML](https://img.shields.io/badge/Config-YAML-CB171E?logo=yaml&logoColor=white)](https://yaml.org)
 [![Linux](https://img.shields.io/badge/Platform-Linux%20%2F%20Wayland%20%2F%20X11-FCC624?logo=linux&logoColor=black)](https://kernel.org)
 
-A fast, lightweight, self-hosted web catalog and remote launcher for your retro and modern ROM collection. It runs in your web browser, serving as a dashboard and remote control for the host computer where your ROMs and desktop emulators (Flatpak, AppImage, or native binaries) are installed. 
-
-When you browse the catalog and click a game from any browser on your local network (such as a phone, tablet, or laptop), ROM Cat executes the emulator command on the host computer to launch the game directly on the host's screen and sound setup. Perfect for living room PCs, TV console setups, arcade cabinets, and desktop gaming rigs.
+A fast, lightweight web catalog and launcher for your retro and modern ROM collection. It runs in your web browser, providing an interactive dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, or native binaries), and customizable themes.
 
 ---
 
@@ -124,7 +122,7 @@ ROM Cat includes a tabbed Settings interface directly in the web UI (accessible 
 - **Advanced Raw YAML Editor (Collapsible)**: Optional raw editor with two-way sync for advanced users.
 - **Instant Save & Rescan**: Automatically compiles the form into `config.yaml`, validates structure, and rescans your library immediately.
 
-Settings and theme configurations are stored on disk in `settings.json` and persist across all devices connected to your network.
+Settings and theme configurations are stored on disk in `settings.json` and persist across browser sessions.
 
 ---
 
