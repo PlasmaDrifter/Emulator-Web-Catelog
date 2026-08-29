@@ -6,7 +6,7 @@
 [![YAML](https://img.shields.io/badge/Config-YAML-CB171E?logo=yaml&logoColor=white)](https://yaml.org)
 [![Linux](https://img.shields.io/badge/Platform-Linux%20%2F%20Wayland%20%2F%20X11-FCC624?logo=linux&logoColor=black)](https://kernel.org)
 
-A fast, lightweight, self-hosted web catalog and remote launcher for your retro and modern ROM collection. It runs locally alongside your installed emulators (Flatpak, AppImage, or native binaries), providing an interactive web dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching, and customizable themes.
+A fast, lightweight, self-hosted web-based catalog and launcher for your retro and modern ROM collection. It runs entirely inside any modern web browser (accessible locally on your host or over your home network from any PC, phone, tablet, or handheld), providing an interactive web dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, or native binaries), and customizable themes.
 
 ---
 
