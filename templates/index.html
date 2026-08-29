@@ -373,11 +373,15 @@
           <div class="help-callout" style="border-left-color: #10b981;">
             <strong>System Identifier (ID) &mdash; When is it needed?</strong>
             <p style="margin: 4px 0 0 0;">
-              <strong>You can leave this box empty.</strong> When you fill in the <strong>Display Name</strong> (such as <code>Nintendo 64</code>), ROM Cat automatically creates the internal system ID for you behind the scenes.
+              <strong>You can leave this box empty.</strong> When you fill in the <strong>Display Name</strong> (such as <code>Nintendo 64</code>), ROM Cat automatically creates a safe internal ID for you behind the scenes.
             </p>
             <p style="margin: 4px 0 0 0;">
-              <strong>Only type in this box if:</strong> you specifically want a custom short nickname (like <code>n64</code>) instead of the automatic name.
+              <strong>Only type in this box if:</strong>
             </p>
+            <ul style="margin: 4px 0 0 18px; padding: 0;">
+              <li>Your <strong>Display Name</strong> contains special characters, slashes, or symbols (e.g. <code>Game Boy / Color</code> or <code>PC Engine &amp; TG-16</code>) and you want a clean internal key like <code>gbc</code> or <code>pce</code>.</li>
+              <li>You specifically want a custom short nickname (like <code>n64</code> instead of <code>nintendo64</code>).</li>
+            </ul>
           </div>
 
           <p style="margin: 4px 0 0 0;">The <strong>Emulator Launch Command</strong> is the exact shell command used to start the emulator with your selected game.</p>
@@ -1279,7 +1283,7 @@ function renderSystemCard(sysId, sysData) {
         <div class="settings-field">
           <label>
             System Identifier (ID)
-            <button type="button" class="btn-inline-help btn-id-help" title="Optional: You can leave this empty! ROM Cat will automatically create the internal ID from your Display Name unless you want to type a custom short nickname like 'n64'.">?</button>
+            <button type="button" class="btn-inline-help btn-id-help" title="Optional: You can leave this empty! Only needed if you want a custom short nickname (like 'n64') or if your Display Name contains special characters/slashes (like 'Game Boy / Color').">?</button>
             <span class="field-hint">(optional)</span>
           </label>
           <input type="text" class="settings-input sys-id-input" value="${escapeHtml(key)}" placeholder="Leave blank to auto-generate (e.g. nes)">
