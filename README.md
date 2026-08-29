@@ -4,9 +4,9 @@
 [![Flask](https://img.shields.io/badge/Flask-Web%20Framework-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![SteamGridDB](https://img.shields.io/badge/SteamGridDB-API%20Cover%20Art-171a21)](https://www.steamgriddb.com)
 [![YAML](https://img.shields.io/badge/Config-YAML-CB171E?logo=yaml&logoColor=white)](https://yaml.org)
-[![Linux](https://img.shields.io/badge/Platform-Linux%20%2F%20Wayland%20%2F%20X11-FCC624?logo=linux&logoColor=black)](https://kernel.org)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20macOS-blue)](https://python.org)
 
-A fast, lightweight web catalog and launcher for your retro and modern ROM collection. It runs in your web browser, providing an interactive dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, or native binaries), and customizable themes.
+A fast, lightweight web catalog and launcher for your retro and modern ROM collection. It runs in your web browser, providing an interactive dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, Windows `.exe`, or native binaries), and customizable themes.
 
 ---
 
@@ -31,7 +31,8 @@ A fast, lightweight web catalog and launcher for your retro and modern ROM colle
 
 ## Features
 
-- **Direct Native Emulator Launching**: Games launch in your real desktop emulators (Flatpak, native binaries, or RetroArch cores) on the host machine. No slow or inaccurate in-browser emulation.
+- **Direct Native Emulator Launching**: Games launch in your real desktop emulators (Flatpak, Windows `.exe`, native binaries, or RetroArch cores) on your system. No slow or inaccurate in-browser emulation.
+- **Cross-Platform Compatibility**: Fully compatible with Linux, Windows, and macOS.
 - **System Tabs & Live Counters**: Instant switching between systems (e.g. NES, SNES, N64, Gamecube, Wii U, Switch, Favorites, All, Hidden).
 - **Fast Search & Filtering**: Real-time title search across thousands of ROMs with automatic title normalization (stripping tags like `[!]`, `(USA)`, `(Rev 1)`, `.nkit`).
 - **Automated Cover Art Scraping**: One-click cover fetching from SteamGridDB with automatic image optimization and local caching in `static/covers/`.
@@ -55,9 +56,17 @@ cd romcat
 
 ### 2. Create Python Virtual Environment & Install Dependencies
 
+**Linux / macOS:**
 ```bash
 python3 -m venv venv
 source venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Windows (PowerShell / Command Prompt):**
+```powershell
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -70,12 +79,18 @@ Required Python packages:
 
 ### 3. Configure Systems & SteamGridDB Key
 
-Edit `config.yaml` to point to your ROM directories and configure emulator commands (see detailed instructions below).
+Edit `config.yaml` or use the **Consoles & Emulators** tab in the Settings UI to point to your ROM directories and configure emulator commands (see detailed instructions below).
 
 ### 4. Run the Application
 
+**Linux / macOS:**
 ```bash
 python3 app.py
+```
+
+**Windows:**
+```powershell
+python app.py
 ```
 
 Open your browser and navigate to:
@@ -203,6 +218,24 @@ snes:
   folder: "/path/to/roms/SNES/"
   extensions: [".sfc", ".smc"]
   command: "retroarch -L /usr/lib/libretro/snes9x_libretro.so {rom}"
+```
+
+#### 4. Windows Executables (.exe)
+
+On Windows, point directly to your emulator `.exe` and ROM folders:
+
+```yaml
+gamecube:
+  name: "GameCube"
+  folder: "D:/ROMs/GameCube"
+  extensions: [".iso", ".rvz", ".gcz"]
+  command: '"C:\\Emulators\\Dolphin\\Dolphin.exe" -b -e {rom}'
+
+snes:
+  name: "SNES"
+  folder: "D:/ROMs/SNES"
+  extensions: [".sfc", ".smc", ".zip"]
+  command: '"C:\\RetroArch-Win64\\retroarch.exe" -L "cores\\snes9x_libretro.dll" {rom}'
 ```
 
 ---

@@ -447,25 +447,39 @@ def api_launch():
         return jsonify({"ok": False, "error": "file not found"}), 404
 
     cmd_template = sys_cfg["command"]
-    cmd = cmd_template.format(rom=shlex.quote(str(resolved)))
-    env = os.environ.copy()
-    if "DISPLAY" not in env:
-        env["DISPLAY"] = ":0"
-    if "WAYLAND_DISPLAY" not in env:
-        env["WAYLAND_DISPLAY"] = "wayland-0"
-    if "XDG_RUNTIME_DIR" not in env:
-        env["XDG_RUNTIME_DIR"] = f"/run/user/{os.getuid()}"
+    if os.name == "nt":
+        # Windows execution
+        cmd = cmd_template.format(rom=f'"{resolved}"')
+        try:
+            subprocess.Popen(
+                cmd,
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except Exception as e:
+            return jsonify({"ok": False, "error": f"emulator launch failed: {e}"}), 500
+    else:
+        # Linux / Unix execution
+        cmd = cmd_template.format(rom=shlex.quote(str(resolved)))
+        env = os.environ.copy()
+        if "DISPLAY" not in env:
+            env["DISPLAY"] = ":0"
+        if "WAYLAND_DISPLAY" not in env:
+            env["WAYLAND_DISPLAY"] = "wayland-0"
+        if "XDG_RUNTIME_DIR" not in env and hasattr(os, "getuid"):
+            env["XDG_RUNTIME_DIR"] = f"/run/user/{os.getuid()}"
 
-    try:
-        subprocess.Popen(
-            shlex.split(cmd),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            env=env,
-            start_new_session=True,
-        )
-    except FileNotFoundError as e:
-        return jsonify({"ok": False, "error": f"emulator not found: {e}"}), 500
+        try:
+            subprocess.Popen(
+                shlex.split(cmd),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                env=env,
+                start_new_session=True,
+            )
+        except FileNotFoundError as e:
+            return jsonify({"ok": False, "error": f"emulator not found: {e}"}), 500
 
     return jsonify({"ok": True})
 
