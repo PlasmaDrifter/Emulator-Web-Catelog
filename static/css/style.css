@@ -143,43 +143,6 @@ button.icon-btn {
   color: var(--text-primary);
 }
 
-.toggle-edit-mode {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  user-select: none;
-  margin-left: auto;
-}
-.toggle-edit-mode input[type="checkbox"] {
-  -webkit-appearance: none;
-  appearance: none;
-  background-color: transparent;
-  margin: 0;
-  width: 16px;
-  height: 16px;
-  border: 1.5px solid var(--text-muted);
-  border-radius: 4px;
-  display: grid;
-  place-content: center;
-  cursor: pointer;
-  outline: none;
-}
-.toggle-edit-mode input[type="checkbox"]::before {
-  content: "";
-  width: 9px;
-  height: 9px;
-  transform: scale(0);
-  transition: 120ms transform ease-in-out;
-  background-color: var(--text-muted);
-  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-}
-.toggle-edit-mode input[type="checkbox"]:checked::before {
-  transform: scale(1);
-}
-
 main { padding: 12px 24px 24px; }
 .system { margin-bottom: 24px; }
 .system h2 {
@@ -342,9 +305,7 @@ body.hide-fetch-covers #fetchCoversBtn { display: none !important; }
 body.hide-rescan #rescanBtn { display: none !important; }
 body.hide-counts .count { display: none !important; }
 body.hide-favorites-tab .tab[data-target="favorites"] { display: none !important; }
-body.hide-hidden-tab .tab[data-target="hidden"],
-body.hide-hidden-tab .toggle-edit-mode,
-body.hide-hidden-tab .hide-toggle { display: none !important; }
+body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
 
 /* Settings Modal & UI */
 .settings-dialog {
@@ -530,15 +491,44 @@ body.hide-hidden-tab .hide-toggle { display: none !important; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   background: var(--bg-body);
   border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 10px 14px;
   cursor: pointer;
 }
-.toggle-row span {
+.toggle-row span,
+.toggle-title {
   font-size: 0.85rem;
   color: var(--text-primary);
+  font-weight: 500;
+}
+.toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.toggle-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: normal;
+  line-height: 1.3;
+}
+.btn-secondary {
+  background: var(--bg-body);
+  color: var(--text-primary);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-secondary:hover {
+  background: var(--border-color);
+  border-color: var(--accent-color);
 }
 .switch {
   position: relative;
