@@ -15,6 +15,9 @@ A fast, lightweight web catalog and launcher for your retro and modern ROM colle
 ### Main Dashboard
 ![ROM Catalog Dashboard](screenshots/catalog.png?raw=true&v=3)
 
+### Theme Presets (4-Second Loop)
+![ROM Cat Themes Animated Preview](screenshots/themes_preview.gif?raw=true&v=1)
+
 ### Settings: Appearance Tab
 ![Settings Appearance Tab](screenshots/settings_appearance.png?raw=true&v=3)
 
