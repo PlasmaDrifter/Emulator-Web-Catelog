@@ -1457,6 +1457,22 @@ if (saveConfigBtn) {
     }
   });
 }
+// URL param helper for screenshots and direct links: ?settings=appearance|ui|consoles
+const urlParams = new URLSearchParams(window.location.search);
+const autoSettingsTab = urlParams.get('settings');
+if (autoSettingsTab) {
+  settingsDialog.showModal();
+  if (autoSettingsTab === 'ui') {
+    const tabEl = document.querySelector('[data-tab-target="tabUI"]');
+    if (tabEl) tabEl.click();
+  } else if (autoSettingsTab === 'consoles') {
+    const tabEl = document.querySelector('[data-tab-target="tabConsoles"]');
+    if (tabEl) tabEl.click();
+  } else {
+    const tabEl = document.querySelector('[data-tab-target="tabAppearance"]');
+    if (tabEl) tabEl.click();
+  }
+}
 
 applyFilters();
 </script>
