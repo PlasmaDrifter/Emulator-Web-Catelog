@@ -8,7 +8,12 @@
 
 ## About
 
-**ROM Cat** is a fast, lightweight web catalog and launcher for your retro and modern ROM collection. It runs in your web browser, providing an interactive dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage or native binaries), and customizable themes.
+**ROM Cat** is a fast, lightweight catalog and launcher for your retro and modern ROM collection. It can be run in two primary ways:
+
+- **Standalone Desktop Application**: Download the pre-packaged app to run ROM Cat as a dedicated, self-contained desktop window with native desktop integration (Wayland and X11 app icon and launcher support)—no Python setup or terminal commands required.
+- **Always-Ready Web Service**: Run ROM Cat as a persistent background service (or local web server) accessible in your web browser (`http://localhost:8420`) and across your home network, ready to launch games instantly whenever your system boots.
+
+ROM Cat provides an interactive dashboard with automated cover art scraping, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, or native binaries), and customizable themes.
 
 ---
 
@@ -36,9 +41,9 @@
 
 ## Features
 
-- **Direct Native Emulator Launching**: Games launch in your real desktop emulators (Flatpak, Windows `.exe`, native binaries, or RetroArch cores) on your system. No slow or inaccurate in-browser emulation.
-- **Cross-Platform Compatibility**: Fully compatible with Linux, Windows, and macOS.
-- **System Tabs & Live Counters**: Instant switching between systems (e.g. NES, SNES, N64, Gamecube, Wii U, Switch, Favorites, All, Hidden).
+- **Direct Native Emulator Launching**: Games launch in your real desktop emulators (Flatpak, native binaries, AppImages, or RetroArch cores) on your system. No slow or inaccurate in-browser emulation.
+- **Two Flexible Modes**: Use the standalone desktop app with dedicated window management or run as an always-on background web service.
+- **System Tabs & Live Counters**: Instant switching between systems (e.g. NES, SNES, N64, GameCube, Wii U, Switch, Favorites, All, Hidden).
 - **Fast Search & Filtering**: Real-time title search across thousands of ROMs with automatic title normalization (stripping tags like `[!]`, `(USA)`, `(Rev 1)`, `.nkit`).
 - **Automated Cover Art Scraping**: One-click cover fetching from SteamGridDB with automatic image optimization and local caching in `static/covers/`.
 - **Manual Cover Art Override**: Drop custom cover art directly into the web UI or filesystem for unmatched or homebrew titles.
@@ -50,59 +55,97 @@
 
 ---
 
-## Quickstart & Installation
+## Ways to Run ROM Cat
 
-### 1. Clone the Repository
+### Option 1: Standalone Desktop App (Recommended for Desktop Users)
 
+The packaged standalone desktop app provides a self-contained executable with native desktop windowing and launcher integration. No Python installation is required.
+
+1. Download the latest Linux release bundle (`ROMCat-v0.1.0-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+2. Extract the archive:
+   ```bash
+   tar -xzf ROMCat-v0.1.0-linux-x86_64.tar.gz
+   cd Standalone.app
+   ```
+3. Run the application directly:
+   ```bash
+   ./ROMCat
+   ```
+4. *(Optional)* Install the Desktop Launcher and Icon into your desktop environment:
+   ```bash
+   mkdir -p ~/.local/share/applications ~/.local/share/icons/hicolor/256x256/apps
+   cp icon.png ~/.local/share/icons/hicolor/256x256/apps/romcat.png
+   sed -i "s|Exec=.*|Exec=\"$(pwd)/ROMCat\"|" ROMCat.desktop
+   cp ROMCat.desktop ~/.local/share/applications/
+   update-desktop-database ~/.local/share/applications/
+   ```
+
+---
+
+### Option 2: Always-On Background Service (Systemd)
+
+To keep ROM Cat running automatically in the background so your catalog is always loaded, ready, and accessible at `http://localhost:8420` whenever your computer starts:
+
+1. Clone the repository and install dependencies:
+   ```bash
+   git clone https://github.com/PlasmaDrifter/Emulator-Web-Catelog.git ~/romcat
+   cd ~/romcat
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+2. Create a systemd user service file at `~/.config/systemd/user/romcat.service`:
+   ```ini
+   [Unit]
+   Description=ROM Cat Emulator Web Catalog
+   After=network.target
+
+   [Service]
+   Type=simple
+   WorkingDirectory=%h/romcat
+   ExecStart=%h/romcat/venv/bin/python3 %h/romcat/app.py
+   Restart=on-failure
+   RestartSec=5
+
+   [Install]
+   WantedBy=default.target
+   ```
+3. Enable and start the background service:
+   ```bash
+   systemctl --user daemon-reload
+   systemctl --user enable --now romcat.service
+   ```
+4. Open your browser and navigate to:
+   ```text
+   http://localhost:8420
+   ```
+   *(Or access from any device on your local network using `http://<your-ip>:8420`).*
+
+To check service status or view logs:
 ```bash
-git clone https://github.com/PlasmaDrifter/Emulator-Web-Catelog.git romcat
-cd romcat
+systemctl --user status romcat.service
+journalctl --user -u romcat.service -f
 ```
 
-### 2. Create Python Virtual Environment & Install Dependencies
+---
 
-**Linux / macOS:**
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+### Option 3: Manual Python Web Server (Development / Command Line)
 
-**Windows (PowerShell / Command Prompt):**
-```powershell
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-```
+If you prefer starting the web server manually via the command line:
 
-Required Python packages:
-- `flask`
-- `pyyaml`
-- `requests`
-- `pillow`
-- `ujson`
-
-### 3. Configure Systems & SteamGridDB Key
-
-Edit `config.yaml` or use the **Consoles & Emulators** tab in the Settings UI to point to your ROM directories and configure emulator commands (see detailed instructions below).
-
-### 4. Run the Application
-
-**Linux / macOS:**
-```bash
-python3 app.py
-```
-
-**Windows:**
-```powershell
-python app.py
-```
-
-Open your browser and navigate to:
-```text
-http://localhost:8420
-```
-Or use your machine's local IP (e.g. `http://<server-ip>:8420`).
+1. Clone and install dependencies:
+   ```bash
+   git clone https://github.com/PlasmaDrifter/Emulator-Web-Catelog.git romcat
+   cd romcat
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+2. Run the application:
+   ```bash
+   python3 app.py
+   ```
+3. Open your browser at `http://localhost:8420`.
 
 ---
 
@@ -304,45 +347,6 @@ Emulator-Web-Catelog/
 │       └── style.css        # CSS styles, theme variables, grid layout, and glow animations
 └── templates/
     └── index.html           # Main dashboard template with search, tabs, settings, and launching modal
-```
-
----
-
-## Running as a Background Systemd Service
-
-To keep the web catalog running automatically in the background on boot:
-
-1. Create a user service definition at `~/.config/systemd/user/romcat.service`:
-
-```ini
-[Unit]
-Description=ROM Cat Emulator Web Catalog
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=%h/romcat
-ExecStart=%h/romcat/venv/bin/python3 %h/romcat/app.py
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=default.target
-```
-
-*(Note: `%h` is a standard systemd specifier that automatically expands to the user's home directory. Adjust `%h/romcat` if your clone is located in another folder).*
-
-2. Enable and start the user service:
-
-```bash
-systemctl --user daemon-reload
-systemctl --user enable --now romcat.service
-```
-
-3. Check service status:
-
-```bash
-systemctl --user status romcat.service
 ```
 
 ---
