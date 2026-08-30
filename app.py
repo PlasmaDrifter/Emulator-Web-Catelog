@@ -680,6 +680,14 @@ def api_fetch_covers():
                     game["cover"] = f"/static/covers/{game['key']}.jpg"
                     fetched += 1
                 else:
+                    failed += 1
+            except Exception:
+                failed += 1
+
+    save_library_cache(library)
+    return jsonify({"ok": True, "fetched": fetched, "skipped": skipped, "failed": failed})
+
+
 @app.route("/api/config", methods=["GET"])
 def api_get_config():
     try:
