@@ -8,7 +8,7 @@
 
 ## About
 
-**ROM Cat** is a fast, lightweight web catalog and launcher for your retro and modern ROM collection. It runs in your web browser, providing an interactive dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, Windows `.exe`, or native binaries), and customizable themes.
+**ROM Cat** is a fast, lightweight web catalog and launcher for your retro and modern ROM collection. It runs in your web browser, providing an interactive dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage or native binaries), and customizable themes.
 
 ---
 
