@@ -1604,7 +1604,7 @@ function collectConfigFromForm() {
       if (!sysId) return;
 
       const rawFolder = card.querySelector('.sys-folder-input').value.trim();
-      const folderLines = rawFolder.split('\n').map(l => l.trim()).filter(Boolean);
+      const folderLines = rawFolder.split('\n').map(l => l.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
       let folder = folderLines.length > 1 ? folderLines : (folderLines[0] || '');
 
       const rawExts = card.querySelector('.sys-exts-input').value.trim();
