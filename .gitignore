@@ -16,3 +16,8 @@ settings.json
 favorites.json
 hidden.json
 library.json
+
+# Packaging and Standalone builds
+Standalone.app/
+build/
+dist/
