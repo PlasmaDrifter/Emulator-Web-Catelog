@@ -108,32 +108,21 @@ button.icon-btn {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
-.tab .tab-icon img,
+.tab .tab-icon img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
 .tab .tab-icon svg {
   width: 15px;
   height: 15px;
-  object-fit: contain;
-  filter: brightness(0) invert(0.8);
-  opacity: 0.9;
-  transition: filter 0.15s ease, opacity 0.15s ease;
 }
-.tab:hover .tab-icon img,
-.tab:hover .tab-icon svg {
-  filter: brightness(0) invert(1);
-  opacity: 1;
-}
-.tab.active .tab-icon img,
-.tab.active .tab-icon svg {
-  filter: brightness(0) invert(1);
-  opacity: 1;
-}
-body.dark-tab-text .tab.active .tab-icon img,
-body.dark-tab-text .tab.active .tab-icon svg {
-  filter: brightness(0);
+.tab[data-target="favorites"] .tab-icon svg {
+  color: var(--favorite-star-color, #ffd700);
 }
 body.show-tab-icons .tab .tab-icon {
   display: inline-flex;
