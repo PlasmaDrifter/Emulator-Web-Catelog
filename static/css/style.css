@@ -68,6 +68,16 @@ button.icon-btn {
   padding: 6px 10px;
   font-size: 1rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+button.icon-btn.spinning svg {
+  animation: spin 0.75s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 #status { font-size: 0.8rem; color: var(--text-muted); }
@@ -351,6 +361,7 @@ body.hide-search .search-box { display: none !important; }
 body.hide-fetch-covers #fetchCoversBtn { display: none !important; }
 body.hide-rescan #rescanBtn { display: none !important; }
 body.hide-counts .count { display: none !important; }
+body.hide-all-tab .tab[data-target="all"] { display: none !important; }
 body.hide-favorites-tab .tab[data-target="favorites"] { display: none !important; }
 body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
 

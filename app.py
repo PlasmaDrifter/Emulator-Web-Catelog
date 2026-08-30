@@ -54,6 +54,7 @@ DEFAULT_SETTINGS = {
     "visibility": {
         "show_search": True,
         "show_counts": True,
+        "show_all_tab": True,
         "show_favorites_tab": True,
         "show_hidden_tab": False,
         "show_card_hide_buttons": False,

@@ -22,7 +22,7 @@
   }
 </style>
 </head>
-<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}{% if settings.visibility.show_tab_icons %}show-tab-icons {% endif %}">
+<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_all_tab %}hide-all-tab {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}{% if settings.visibility.show_tab_icons %}show-tab-icons {% endif %}">
 <header>
   <div class="header-brand">
     <img id="headerIcon" src="{{ settings.icon or '/static/favicon.png' }}" class="header-icon" alt="">
@@ -34,6 +34,7 @@
   </div>
   <div class="actions">
     <span id="status"></span>
+    <button id="refreshBtn" title="Refresh library" class="icon-btn" aria-label="Refresh library"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
     <button id="settingsBtn" title="Settings" class="icon-btn" aria-label="Settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
   </div>
 </header>
@@ -433,11 +434,21 @@
           </label>
           <label class="toggle-row">
             <div class="toggle-info">
+              <span class="toggle-title">Show "All" Tab</span>
+              <span class="toggle-desc">Category pill to view all titles across every system</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleAllTab" {% if settings.visibility.show_all_tab != false %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+          <label class="toggle-row">
+            <div class="toggle-info">
               <span class="toggle-title">Show "Favorites" Tab</span>
               <span class="toggle-desc">Category pill to view all favorited titles</span>
             </div>
             <div class="switch">
-              <input type="checkbox" id="toggleFavoritesTab" {% if settings.visibility.show_favorites_tab %}checked{% endif %}>
+              <input type="checkbox" id="toggleFavoritesTab" {% if settings.visibility.show_favorites_tab != false %}checked{% endif %}>
               <span class="slider"></span>
             </div>
           </label>
@@ -881,6 +892,7 @@ const THEME_PRESETS = {
 };
 
 const settingsDialog = document.getElementById('settingsDialog');
+const refreshBtn = document.getElementById('refreshBtn');
 const settingsBtn = document.getElementById('settingsBtn');
 const closeSettingsBtn = document.getElementById('closeSettingsBtn');
 const closeSettingsModalBtn = document.getElementById('closeSettingsModalBtn');
@@ -915,6 +927,7 @@ function getContrastColor(hexColor) {
 const visibilityToggles = {
   show_search: { el: document.getElementById('toggleSearch'), cls: 'hide-search' },
   show_counts: { el: document.getElementById('toggleCounts'), cls: 'hide-counts' },
+  show_all_tab: { el: document.getElementById('toggleAllTab'), cls: 'hide-all-tab' },
   show_favorites_tab: { el: document.getElementById('toggleFavoritesTab'), cls: 'hide-favorites-tab' },
   show_hidden_tab: { el: document.getElementById('toggleHiddenTab'), cls: 'hide-hidden-tab' },
   show_card_hide_buttons: { el: document.getElementById('toggleCardHideButtons'), cls: 'show-hide-controls', invert: true },
@@ -1018,6 +1031,20 @@ function applyLiveTheme() {
   document.body.classList.toggle('dark-tab-text', isDarkText || activeTextColor === '#000000');
 }
 
+function ensureValidActiveTab() {
+  const activeTab = document.querySelector('.tab.active');
+  if (!activeTab || window.getComputedStyle(activeTab).display === 'none') {
+    const tabs = Array.from(document.querySelectorAll('.tab'));
+    const firstVisible = tabs.find(t => window.getComputedStyle(t).display !== 'none');
+    if (firstVisible) {
+      tabs.forEach(t => t.classList.remove('active'));
+      firstVisible.classList.add('active');
+      activeTarget = firstVisible.dataset.target;
+      applyFilters();
+    }
+  }
+}
+
 function applyLiveVisibility() {
   for (const [key, item] of Object.entries(visibilityToggles)) {
     if (item.el) {
@@ -1028,6 +1055,7 @@ function applyLiveVisibility() {
       }
     }
   }
+  ensureValidActiveTab();
 }
 
 function applyLiveTitle() {
@@ -1213,6 +1241,29 @@ if (iconFileInput) {
 }
 
 renderIconGrid('all');
+
+// Refresh & Rescan
+if (refreshBtn) {
+  refreshBtn.addEventListener('click', async () => {
+    refreshBtn.classList.add('spinning');
+    refreshBtn.disabled = true;
+    try {
+      const res = await fetch('/api/rescan', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        location.reload();
+      } else {
+        alert('Rescan error: ' + (data.error || 'Unknown error'));
+        refreshBtn.classList.remove('spinning');
+        refreshBtn.disabled = false;
+      }
+    } catch (err) {
+      alert('Network error: ' + err);
+      refreshBtn.classList.remove('spinning');
+      refreshBtn.disabled = false;
+    }
+  });
+}
 
 // Modal open/close
 settingsBtn.addEventListener('click', () => {
@@ -2067,6 +2118,7 @@ if (urlParams.get('test_hide')) {
   document.body.classList.add('show-hide-controls');
 }
 applyFilters();
+ensureValidActiveTab();
 </script>
 </body>
 </html>
