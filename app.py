@@ -538,8 +538,8 @@ def api_launch():
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-        except Exception as e:
-            return jsonify({"ok": False, "error": f"emulator launch failed: {e}"}), 500
+        except Exception:
+            return jsonify({"ok": False, "error": "Emulator launch failed on Windows."}), 500
     else:
         # Linux / Unix execution
         cmd = cmd_template.format(rom=shlex.quote(str(resolved)))
@@ -559,8 +559,10 @@ def api_launch():
                 env=env,
                 start_new_session=True,
             )
-        except FileNotFoundError as e:
-            return jsonify({"ok": False, "error": f"emulator not found: {e}"}), 500
+        except FileNotFoundError:
+            return jsonify({"ok": False, "error": "Emulator executable not found. Please check your command in settings."}), 500
+        except Exception:
+            return jsonify({"ok": False, "error": "Failed to launch emulator process."}), 500
 
     return jsonify({"ok": True})
 
@@ -695,8 +697,8 @@ def api_get_config():
         raw_yaml = CONFIG_PATH.read_text(encoding="utf-8") if CONFIG_PATH.exists() else ""
         parsed = resilient_yaml_load(raw_yaml) if raw_yaml else {}
         return jsonify({"ok": True, "raw_yaml": raw_yaml, "config": parsed})
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 500
+    except Exception:
+        return jsonify({"ok": False, "error": "Failed to read configuration."}), 500
 
 
 @app.route("/api/config", methods=["POST"])
@@ -742,8 +744,8 @@ def api_save_config():
         library = scan_library()
         save_library_cache(library)
         return jsonify({"ok": True, "config": parsed, "raw_yaml": raw_yaml, "library": library})
-    except Exception as e:
-        return jsonify({"ok": False, "error": f"YAML Error: {str(e)}"}), 400
+    except Exception:
+        return jsonify({"ok": False, "error": "Invalid YAML configuration syntax."}), 400
 
 
 @app.route('/static/covers/<path:filename>')
