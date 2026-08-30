@@ -199,17 +199,34 @@ def load_config():
         return {"systems": {}, "steamgriddb": {"api_key": ""}}
 
 
+def remove_brackets_and_parentheses(text: str) -> str:
+    """Linear character parser to remove parenthesized and bracketed tags without regex backtracking."""
+    result = []
+    depth_paren = 0
+    depth_bracket = 0
+    for ch in text:
+        if ch == "(":
+            depth_paren += 1
+        elif ch == ")" and depth_paren > 0:
+            depth_paren -= 1
+        elif ch == "[":
+            depth_bracket += 1
+        elif ch == "]" and depth_bracket > 0:
+            depth_bracket -= 1
+        elif depth_paren == 0 and depth_bracket == 0:
+            result.append(ch)
+    return "".join(result)
+
+
 def clean_title(filename: str) -> str:
     """Strip extension and common ROM tags like (USA), (Rev 1), [!] etc.,
     and normalize underscores/dashes into spaces for better search matches."""
     name = Path(filename).stem
     if name.lower().endswith(".nkit"):
         name = name[:-5]
-    name = re.sub(r"\([^)]*\)", "", name)
-    name = re.sub(r"\[[^\]]*\]", "", name)
+    name = remove_brackets_and_parentheses(name)
     name = name.replace("_", " ").replace("-", " ")
-    name = re.sub(r"\s+", " ", name).strip()
-    return name
+    return " ".join(name.split())
 
 
 def get_sort_title(title: str) -> str:
