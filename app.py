@@ -546,12 +546,11 @@ def api_launch():
 
     cmd_template = sys_cfg["command"]
     if os.name == "nt":
-        # Windows execution
+        # Windows execution (shell=False to prevent command injection)
         cmd = cmd_template.format(rom=f'"{resolved}"')
         try:
             subprocess.Popen(
-                cmd,
-                shell=True,
+                shlex.split(cmd, posix=False),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
