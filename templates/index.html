@@ -1177,10 +1177,14 @@ function renderIconGrid(filterCat = 'all') {
     const tile = document.createElement('div');
     tile.className = 'icon-tile' + (selectedIconUrl === icon.src ? ' selected' : '');
     tile.dataset.src = icon.src;
-    tile.innerHTML = `
-      <img src="${icon.src}" alt="${icon.name}" loading="lazy">
-      <span>${icon.name}</span>
-    `;
+    const img = document.createElement('img');
+    img.src = encodeURI(icon.src);
+    img.alt = icon.name;
+    img.loading = 'lazy';
+    const span = document.createElement('span');
+    span.textContent = icon.name;
+    tile.appendChild(img);
+    tile.appendChild(span);
     tile.addEventListener('click', () => {
       setLiveIcon(icon.src);
     });
@@ -1189,14 +1193,18 @@ function renderIconGrid(filterCat = 'all') {
 }
 
 function setLiveIcon(src) {
-  selectedIconUrl = src;
+  if (typeof src !== 'string') return;
+  const cleanSrc = src.trim();
+  if (!cleanSrc || /^javascript:/i.test(cleanSrc)) return;
+  selectedIconUrl = cleanSrc;
+  const safeUri = encodeURI(cleanSrc);
   const favLink = document.getElementById('faviconLink');
-  if (favLink) favLink.href = src;
+  if (favLink) favLink.href = safeUri;
   const headerIcon = document.getElementById('headerIcon');
-  if (headerIcon) headerIcon.src = src;
-  if (customIconUrl) customIconUrl.value = src;
+  if (headerIcon) headerIcon.src = safeUri;
+  if (customIconUrl) customIconUrl.value = cleanSrc;
   document.querySelectorAll('.icon-tile').forEach(t => {
-    t.classList.toggle('selected', t.dataset.src === src);
+    t.classList.toggle('selected', t.dataset.src === cleanSrc);
   });
 }
 

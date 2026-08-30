@@ -15,6 +15,7 @@ import yaml
 import requests
 from pathlib import Path
 from flask import Flask, render_template, jsonify, request, send_from_directory
+from werkzeug.utils import secure_filename
 from PIL import Image
 
 __version__ = "0.1.2"
@@ -239,9 +240,11 @@ def get_sort_title(title: str) -> str:
 
 def safe_key(system: str, filename: str) -> str:
     """Filesystem-safe cache key for a rom's cover image."""
-    stem = Path(filename).stem
-    key = f"{system}_{stem}"
-    return re.sub(r"[^a-zA-Z0-9_\-]", "_", key)
+    safe_sys = secure_filename(str(system))
+    safe_fn = secure_filename(Path(filename).stem)
+    key = f"{safe_sys}_{safe_fn}"
+    clean_k = re.sub(r"[^a-zA-Z0-9_\-]", "_", key).strip("_")
+    return clean_k or "cover"
 
 
 def compress_and_save_image(img_bytes, out_path) -> bool:
@@ -405,11 +408,13 @@ def api_upload_icon():
     if ext not in [".png", ".svg", ".ico", ".jpg", ".jpeg", ".webp"]:
         return jsonify({"ok": False, "error": "Invalid image format"}), 400
 
-    icons_dir = BASE_DIR / "static" / "icons"
+    icons_dir = (BASE_DIR / "static" / "icons").resolve()
     icons_dir.mkdir(parents=True, exist_ok=True)
-    clean_stem = re.sub(r"[^a-zA-Z0-9_-]", "_", Path(file.filename).stem)
+    clean_stem = secure_filename(Path(file.filename).stem) or "custom_icon"
     filename = f"custom_{clean_stem}{ext}"
-    target_path = icons_dir / filename
+    target_path = (icons_dir / filename).resolve()
+    if os.path.commonpath([str(icons_dir), str(target_path)]) != str(icons_dir):
+        return jsonify({"ok": False, "error": "Invalid path"}), 400
     file.save(str(target_path))
 
     icon_url = f"/static/icons/{filename}"
@@ -516,24 +521,15 @@ def api_launch():
         return jsonify({"ok": False, "error": "unknown system"}), 400
 
     cleaned_path = str(path).strip().strip('"').strip("'")
-    rom_path = Path(cleaned_path)
-    try:
-        resolved = rom_path.resolve()
-    except Exception:
-        resolved = rom_path
+    normalized_path = os.path.normpath(os.path.abspath(os.path.expanduser(cleaned_path)))
 
     folders_cfg = sys_cfg["folder"]
     folders = [folders_cfg] if isinstance(folders_cfg, str) else folders_cfg
     allowed = False
     for folder_str in folders:
         try:
-            cleaned_folder = str(folder_str).strip().strip('"').strip("'")
-            configured_folder = Path(cleaned_folder).expanduser().resolve()
-            if (
-                configured_folder in resolved.parents
-                or resolved == configured_folder
-                or str(resolved).lower().startswith(str(configured_folder).lower())
-            ):
+            clean_f = os.path.normpath(os.path.abspath(os.path.expanduser(str(folder_str).strip().strip('"').strip("'"))))
+            if os.path.commonpath([clean_f, normalized_path]) == clean_f:
                 allowed = True
                 break
         except Exception:
@@ -541,13 +537,13 @@ def api_launch():
 
     if not allowed:
         return jsonify({"ok": False, "error": "path outside configured folder"}), 400
-    if not resolved.is_file():
+    if not os.path.isfile(normalized_path):
         return jsonify({"ok": False, "error": "file not found"}), 404
 
     cmd_template = sys_cfg["command"]
     if os.name == "nt":
         # Windows execution (shell=False to prevent command injection)
-        cmd = cmd_template.format(rom=f'"{resolved}"')
+        cmd = cmd_template.format(rom=f'"{normalized_path}"')
         try:
             subprocess.Popen(
                 shlex.split(cmd, posix=False),
@@ -558,7 +554,7 @@ def api_launch():
             return jsonify({"ok": False, "error": "Emulator launch failed on Windows."}), 500
     else:
         # Linux / Unix execution
-        cmd = cmd_template.format(rom=shlex.quote(str(resolved)))
+        cmd = cmd_template.format(rom=shlex.quote(normalized_path))
         env = os.environ.copy()
         if "DISPLAY" not in env:
             env["DISPLAY"] = ":0"
@@ -605,12 +601,19 @@ def fetch_one_cover(api_key: str, title: str, key: str) -> bool:
         img_resp = requests.get(image_url, timeout=15)
         img_resp.raise_for_status()
 
-        for old_ext in (".jpg", ".jpeg", ".png"):
-            old_path = COVERS_DIR / f"{key}{old_ext}"
-            if old_path.exists():
-                old_path.unlink()
+        covers_resolved = str(COVERS_DIR.resolve())
+        out_path = os.path.normpath(os.path.join(covers_resolved, f"{key}.jpg"))
+        if os.path.commonpath([covers_resolved, out_path]) != covers_resolved:
+            return False
 
-        out_path = COVERS_DIR / f"{key}.jpg"
+        for old_ext in (".jpg", ".jpeg", ".png"):
+            old_path = os.path.normpath(os.path.join(covers_resolved, f"{key}{old_ext}"))
+            if os.path.commonpath([covers_resolved, old_path]) == covers_resolved and os.path.exists(old_path):
+                try:
+                    os.unlink(old_path)
+                except Exception:
+                    pass
+
         return compress_and_save_image(img_resp.content, out_path)
     except Exception:
         return False
@@ -766,12 +769,21 @@ def api_save_config():
 
 @app.route('/static/covers/<path:filename>')
 def serve_covers(filename):
-    if (COVERS_DIR / filename).exists():
-        return send_from_directory(COVERS_DIR, filename)
-    bundled_covers = BUNDLE_DIR / "static" / "covers"
-    if (bundled_covers / filename).exists():
-        return send_from_directory(bundled_covers, filename)
-    return send_from_directory(COVERS_DIR, filename)
+    clean_name = secure_filename(Path(filename).name)
+    if not clean_name:
+        return jsonify({"error": "Invalid filename"}), 400
+
+    covers_resolved = str(COVERS_DIR.resolve())
+    target_path = os.path.normpath(os.path.join(covers_resolved, clean_name))
+    if os.path.commonpath([covers_resolved, target_path]) == covers_resolved and os.path.isfile(target_path):
+        return send_from_directory(COVERS_DIR, clean_name)
+
+    bundled_resolved = str((BUNDLE_DIR / "static" / "covers").resolve())
+    bundled_target = os.path.normpath(os.path.join(bundled_resolved, clean_name))
+    if os.path.commonpath([bundled_resolved, bundled_target]) == bundled_resolved and os.path.isfile(bundled_target):
+        return send_from_directory(BUNDLE_DIR / "static" / "covers", clean_name)
+
+    return jsonify({"error": "Cover not found"}), 404
 
 
 @app.after_request
