@@ -157,6 +157,29 @@ def save_hidden(hidden: set):
     HIDDEN_PATH.write_text(json.dumps(sorted(hidden), indent=2))
 
 
+def resilient_yaml_load(raw_text: str):
+    """Safely parse YAML with fallback handling for unescaped Windows backslashes."""
+    if not raw_text:
+        return {}
+    try:
+        return yaml.safe_load(raw_text) or {}
+    except Exception:
+        # Handle unescaped backslashes in Windows paths (e.g. "C:\Users\...")
+        try:
+            fixed = re.sub(
+                r'"([A-Za-z]:\\[^"]+)"',
+                lambda m: repr(m.group(1).replace("\\\\", "\\")),
+                raw_text
+            )
+            return yaml.safe_load(fixed) or {}
+        except Exception:
+            try:
+                fixed = raw_text.replace("\\", "/")
+                return yaml.safe_load(fixed) or {}
+            except Exception:
+                return {}
+
+
 def load_config():
     if not CONFIG_PATH.exists():
         if CONFIG_EXAMPLE_PATH.exists():
@@ -165,9 +188,13 @@ def load_config():
         else:
             return {"systems": {}, "steamgriddb": {"api_key": ""}}
     try:
-        with open(CONFIG_PATH, "r") as f:
-            return yaml.safe_load(f) or {"systems": {}, "steamgriddb": {"api_key": ""}}
-    except Exception:
+        raw_text = CONFIG_PATH.read_text(encoding="utf-8")
+        parsed = resilient_yaml_load(raw_text)
+        if isinstance(parsed, dict) and "systems" in parsed:
+            return parsed
+        return {"systems": {}, "steamgriddb": {"api_key": ""}}
+    except Exception as e:
+        print(f"Error loading config.yaml: {e}", file=sys.stderr)
         return {"systems": {}, "steamgriddb": {"api_key": ""}}
 
 
@@ -220,26 +247,34 @@ def scan_library():
     hidden = load_hidden()
     library = {}
 
-    # Cache existing cover filenames in memory for fast lookup
+    COVERS_DIR.mkdir(parents=True, exist_ok=True)
     existing_covers = {p.name for p in COVERS_DIR.iterdir() if p.is_file()}
 
-    for sys_id, sys_cfg in config["systems"].items():
-        folders_cfg = sys_cfg["folder"]
+    for sys_id, sys_cfg in config.get("systems", {}).items():
+        if not isinstance(sys_cfg, dict):
+            continue
+        folders_cfg = sys_cfg.get("folder", [])
         folders = [folders_cfg] if isinstance(folders_cfg, str) else folders_cfg
-        exts = [e.lower() if e.startswith('.') else f".{e.lower()}" for e in sys_cfg["extensions"]]
+        raw_exts = sys_cfg.get("extensions", [])
+        exts_set = {e.lower() if e.startswith('.') else f".{e.lower()}" for e in raw_exts}
         games = []
         seen_paths = set()
 
         for folder_str in folders:
-            folder = Path(folder_str).expanduser()
+            cleaned_str = str(folder_str).strip().strip('"').strip("'")
+            if not cleaned_str:
+                continue
+            folder = Path(cleaned_str).expanduser()
             if not folder.is_dir():
                 continue
 
-            # Scan matching target extensions explicitly (skips unneeded disk files)
-            for ext in exts:
-                for entry in folder.rglob(f"*{ext}"):
-                    if not entry.is_file():
+            # Case-insensitive filesystem walk
+            for root, dirs, files in os.walk(folder):
+                for file in files:
+                    ext = Path(file).suffix.lower()
+                    if ext not in exts_set:
                         continue
+                    entry = Path(root) / file
                     try:
                         resolved_path = str(entry.resolve())
                     except Exception:
@@ -257,7 +292,7 @@ def scan_library():
                             stem_lower = stem_lower[:-5]
                         is_generic_name = stem_lower in ("game", "boot", "main")
                         display_name = parts[0] if len(parts) > 1 and (is_wiiu or is_generic_name) else entry.name
-                    except ValueError:
+                    except Exception:
                         display_name = entry.name
 
                     key = safe_key(sys_id, display_name)
@@ -280,7 +315,7 @@ def scan_library():
                     })
         games.sort(key=lambda g: (not g["favorite"], get_sort_title(g["title"])))
         library[sys_id] = {
-            "name": sys_cfg["name"],
+            "name": sys_cfg.get("name", sys_id),
             "games": games,
         }
     return library
@@ -462,19 +497,25 @@ def api_launch():
     if not sys_cfg:
         return jsonify({"ok": False, "error": "unknown system"}), 400
 
-    rom_path = Path(path)
+    cleaned_path = str(path).strip().strip('"').strip("'")
+    rom_path = Path(cleaned_path)
     try:
         resolved = rom_path.resolve()
     except Exception:
-        return jsonify({"ok": False, "error": "bad path"}), 400
+        resolved = rom_path
 
     folders_cfg = sys_cfg["folder"]
     folders = [folders_cfg] if isinstance(folders_cfg, str) else folders_cfg
     allowed = False
     for folder_str in folders:
         try:
-            configured_folder = Path(folder_str).expanduser().resolve()
-            if configured_folder in resolved.parents or resolved == configured_folder:
+            cleaned_folder = str(folder_str).strip().strip('"').strip("'")
+            configured_folder = Path(cleaned_folder).expanduser().resolve()
+            if (
+                configured_folder in resolved.parents
+                or resolved == configured_folder
+                or str(resolved).lower().startswith(str(configured_folder).lower())
+            ):
                 allowed = True
                 break
         except Exception:
@@ -639,19 +680,11 @@ def api_fetch_covers():
                     game["cover"] = f"/static/covers/{game['key']}.jpg"
                     fetched += 1
                 else:
-                    failed += 1
-            except Exception:
-                failed += 1
-
-    save_library_cache(library)
-    return jsonify({"ok": True, "fetched": fetched, "skipped": skipped, "failed": failed})
-
-
 @app.route("/api/config", methods=["GET"])
 def api_get_config():
     try:
-        raw_yaml = CONFIG_PATH.read_text() if CONFIG_PATH.exists() else ""
-        parsed = yaml.safe_load(raw_yaml) if raw_yaml else {}
+        raw_yaml = CONFIG_PATH.read_text(encoding="utf-8") if CONFIG_PATH.exists() else ""
+        parsed = resilient_yaml_load(raw_yaml) if raw_yaml else {}
         return jsonify({"ok": True, "raw_yaml": raw_yaml, "config": parsed})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
@@ -666,7 +699,7 @@ def api_save_config():
         if not raw_yaml and "config" in data:
             raw_yaml = yaml.dump(data["config"], sort_keys=False)
 
-        parsed = yaml.safe_load(raw_yaml)
+        parsed = resilient_yaml_load(raw_yaml)
         if not isinstance(parsed, dict) or "systems" not in parsed:
             return jsonify({"ok": False, "error": "Invalid configuration: 'systems' block is required."}), 400
 
@@ -695,7 +728,7 @@ def api_save_config():
         if errors:
             return jsonify({"ok": False, "error": "Validation failed", "errors": errors}), 400
 
-        CONFIG_PATH.write_text(raw_yaml)
+        CONFIG_PATH.write_text(raw_yaml, encoding="utf-8")
         _library_cache = None
         library = scan_library()
         save_library_cache(library)
