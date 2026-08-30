@@ -47,7 +47,8 @@ DEFAULT_SETTINGS = {
         "show_counts": True,
         "show_favorites_tab": True,
         "show_hidden_tab": False,
-        "show_card_hide_buttons": False
+        "show_card_hide_buttons": False,
+        "show_tab_icons": False
     }
 }
 
