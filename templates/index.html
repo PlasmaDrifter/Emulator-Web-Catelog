@@ -291,11 +291,76 @@
 
       <!-- Library Actions -->
       <section class="settings-section">
-        <h4>Library Actions</h4>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+          <h4 style="margin: 0;">Library Actions</h4>
+          <button type="button" id="toggleCoverHelpBtn" class="btn-secondary help-pill-btn" title="View Manual Cover Art Guide">
+            <span class="help-circle-icon">?</span> Manual Cover Art Guide
+          </button>
+        </div>
+
+        <!-- Manual Cover Art Help Box -->
+        <div id="coverHelpBox" class="command-help-box hidden" style="margin-bottom: 12px;">
+          <div class="command-help-header">
+            <h5>Manual Cover Art Placement Guide</h5>
+            <button type="button" class="btn-close-help" id="closeCoverHelpBtn" title="Close guide">&times;</button>
+          </div>
+          <div class="command-help-content">
+            <div class="help-callout" style="border-left-color: #10b981;">
+              <strong>Folder Location for Custom Box Art:</strong>
+              <p style="margin: 4px 0 0 0;">
+                Place your image files directly into the <code>static/covers/</code> directory in your ROM Cat installation folder.
+              </p>
+            </div>
+
+            <h6>Cover Image Naming Formula:</h6>
+            <div class="help-callout">
+              <strong>Format: <code>&lt;system_id&gt;_&lt;rom_filename_without_extension&gt;.jpg</code></strong>
+              <p style="margin: 4px 0 0 0;">
+                Spaces, parentheses, brackets, dots, and special characters in the ROM filename are replaced with underscores (<code>_</code>).
+              </p>
+            </div>
+
+            <h6>Naming Examples:</h6>
+            <div class="code-examples-grid">
+              <div class="example-row">
+                <span class="ex-sys">NES:</span>
+                <div>ROM: <code>Super Mario Bros (USA).nes</code><br>&rarr; Cover: <code>nes_Super_Mario_Bros__USA_.jpg</code></div>
+              </div>
+              <div class="example-row">
+                <span class="ex-sys">SNES:</span>
+                <div>ROM: <code>Chrono Trigger [!].sfc</code><br>&rarr; Cover: <code>snes_Chrono_Trigger____.jpg</code></div>
+              </div>
+              <div class="example-row">
+                <span class="ex-sys">Nintendo 64:</span>
+                <div>ROM: <code>The Legend of Zelda - Ocarina of Time (USA).z64</code><br>&rarr; Cover: <code>n64_The_Legend_of_Zelda_-_Ocarina_of_Time__USA_.jpg</code></div>
+              </div>
+              <div class="example-row">
+                <span class="ex-sys">GameCube:</span>
+                <div>ROM: <code>Super Smash Bros Melee.iso</code><br>&rarr; Cover: <code>gamecube_Super_Smash_Bros_Melee.jpg</code></div>
+              </div>
+              <div class="example-row">
+                <span class="ex-sys">Switch:</span>
+                <div>ROM: <code>Super Mario Odyssey.nsp</code><br>&rarr; Cover: <code>Switch_Super_Mario_Odyssey.jpg</code></div>
+              </div>
+            </div>
+
+            <h6>Image Specifications &amp; Tips:</h6>
+            <ul style="margin: 4px 0 0 18px; padding: 0;">
+              <li><strong>Supported Formats:</strong> <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.webp</code></li>
+              <li><strong>Recommended Aspect Ratio:</strong> Standard vertical box art ratio <strong>3:4</strong> (e.g. <strong>300 &times; 400</strong> or <strong>600 &times; 800</strong> pixels).</li>
+              <li><strong>Instant Refresh:</strong> After copying images to <code>static/covers/</code>, click <strong>Rescan</strong> below to instantly update the catalog.</li>
+              <li><strong>In-Catalog Search:</strong> You can also click the <strong>Find cover</strong> input on any game card missing art to search SteamGridDB with custom search keywords directly.</li>
+            </ul>
+          </div>
+        </div>
+
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <div class="toggle-row" style="cursor: default;">
             <div class="toggle-info">
-              <span class="toggle-title">Fetch Cover Art</span>
+              <span class="toggle-title">
+                Fetch Cover Art
+                <button type="button" id="btnInlineCoverHelp" class="btn-inline-help" title="Click for guide on manually adding custom cover art">?</button>
+              </span>
               <span class="toggle-desc">Automatically download box art from SteamGridDB for games missing covers.</span>
             </div>
             <button type="button" id="modalFetchCoversBtn" class="btn-secondary" style="white-space: nowrap;">Fetch Covers</button>
@@ -1313,6 +1378,11 @@ const toggleCommandHelpBtn = document.getElementById('toggleCommandHelpBtn');
 const closeCommandHelpBtn = document.getElementById('closeCommandHelpBtn');
 const commandHelpBox = document.getElementById('commandHelpBox');
 
+const toggleCoverHelpBtn = document.getElementById('toggleCoverHelpBtn');
+const closeCoverHelpBtn = document.getElementById('closeCoverHelpBtn');
+const btnInlineCoverHelp = document.getElementById('btnInlineCoverHelp');
+const coverHelpBox = document.getElementById('coverHelpBox');
+
 if (toggleCommandHelpBtn && commandHelpBox) {
   toggleCommandHelpBtn.addEventListener('click', () => {
     commandHelpBox.classList.toggle('hidden');
@@ -1325,6 +1395,28 @@ if (toggleCommandHelpBtn && commandHelpBox) {
 if (closeCommandHelpBtn && commandHelpBox) {
   closeCommandHelpBtn.addEventListener('click', () => {
     commandHelpBox.classList.add('hidden');
+  });
+}
+
+if (toggleCoverHelpBtn && coverHelpBox) {
+  toggleCoverHelpBtn.addEventListener('click', () => {
+    coverHelpBox.classList.toggle('hidden');
+    if (!coverHelpBox.classList.contains('hidden')) {
+      coverHelpBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  });
+}
+
+if (btnInlineCoverHelp && coverHelpBox) {
+  btnInlineCoverHelp.addEventListener('click', () => {
+    coverHelpBox.classList.remove('hidden');
+    coverHelpBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+}
+
+if (closeCoverHelpBtn && coverHelpBox) {
+  closeCoverHelpBtn.addEventListener('click', () => {
+    coverHelpBox.classList.add('hidden');
   });
 }
 
@@ -1938,6 +2030,9 @@ if (autoSettingsTab) {
   if (autoSettingsTab === 'ui') {
     const tabEl = document.querySelector('[data-tab-target="tabUI"]');
     if (tabEl) tabEl.click();
+    if (urlParams.get('help') && coverHelpBox) {
+      coverHelpBox.classList.remove('hidden');
+    }
   } else if (autoSettingsTab === 'consoles') {
     const tabEl = document.querySelector('[data-tab-target="tabConsoles"]');
     if (tabEl) tabEl.click();
