@@ -113,7 +113,7 @@
         <h4>General</h4>
         <div class="settings-field">
           <label for="catalogTitleInput">Catalog Title</label>
-          <input type="text" id="catalogTitleInput" class="settings-input" value="{{ settings.title }}" placeholder="ROM Catelog">
+          <input type="text" id="catalogTitleInput" class="settings-input" value="{{ settings.title }}" placeholder="ROMcat">
         </div>
       </section>
 
@@ -308,7 +308,7 @@
             <div class="help-callout" style="border-left-color: #10b981;">
               <strong>Folder Location for Custom Box Art:</strong>
               <p style="margin: 4px 0 0 0;">
-                Place your image files directly into the <code>static/covers/</code> directory in your ROM Cat installation folder.
+                Place your image files directly into the <code>static/covers/</code> directory in your ROMcat installation folder.
               </p>
             </div>
 
@@ -471,7 +471,7 @@
           <div class="help-callout" style="border-left-color: #10b981;">
             <strong>System Identifier (ID) &mdash; When is it needed?</strong>
             <p style="margin: 4px 0 0 0;">
-              <strong>You can leave this box empty.</strong> When you fill in the <strong>Display Name</strong> (such as <code>Nintendo 64</code>), ROM Cat automatically creates a safe internal ID for you behind the scenes.
+              <strong>You can leave this box empty.</strong> When you fill in the <strong>Display Name</strong> (such as <code>Nintendo 64</code>), ROMcat automatically creates a safe internal ID for you behind the scenes.
             </p>
             <p style="margin: 4px 0 0 0;">
               <strong>Only type in this box if:</strong>
@@ -485,7 +485,7 @@
           <p style="margin: 4px 0 0 0;">The <strong>Emulator Launch Command</strong> is the exact shell command used to start the emulator with your selected game.</p>
           <div class="help-callout">
             <strong>Key Token: <code>{rom}</code></strong>
-            <p style="margin: 4px 0 0 0;">ROM Cat automatically replaces <code>{rom}</code> with the full, shell-quoted path to the selected ROM file on disk (e.g. <code>"/home/user/ROMs/NES/Mario.nes"</code>).</p>
+            <p style="margin: 4px 0 0 0;">ROMcat automatically replaces <code>{rom}</code> with the full, shell-quoted path to the selected ROM file on disk (e.g. <code>"/home/user/ROMs/NES/Mario.nes"</code>).</p>
           </div>
 
           <h6>Common Flatpak Emulator Commands:</h6>
@@ -1031,7 +1031,7 @@ function applyLiveVisibility() {
 }
 
 function applyLiveTitle() {
-  const title = catalogTitleInput.value.trim() || 'ROM Catelog';
+  const title = catalogTitleInput.value.trim() || 'ROMcat';
   document.title = title;
   const headerEl = document.getElementById('headerTitle');
   if (headerEl) headerEl.textContent = title;
@@ -1246,7 +1246,7 @@ async function saveAllSettings() {
   for (const [key, item] of Object.entries(visibilityToggles)) {
     visibility[key] = item.el ? item.el.checked : true;
   }
-  const title = catalogTitleInput.value.trim() || 'ROM Catelog';
+  const title = catalogTitleInput.value.trim() || 'ROMcat';
   const icon = selectedIconUrl || customIconUrl.value.trim() || '/static/favicon.png';
 
   saveSettingsBtn.textContent = 'Saving...';
@@ -1313,7 +1313,7 @@ saveSettingsBtn.addEventListener('click', () => {
 // Reset to Defaults
 resetDefaultsBtn.addEventListener('click', () => {
   if (!confirm('Reset all title, icon, colors, and visibility settings to default?')) return;
-  catalogTitleInput.value = 'ROM Catelog';
+  catalogTitleInput.value = 'ROMcat';
   applyLiveTitle();
   setLiveIcon('/static/favicon.png');
 

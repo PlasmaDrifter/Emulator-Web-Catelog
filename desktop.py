@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ROM Cat Desktop Launcher (Standalone Desktop App)
+ROMcat Desktop Launcher (Standalone Desktop App)
 Launches the Flask backend server in a background thread
 and presents the interface in a native desktop window via pywebview.
 """
@@ -85,7 +85,7 @@ def main():
     time.sleep(0.35)
 
     settings = load_settings()
-    title = settings.get("title", "ROM Cat")
+    title = settings.get("title", "ROMcat")
     icon_path = BUNDLE_DIR / "static" / "favicon.png"
 
     setup_desktop_integration(title, icon_path)

@@ -36,7 +36,7 @@ SETTINGS_PATH = BASE_DIR / "settings.json"
 COVERS_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_SETTINGS = {
-    "title": "ROM Catelog",
+    "title": "ROMcat",
     "icon": "/static/favicon.png",
     "theme": {
         "bg_body": "#14161a",
