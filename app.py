@@ -17,7 +17,7 @@ from pathlib import Path
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from PIL import Image
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)
@@ -353,7 +353,7 @@ def save_library_cache(library_data):
 def index():
     library = load_cached_library()
     settings = load_settings()
-    return render_template("index.html", library=library, settings=settings)
+    return render_template("index.html", library=library, settings=settings, version=__version__)
 
 
 @app.route("/api/settings", methods=["GET", "POST"])
