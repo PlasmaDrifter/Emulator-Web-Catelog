@@ -513,37 +513,30 @@ def api_hide():
 def api_launch():
     data = request.get_json(force=True)
     system = data.get("system")
-    path = data.get("path")
+    path_param = str(data.get("path") or "").strip().strip('"').strip("'")
+    filename_param = str(data.get("filename") or "").strip()
 
     config = load_config()
     sys_cfg = config["systems"].get(system)
     if not sys_cfg:
         return jsonify({"ok": False, "error": "unknown system"}), 400
 
-    cleaned_path = str(path).strip().strip('"').strip("'")
-    candidate_path = os.path.normpath(os.path.abspath(os.path.expanduser(cleaned_path)))
+    # Verify against server-scanned library cache to ensure path originates strictly from verified local scan
+    library = load_cached_library()
+    sys_games = library.get(system, {}).get("games", [])
+    matched_path = None
+    for game in sys_games:
+        if game.get("path") == path_param or (filename_param and game.get("filename") == filename_param):
+            matched_path = game.get("path")
+            break
 
-    folders_cfg = sys_cfg["folder"]
-    folders = [folders_cfg] if isinstance(folders_cfg, str) else folders_cfg
-    validated_path = None
-    for folder_str in folders:
-        try:
-            clean_f = os.path.normpath(os.path.abspath(os.path.expanduser(str(folder_str).strip().strip('"').strip("'"))))
-            safe_prefix = clean_f if clean_f.endswith(os.sep) else clean_f + os.sep
-            if candidate_path.startswith(safe_prefix) or candidate_path == clean_f:
-                if os.path.isfile(candidate_path):
-                    validated_path = candidate_path
-                    break
-        except Exception:
-            continue
-
-    if not validated_path:
-        return jsonify({"ok": False, "error": "file not found or outside configured folder"}), 400
+    if not matched_path or not os.path.isfile(matched_path):
+        return jsonify({"ok": False, "error": "Game not found in library cache"}), 404
 
     cmd_template = sys_cfg["command"]
     if os.name == "nt":
         # Windows execution (shell=False to prevent command injection)
-        cmd = cmd_template.format(rom=f'"{validated_path}"')
+        cmd = cmd_template.format(rom=f'"{matched_path}"')
         try:
             subprocess.Popen(
                 shlex.split(cmd, posix=False),
@@ -554,7 +547,7 @@ def api_launch():
             return jsonify({"ok": False, "error": "Emulator launch failed on Windows."}), 500
     else:
         # Linux / Unix execution
-        cmd = cmd_template.format(rom=shlex.quote(validated_path))
+        cmd = cmd_template.format(rom=shlex.quote(matched_path))
         env = os.environ.copy()
         if "DISPLAY" not in env:
             env["DISPLAY"] = ":0"
