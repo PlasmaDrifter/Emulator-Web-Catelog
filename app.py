@@ -429,7 +429,7 @@ def favicon():
     settings = load_settings()
     icon_path = settings.get("icon", "/static/favicon.png")
     if icon_path.startswith("/static/"):
-        rel_path = icon_path[len("/static/"):]
+        rel_path = secure_filename(Path(icon_path[len("/static/"):]).name) or "favicon.png"
         return send_from_directory(os.path.join(app.root_path, "static"), rel_path)
     return send_from_directory(
         os.path.join(app.root_path, "static"),
@@ -529,7 +529,8 @@ def api_launch():
     for folder_str in folders:
         try:
             clean_f = os.path.normpath(os.path.abspath(os.path.expanduser(str(folder_str).strip().strip('"').strip("'"))))
-            if os.path.commonpath([clean_f, normalized_path]) == clean_f:
+            safe_prefix = clean_f if clean_f.endswith(os.sep) else clean_f + os.sep
+            if normalized_path.startswith(safe_prefix) or normalized_path == clean_f:
                 allowed = True
                 break
         except Exception:
