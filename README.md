@@ -6,7 +6,9 @@
 [![YAML](https://img.shields.io/badge/Config-YAML-CB171E?logo=yaml&logoColor=white)](https://yaml.org)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20macOS-blue)](https://python.org)
 
-A fast, lightweight web catalog and launcher for your retro and modern ROM collection. It runs in your web browser, providing an interactive dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, Windows `.exe`, or native binaries), and customizable themes.
+## About
+
+**ROM Cat** is a fast, lightweight web catalog and launcher for your retro and modern ROM collection. It runs in your web browser, providing an interactive dashboard with cover art, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, Windows `.exe`, or native binaries), and customizable themes.
 
 ---
 
