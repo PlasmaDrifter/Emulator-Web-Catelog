@@ -1842,8 +1842,18 @@ if (saveConfigBtn) {
     }
   });
 }
-// URL param helper for screenshots and direct links: ?settings=appearance|ui|consoles
+// URL param helper for screenshots and direct links: ?settings=appearance|ui|consoles&theme=preset
 const urlParams = new URLSearchParams(window.location.search);
+const autoTheme = urlParams.get('theme');
+if (autoTheme && THEME_PRESETS[autoTheme]) {
+  const preset = THEME_PRESETS[autoTheme];
+  for (const [key, val] of Object.entries(preset)) {
+    if (colorInputs[key]) {
+      colorInputs[key].picker.value = val;
+      colorInputs[key].hex.value = val;
+    }
+  }
+}
 const autoSettingsTab = urlParams.get('settings');
 if (autoSettingsTab) {
   settingsDialog.showModal();
@@ -1859,6 +1869,10 @@ if (autoSettingsTab) {
   } else {
     const tabEl = document.querySelector('[data-tab-target="tabAppearance"]');
     if (tabEl) tabEl.click();
+    if (urlParams.get('scroll_icon')) {
+      const mb = document.querySelector('.modal-body');
+      if (mb) mb.scrollTop = 450;
+    }
   }
   if (urlParams.get('test_error')) {
     showValidationErrorPopup('Console Validation Error', [
