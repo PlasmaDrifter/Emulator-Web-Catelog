@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=3.1">
+<link rel="stylesheet" href="/static/css/style.css?v=3.2">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -21,7 +21,7 @@
   }
 </style>
 </head>
-<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}">
+<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}{% if settings.visibility.show_tab_icons %}show-tab-icons {% endif %}">
 <header>
   <div class="header-brand">
     <img id="headerIcon" src="{{ settings.icon or '/static/favicon.png' }}" class="header-icon" alt="">
@@ -38,12 +38,28 @@
 </header>
 
 <nav class="tabs">
-  <button class="tab active" data-target="all">All</button>
-  <button class="tab" data-target="favorites">Favorites</button>
+  <button class="tab active" data-target="all" data-sys-name="All">
+    <span class="tab-icon"><img src="/static/icons/retro-gamepad.svg" alt=""></span>
+    <span class="tab-label">All</span>
+    <span class="count"></span>
+  </button>
+  <button class="tab" data-target="favorites" data-sys-name="Favorites">
+    <span class="tab-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span>
+    <span class="tab-label">Favorites</span>
+    <span class="count"></span>
+  </button>
   {% for sys_id, sys_data in library.items() %}
-  <button class="tab" data-target="{{ sys_id }}">{{ sys_data.name }} <span class="count">({{ sys_data.games|length }})</span></button>
+  <button class="tab" data-target="{{ sys_id }}" data-sys-name="{{ sys_data.name }}">
+    <span class="tab-icon"></span>
+    <span class="tab-label">{{ sys_data.name }}</span>
+    <span class="count">({{ sys_data.games|length }})</span>
+  </button>
   {% endfor %}
-  <button class="tab" data-target="hidden">Hidden</button>
+  <button class="tab" data-target="hidden" data-sys-name="Hidden">
+    <span class="tab-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg></span>
+    <span class="tab-label">Hidden</span>
+    <span class="count"></span>
+  </button>
 </nav>
 
 <main>
@@ -211,7 +227,23 @@
       <!-- Webpage & Tab Icon -->
       <section class="settings-section">
         <h4>Webpage & Tab Icon</h4>
+
+        <!-- Category Tab Icons Toggle -->
+        <div class="toggle-list" style="margin-bottom: 14px;">
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Show Category Tab Icons</span>
+              <span class="toggle-desc">Automatically match and display console & system icons on navigation tabs</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleTabIcons" {% if settings.visibility.show_tab_icons %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+        </div>
+
         <div class="settings-field">
+          <label>Header & Favicon Icon</label>
           <div class="icon-selector-container">
             <div class="icon-category-tabs" id="iconCatTabs">
               <button type="button" class="icon-cat-btn active" data-cat="all">All</button>
@@ -813,14 +845,101 @@ const visibilityToggles = {
   show_counts: { el: document.getElementById('toggleCounts'), cls: 'hide-counts' },
   show_favorites_tab: { el: document.getElementById('toggleFavoritesTab'), cls: 'hide-favorites-tab' },
   show_hidden_tab: { el: document.getElementById('toggleHiddenTab'), cls: 'hide-hidden-tab' },
-  show_card_hide_buttons: { el: document.getElementById('toggleCardHideButtons'), cls: 'show-hide-controls', invert: true }
+  show_card_hide_buttons: { el: document.getElementById('toggleCardHideButtons'), cls: 'show-hide-controls', invert: true },
+  show_tab_icons: { el: document.getElementById('toggleTabIcons'), cls: 'show-tab-icons', invert: true }
 };
+
+const CONSOLE_ICON_MAP = [
+  // Nintendo
+  { pattern: /switch/i, src: '/static/icons/nintendo-switch.svg' },
+  { pattern: /wii\s*u/i, src: '/static/icons/nintendo-wiiu.svg' },
+  { pattern: /wii/i, src: '/static/icons/nintendo-wii.svg' },
+  { pattern: /gamecube|ngc|\bgc\b/i, src: '/static/icons/nintendo-gamecube.svg' },
+  { pattern: /n64|nintendo\s*64/i, src: '/static/icons/nintendo-n64.svg' },
+  { pattern: /snes|super\s*nintendo|sfc|super\s*famicom/i, src: '/static/icons/nintendo-snes.svg' },
+  { pattern: /nes|famicom/i, src: '/static/icons/nintendo-nes.svg' },
+  { pattern: /gba|game\s*boy\s*advance/i, src: '/static/icons/nintendo-gba.svg' },
+  { pattern: /gbc|game\s*boy\s*color/i, src: '/static/icons/nintendo-gameboy.svg' },
+  { pattern: /game\s*boy|\bgb\b/i, src: '/static/icons/nintendo-gameboy.svg' },
+  { pattern: /3ds/i, src: '/static/icons/nintendo-3ds.svg' },
+  { pattern: /nds|nintendo\s*ds|\bds\b/i, src: '/static/icons/nintendo-ds.svg' },
+  // PlayStation
+  { pattern: /ps5|playstation\s*5/i, src: '/static/icons/playstation-ps5.svg' },
+  { pattern: /ps4|playstation\s*4/i, src: '/static/icons/playstation-ps4.svg' },
+  { pattern: /ps3|playstation\s*3/i, src: '/static/icons/playstation-ps3.svg' },
+  { pattern: /ps2|playstation\s*2/i, src: '/static/icons/playstation-ps2.svg' },
+  { pattern: /ps1|psx|playstation\s*1|playstation/i, src: '/static/icons/playstation-ps1.svg' },
+  { pattern: /psp|playstation\s*portable/i, src: '/static/icons/playstation-psp.svg' },
+  { pattern: /psvita|vita/i, src: '/static/icons/playstation-psvita.svg' },
+  // Xbox
+  { pattern: /xbox\s*360|x360/i, src: '/static/icons/xbox-360.svg' },
+  { pattern: /xbox\s*one|xbone/i, src: '/static/icons/xbox-one.svg' },
+  { pattern: /series\s*[xs]|xbox\s*series/i, src: '/static/icons/xbox-series.svg' },
+  { pattern: /xbox/i, src: '/static/icons/xbox-original.svg' },
+  // Sega
+  { pattern: /dreamcast|\bdc\b/i, src: '/static/icons/sega-dreamcast.svg' },
+  { pattern: /saturn/i, src: '/static/icons/sega-saturn.svg' },
+  { pattern: /genesis|mega\s*drive|\bmd\b/i, src: '/static/icons/sega-genesis.svg' },
+  { pattern: /master\s*system|\bsms\b/i, src: '/static/icons/sega-master-system.svg' },
+  { pattern: /sega\s*cd|mega\s*cd/i, src: '/static/icons/sega-cd.svg' },
+  { pattern: /32x|sega\s*32x/i, src: '/static/icons/sega-32x.svg' },
+  { pattern: /game\s*gear|\bgg\b/i, src: '/static/icons/sega-gamegear.svg' },
+  { pattern: /sega/i, src: '/static/icons/sega-genesis.svg' },
+  // Atari
+  { pattern: /2600|atari\s*2600/i, src: '/static/icons/atari-2600.svg' },
+  { pattern: /5200|atari\s*5200/i, src: '/static/icons/atari-5200.svg' },
+  { pattern: /7800|atari\s*7800/i, src: '/static/icons/atari-7800.svg' },
+  { pattern: /lynx|atari\s*lynx/i, src: '/static/icons/atari-lynx.svg' },
+  { pattern: /jaguar|atari\s*jaguar/i, src: '/static/icons/atari-jaguar.svg' },
+  { pattern: /atari/i, src: '/static/icons/atari-2600.svg' },
+  // Commodore
+  { pattern: /c64|commodore\s*64/i, src: '/static/icons/commodore-64.svg' },
+  { pattern: /amiga/i, src: '/static/icons/commodore-amiga.svg' },
+  { pattern: /vic20|vic-20/i, src: '/static/icons/commodore-vic20.svg' },
+  { pattern: /commodore/i, src: '/static/icons/commodore-64.svg' },
+  // Arcade / Retro
+  { pattern: /neogeo|neo-geo|mvs|aes/i, src: '/static/icons/neogeo.svg' },
+  { pattern: /arcade|mame|fbneo|fba/i, src: '/static/icons/retro-arcade.svg' }
+];
+
+function matchIconForCategory(sysId, sysName) {
+  const text = (sysId + ' ' + (sysName || '')).trim();
+  for (const item of CONSOLE_ICON_MAP) {
+    if (item.pattern.test(text)) {
+      return item.src;
+    }
+  }
+  return '/static/icons/retro-gamepad.svg';
+}
+
+function matchAndPopulateCategoryIcons() {
+  document.querySelectorAll('.tabs .tab').forEach(tab => {
+    const target = tab.dataset.target;
+    const sysName = tab.dataset.sysName || '';
+    const iconSpan = tab.querySelector('.tab-icon');
+    if (!iconSpan) return;
+
+    if (target === 'all') {
+      iconSpan.innerHTML = '<img src="/static/icons/retro-gamepad.svg" alt="" loading="lazy">';
+    } else if (target === 'favorites') {
+      iconSpan.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
+    } else if (target === 'hidden') {
+      iconSpan.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+    } else {
+      const iconSrc = matchIconForCategory(target, sysName);
+      iconSpan.innerHTML = `<img src="${iconSrc}" alt="" loading="lazy">`;
+    }
+  });
+}
 
 function applyLiveTheme() {
   for (const [key, item] of Object.entries(colorInputs)) {
     const val = item.hex.value.trim() || item.picker.value;
     document.documentElement.style.setProperty(item.cssVar, val);
   }
+  const activeTextColor = colorInputs.tab_active_text.hex.value.trim() || colorInputs.tab_active_text.picker.value;
+  const isDarkText = getContrastColor(colorInputs.accent_color.hex.value.trim() || colorInputs.accent_color.picker.value) === '#000000';
+  document.body.classList.toggle('dark-tab-text', isDarkText || activeTextColor === '#000000');
 }
 
 function applyLiveVisibility() {
@@ -1115,7 +1234,13 @@ resetDefaultsBtn.addEventListener('click', () => {
   applyLiveTheme();
 
   for (const [key, item] of Object.entries(visibilityToggles)) {
-    if (item.el) item.el.checked = true;
+    if (item.el) {
+      if (['show_hidden_tab', 'show_card_hide_buttons', 'show_tab_icons'].includes(key)) {
+        item.el.checked = false;
+      } else {
+        item.el.checked = true;
+      }
+    }
   }
   applyLiveVisibility();
   saveAllSettings();
@@ -1744,6 +1869,8 @@ if (autoSettingsTab) {
   }
 }
 
+matchAndPopulateCategoryIcons();
+applyLiveTheme();
 applyFilters();
 </script>
 </body>
