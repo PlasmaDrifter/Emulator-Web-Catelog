@@ -19,5 +19,6 @@ library.json
 
 # Packaging and Standalone builds
 Standalone.app/
+Standalone.app.windows/
 build/
 dist/

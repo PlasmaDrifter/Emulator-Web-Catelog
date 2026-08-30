@@ -34,6 +34,8 @@ def run_server(port):
 
 def setup_desktop_integration(title, icon_path):
     """Register application name, prgname and icons for Wayland and X11."""
+    if sys.platform == 'win32' or os.name == 'nt':
+        return
     try:
         import gi
         gi.require_version('Gtk', '3.0')
