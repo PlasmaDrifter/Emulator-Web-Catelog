@@ -17,7 +17,7 @@ from pathlib import Path
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from PIL import Image
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)

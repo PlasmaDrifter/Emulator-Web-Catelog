@@ -61,10 +61,10 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 
 The packaged standalone desktop app provides a self-contained executable with native desktop windowing and launcher integration. No Python installation is required.
 
-1. Download the latest Linux release bundle (`ROMCat-v0.1.1-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+1. Download the latest Linux release bundle (`ROMCat-v0.1.2-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
 2. Extract the archive:
    ```bash
-   tar -xzf ROMCat-v0.1.1-linux-x86_64.tar.gz
+   tar -xzf ROMCat-v0.1.2-linux-x86_64.tar.gz
    cd Standalone.app
    ```
 3. Run the application directly:
