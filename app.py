@@ -521,30 +521,29 @@ def api_launch():
         return jsonify({"ok": False, "error": "unknown system"}), 400
 
     cleaned_path = str(path).strip().strip('"').strip("'")
-    normalized_path = os.path.normpath(os.path.abspath(os.path.expanduser(cleaned_path)))
+    candidate_path = os.path.normpath(os.path.abspath(os.path.expanduser(cleaned_path)))
 
     folders_cfg = sys_cfg["folder"]
     folders = [folders_cfg] if isinstance(folders_cfg, str) else folders_cfg
-    allowed = False
+    validated_path = None
     for folder_str in folders:
         try:
             clean_f = os.path.normpath(os.path.abspath(os.path.expanduser(str(folder_str).strip().strip('"').strip("'"))))
             safe_prefix = clean_f if clean_f.endswith(os.sep) else clean_f + os.sep
-            if normalized_path.startswith(safe_prefix) or normalized_path == clean_f:
-                allowed = True
-                break
+            if candidate_path.startswith(safe_prefix) or candidate_path == clean_f:
+                if os.path.isfile(candidate_path):
+                    validated_path = candidate_path
+                    break
         except Exception:
             continue
 
-    if not allowed:
-        return jsonify({"ok": False, "error": "path outside configured folder"}), 400
-    if not os.path.isfile(normalized_path):
-        return jsonify({"ok": False, "error": "file not found"}), 404
+    if not validated_path:
+        return jsonify({"ok": False, "error": "file not found or outside configured folder"}), 400
 
     cmd_template = sys_cfg["command"]
     if os.name == "nt":
         # Windows execution (shell=False to prevent command injection)
-        cmd = cmd_template.format(rom=f'"{normalized_path}"')
+        cmd = cmd_template.format(rom=f'"{validated_path}"')
         try:
             subprocess.Popen(
                 shlex.split(cmd, posix=False),
@@ -555,7 +554,7 @@ def api_launch():
             return jsonify({"ok": False, "error": "Emulator launch failed on Windows."}), 500
     else:
         # Linux / Unix execution
-        cmd = cmd_template.format(rom=shlex.quote(normalized_path))
+        cmd = cmd_template.format(rom=shlex.quote(validated_path))
         env = os.environ.copy()
         if "DISPLAY" not in env:
             env["DISPLAY"] = ":0"
