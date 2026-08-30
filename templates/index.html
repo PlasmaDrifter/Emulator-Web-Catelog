@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=3.3">
+<link rel="stylesheet" href="/static/css/style.css?v=4.0">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -15,6 +15,7 @@
     --text-primary: {{ settings.theme.text_primary }};
     --text-muted: {{ settings.theme.text_muted }};
     --accent-color: {{ settings.theme.accent_color }};
+    --accent-contrast: {{ settings.theme.accent_contrast or '#ffffff' }};
     --tab-active-text: {{ settings.theme.tab_active_text or '#ffffff' }};
     --favorite-color: {{ settings.theme.favorite_color }};
     --favorite-star-color: {{ settings.theme.favorite_star_color or '#ffd700' }};
@@ -73,7 +74,7 @@
       {% for game in sys_data.games %}
       <div class="card" data-system="{{ sys_id }}" data-path="{{ game.path }}" data-filename="{{ game.filename }}" data-favorite="{{ 'true' if game.favorite else 'false' }}" data-has-cover="{{ 'true' if game.cover else 'false' }}" data-hidden="{{ 'true' if game.hidden else 'false' }}">
         <button class="star {{ 'active' if game.favorite else '' }}" title="Toggle favorite">&#9733;</button>
-        <button class="hide-toggle {{ 'active' if game.hidden else '' }}" title="{{ 'Unhide game' if game.hidden else 'Hide game' }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg></button>
+        <button class="hide-toggle {{ 'active' if game.hidden else '' }}" title="{{ 'Unhide game' if game.hidden else 'Hide game' }}">{{ 'UNHIDE' if game.hidden else 'HIDE' }}</button>
         <div class="cover">
           {% if game.cover %}
             <img src="{{ game.cover }}" alt="{{ game.title }}" loading="lazy">
@@ -466,17 +467,20 @@
       </details>
     </section>
 
-    <!-- Actions & Status Alert -->
+    <!-- Status Alert -->
     <div id="configStatusAlert" class="config-status-msg"></div>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--border-color); gap: 10px; flex-wrap: wrap;">
-      <button type="button" id="reloadConfigBtn" class="btn-secondary" style="font-size: 0.82rem; padding: 8px 14px;">Reload From Disk</button>
-      <button type="button" id="saveConfigBtn" class="btn-primary" style="padding: 9px 20px; font-weight: 600;">Save & Rescan Library</button>
-    </div>
   </div>
 </div>
-<div class="modal-footer" id="generalModalFooter">
-  <button type="button" id="resetDefaultsBtn" class="btn-danger">Reset to Defaults</button>
-  <button type="button" id="saveSettingsBtn" class="btn-primary">Save & Apply</button>
+
+<div class="modal-footer" id="modalFooter">
+  <div>
+    <button type="button" id="resetDefaultsBtn" class="btn-danger">Reset to Defaults</button>
+    <button type="button" id="reloadConfigBtn" class="btn-secondary hidden">Reload From Disk</button>
+  </div>
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <button type="button" id="closeSettingsModalBtn" class="btn-secondary">Close</button>
+    <button type="button" id="saveSettingsBtn" class="btn-primary">Save</button>
+  </div>
 </div>
 </dialog>
 
@@ -607,6 +611,7 @@ document.querySelectorAll('.hide-toggle').forEach(btn => {
       if (data.ok) {
         card.dataset.hidden = data.hidden ? 'true' : 'false';
         btn.classList.toggle('active', data.hidden);
+        btn.textContent = data.hidden ? 'UNHIDE' : 'HIDE';
         btn.title = data.hidden ? 'Unhide game' : 'Hide game';
         applyFilters();
       }
@@ -813,6 +818,8 @@ const THEME_PRESETS = {
 const settingsDialog = document.getElementById('settingsDialog');
 const settingsBtn = document.getElementById('settingsBtn');
 const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+const closeSettingsModalBtn = document.getElementById('closeSettingsModalBtn');
+const closeConsolesModalBtn = document.getElementById('closeConsolesModalBtn');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
 const catalogTitleInput = document.getElementById('catalogTitleInput');
@@ -937,8 +944,12 @@ function applyLiveTheme() {
     const val = item.hex.value.trim() || item.picker.value;
     document.documentElement.style.setProperty(item.cssVar, val);
   }
+  const accentVal = colorInputs.accent_color.hex.value.trim() || colorInputs.accent_color.picker.value;
+  const accentContrast = getContrastColor(accentVal);
+  document.documentElement.style.setProperty('--accent-contrast', accentContrast);
+
   const activeTextColor = colorInputs.tab_active_text.hex.value.trim() || colorInputs.tab_active_text.picker.value;
-  const isDarkText = getContrastColor(colorInputs.accent_color.hex.value.trim() || colorInputs.accent_color.picker.value) === '#000000';
+  const isDarkText = accentContrast === '#000000';
   document.body.classList.toggle('dark-tab-text', isDarkText || activeTextColor === '#000000');
 }
 
@@ -1146,6 +1157,16 @@ settingsBtn.addEventListener('click', () => {
 closeSettingsBtn.addEventListener('click', () => {
   settingsDialog.close();
 });
+if (closeSettingsModalBtn) {
+  closeSettingsModalBtn.addEventListener('click', () => {
+    settingsDialog.close();
+  });
+}
+if (closeConsolesModalBtn) {
+  closeConsolesModalBtn.addEventListener('click', () => {
+    settingsDialog.close();
+  });
+}
 settingsDialog.addEventListener('click', (e) => {
   if (e.target === settingsDialog) settingsDialog.close();
 });
@@ -1199,23 +1220,30 @@ async function saveAllSettings() {
     if (data.ok) {
       saveSettingsBtn.textContent = 'Saved!';
       setTimeout(() => {
-        saveSettingsBtn.textContent = 'Save & Apply';
+        saveSettingsBtn.textContent = 'Save';
         saveSettingsBtn.disabled = false;
-        settingsDialog.close();
-      }, 700);
+      }, 1200);
     } else {
       alert('Error saving settings: ' + data.error);
-      saveSettingsBtn.textContent = 'Save & Apply';
+      saveSettingsBtn.textContent = 'Save';
       saveSettingsBtn.disabled = false;
     }
   } catch (err) {
     alert('Failed to connect to server: ' + err);
-    saveSettingsBtn.textContent = 'Save & Apply';
+    saveSettingsBtn.textContent = 'Save';
     saveSettingsBtn.disabled = false;
   }
 }
 
-saveSettingsBtn.addEventListener('click', saveAllSettings);
+saveSettingsBtn.addEventListener('click', () => {
+  if (currentSettingsTab === 'tabConsoles') {
+    if (typeof saveConsolesConfig === 'function') {
+      saveConsolesConfig();
+    }
+  } else {
+    saveAllSettings();
+  }
+});
 
 // Reset to Defaults
 resetDefaultsBtn.addEventListener('click', () => {
@@ -1265,6 +1293,7 @@ const tabAppearance = document.getElementById('tabAppearance');
 const tabUI = document.getElementById('tabUI');
 const tabConsoles = document.getElementById('tabConsoles');
 const generalModalFooter = document.getElementById('generalModalFooter');
+const consolesModalFooter = document.getElementById('consolesModalFooter');
 
 const steamgriddbApiKeyInput = document.getElementById('steamgriddbApiKeyInput');
 const toggleApiKeyVisibilityBtn = document.getElementById('toggleApiKeyVisibilityBtn');
@@ -1299,26 +1328,32 @@ if (closeCommandHelpBtn && commandHelpBox) {
   });
 }
 
+let currentSettingsTab = 'tabAppearance';
+
 modalNavTabs.forEach(tab => {
   tab.addEventListener('click', () => {
     modalNavTabs.forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     const target = tab.dataset.tabTarget;
+    currentSettingsTab = target;
     if (target === 'tabAppearance') {
       tabAppearance.classList.remove('hidden');
       tabUI.classList.add('hidden');
       tabConsoles.classList.add('hidden');
-      if (generalModalFooter) generalModalFooter.style.display = 'flex';
+      if (resetDefaultsBtn) resetDefaultsBtn.classList.remove('hidden');
+      if (reloadConfigBtn) reloadConfigBtn.classList.add('hidden');
     } else if (target === 'tabUI') {
       tabAppearance.classList.add('hidden');
       tabUI.classList.remove('hidden');
       tabConsoles.classList.add('hidden');
-      if (generalModalFooter) generalModalFooter.style.display = 'flex';
+      if (resetDefaultsBtn) resetDefaultsBtn.classList.remove('hidden');
+      if (reloadConfigBtn) reloadConfigBtn.classList.add('hidden');
     } else {
       tabAppearance.classList.add('hidden');
       tabUI.classList.add('hidden');
       tabConsoles.classList.remove('hidden');
-      if (generalModalFooter) generalModalFooter.style.display = 'none';
+      if (resetDefaultsBtn) resetDefaultsBtn.classList.add('hidden');
+      if (reloadConfigBtn) reloadConfigBtn.classList.remove('hidden');
       loadConfigData();
     }
   });
@@ -1489,10 +1524,51 @@ function renderSystemCard(sysId, sysData) {
     idBadge.textContent = idInput.value.trim().toLowerCase() || 'unassigned';
   });
 
-  removeBtn.addEventListener('click', () => {
+  removeBtn.addEventListener('click', async () => {
     const displayName = nameInput.value.trim() || idInput.value.trim() || 'this console';
-    if (confirm(`Remove console definition for "${displayName}"?`)) {
-      card.remove();
+    if (!confirm(`Remove console definition for "${displayName}"?`)) return;
+
+    card.remove();
+
+    const remainingCards = systemsListContainer ? systemsListContainer.querySelectorAll('.system-config-card') : [];
+    if (remainingCards.length === 0 && systemsListContainer) {
+      systemsListContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; margin: 6px 0;">No consoles configured yet. Click "+ Add Console" above to define your first emulator system.</p>';
+    }
+
+    const configObj = collectConfigFromForm();
+    if (Object.keys(configObj.systems || {}).length > 0) {
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ config: configObj })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          if (yamlConfigEditor && data.raw_yaml) {
+            yamlConfigEditor.value = data.raw_yaml;
+          }
+          if (configStatusAlert) {
+            configStatusAlert.className = 'config-status-msg success';
+            configStatusAlert.textContent = `Console "${displayName}" removed and config.yaml updated!`;
+            configStatusAlert.style.display = 'block';
+          }
+        } else {
+          if (configStatusAlert) {
+            configStatusAlert.className = 'config-status-msg error';
+            configStatusAlert.textContent = data.error || 'Failed to update config.yaml';
+            configStatusAlert.style.display = 'block';
+          }
+        }
+      } catch (e) {
+        console.error('Failed to save config after removing console', e);
+      }
+    } else {
+      if (configStatusAlert) {
+        configStatusAlert.className = 'config-status-msg';
+        configStatusAlert.textContent = `Console "${displayName}" removed. Add a new console or edit raw YAML to save.`;
+        configStatusAlert.style.display = 'block';
+      }
     }
   });
 
@@ -1751,96 +1827,98 @@ if (syncYamlToFormBtn && yamlConfigEditor) {
   });
 }
 
-if (saveConfigBtn) {
-  saveConfigBtn.addEventListener('click', async () => {
-    configStatusAlert.className = 'config-status-msg';
-    configStatusAlert.style.display = 'none';
+async function saveConsolesConfig() {
+  configStatusAlert.className = 'config-status-msg';
+  configStatusAlert.style.display = 'none';
 
-    try {
-      let payload;
-      if (advancedYamlDetails && advancedYamlDetails.open) {
-        const raw = yamlConfigEditor.value.trim();
-        if (!raw) {
-          showValidationErrorPopup('YAML Validation Error', ['Configuration cannot be empty. Please enter valid YAML.'], 'YAML syntax error:');
-          return;
-        }
-        payload = { raw_yaml: raw };
-      } else {
-        // Validate visual form cards
-        const cards = systemsListContainer ? systemsListContainer.querySelectorAll('.system-config-card') : [];
-        if (cards.length === 0) {
-          showValidationErrorPopup('Console Validation Error', ['Please click "+ Add Console" to configure at least one console before saving.'], 'No consoles defined:');
-          return;
-        }
-
-        const errors = [];
-        cards.forEach((card, idx) => {
-          const name = card.querySelector('.sys-name-input').value.trim();
-          const folder = card.querySelector('.sys-folder-input').value.trim();
-          const exts = card.querySelector('.sys-exts-input').value.trim();
-          const cmd = card.querySelector('.sys-cmd-input').value.trim();
-          const label = name ? `Console "${name}"` : `Console #${idx + 1}`;
-
-          if (!name) {
-            errors.push(`${label}: Display Name is required.`);
-          }
-          if (!folder) {
-            errors.push(`${label}: ROM folder path is required.`);
-          }
-          if (!exts) {
-            errors.push(`${label}: Allowed file extensions are required (e.g. .zip, .iso).`);
-          }
-          if (!cmd) {
-            errors.push(`${label}: Emulator launch command is required.`);
-          } else if (!cmd.includes('{rom}')) {
-            errors.push(`${label}: Launch command must include the '{rom}' token.`);
-          }
-        });
-
-        if (errors.length > 0) {
-          showValidationErrorPopup('Console Configuration Error', errors, 'Please correct the following issues before saving:');
-          return;
-        }
-
-        const configObj = collectConfigFromForm();
-        payload = { config: configObj };
+  try {
+    let payload;
+    if (advancedYamlDetails && advancedYamlDetails.open) {
+      const raw = yamlConfigEditor.value.trim();
+      if (!raw) {
+        showValidationErrorPopup('YAML Validation Error', ['Configuration cannot be empty. Please enter valid YAML.'], 'YAML syntax error:');
+        return;
+      }
+      payload = { raw_yaml: raw };
+    } else {
+      // Validate visual form cards
+      const cards = systemsListContainer ? systemsListContainer.querySelectorAll('.system-config-card') : [];
+      if (cards.length === 0) {
+        showValidationErrorPopup('Console Validation Error', ['Please click "+ Add Console" to configure at least one console before saving.'], 'No consoles defined:');
+        return;
       }
 
-      saveConfigBtn.textContent = 'Saving & Rescanning...';
-      saveConfigBtn.disabled = true;
+      const errors = [];
+      cards.forEach((card, idx) => {
+        const name = card.querySelector('.sys-name-input').value.trim();
+        const folder = card.querySelector('.sys-folder-input').value.trim();
+        const exts = card.querySelector('.sys-exts-input').value.trim();
+        const cmd = card.querySelector('.sys-cmd-input').value.trim();
+        const label = name ? `Console "${name}"` : `Console #${idx + 1}`;
 
-      const res = await fetch('/api/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        if (!name) {
+          errors.push(`${label}: Display Name is required.`);
+        }
+        if (!folder) {
+          errors.push(`${label}: ROM folder path is required.`);
+        }
+        if (!exts) {
+          errors.push(`${label}: Allowed file extensions are required (e.g. .zip, .iso).`);
+        }
+        if (!cmd) {
+          errors.push(`${label}: Emulator launch command is required.`);
+        } else if (!cmd.includes('{rom}')) {
+          errors.push(`${label}: Launch command must include the '{rom}' token.`);
+        }
       });
-      const data = await res.json();
-      if (data.ok) {
-        configStatusAlert.className = 'config-status-msg success';
-        configStatusAlert.textContent = 'Configuration saved and library rescanned successfully! Refreshing dashboard...';
-        configStatusAlert.style.display = 'block';
-        saveConfigBtn.textContent = 'Saved!';
-        setTimeout(() => {
-          location.reload();
-        }, 1200);
-      } else {
-        saveConfigBtn.textContent = 'Save & Rescan Library';
-        saveConfigBtn.disabled = false;
-        const errList = data.errors || [data.error || 'Failed to save configuration'];
-        showValidationErrorPopup('Configuration Validation Error', errList, 'Server rejected the configuration:');
-        configStatusAlert.className = 'config-status-msg error';
-        configStatusAlert.textContent = data.error || 'Failed to save configuration';
-        configStatusAlert.style.display = 'block';
+
+      if (errors.length > 0) {
+        showValidationErrorPopup('Console Configuration Error', errors, 'Please correct the following issues before saving:');
+        return;
       }
-    } catch (err) {
-      saveConfigBtn.textContent = 'Save & Rescan Library';
-      saveConfigBtn.disabled = false;
-      showValidationErrorPopup('Error', [err.message], 'An error occurred while communicating with the server:');
+
+      const configObj = collectConfigFromForm();
+      payload = { config: configObj };
+    }
+
+    saveSettingsBtn.textContent = 'Saving...';
+    saveSettingsBtn.disabled = true;
+
+    const res = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      if (yamlConfigEditor && data.raw_yaml) {
+        yamlConfigEditor.value = data.raw_yaml;
+      }
+      configStatusAlert.className = 'config-status-msg success';
+      configStatusAlert.textContent = 'Configuration saved and library rescanned successfully!';
+      configStatusAlert.style.display = 'block';
+      saveSettingsBtn.textContent = 'Saved!';
+      setTimeout(() => {
+        saveSettingsBtn.textContent = 'Save';
+        saveSettingsBtn.disabled = false;
+      }, 1200);
+    } else {
+      saveSettingsBtn.textContent = 'Save';
+      saveSettingsBtn.disabled = false;
+      const errList = data.errors || [data.error || 'Failed to save configuration'];
+      showValidationErrorPopup('Configuration Validation Error', errList, 'Server rejected the configuration:');
       configStatusAlert.className = 'config-status-msg error';
-      configStatusAlert.textContent = 'Error: ' + err.message;
+      configStatusAlert.textContent = data.error || 'Failed to save configuration';
       configStatusAlert.style.display = 'block';
     }
-  });
+  } catch (err) {
+    saveSettingsBtn.textContent = 'Save';
+    saveSettingsBtn.disabled = false;
+    showValidationErrorPopup('Error', [err.message], 'An error occurred while communicating with the server:');
+    configStatusAlert.className = 'config-status-msg error';
+    configStatusAlert.textContent = 'Error: ' + err.message;
+    configStatusAlert.style.display = 'block';
+  }
 }
 // URL param helper for screenshots and direct links: ?settings=appearance|ui|consoles&theme=preset
 const urlParams = new URLSearchParams(window.location.search);
@@ -1882,9 +1960,17 @@ if (autoSettingsTab) {
     ], 'Please correct the following fields before saving:');
   }
 }
+if (urlParams.get('test_hide')) {
+  const chb = document.getElementById('toggleCardHideButtons');
+  if (chb) chb.checked = true;
+  document.body.classList.add('show-hide-controls');
+}
 
 matchAndPopulateCategoryIcons();
 applyLiveTheme();
+if (urlParams.get('test_hide')) {
+  document.body.classList.add('show-hide-controls');
+}
 applyFilters();
 </script>
 </body>

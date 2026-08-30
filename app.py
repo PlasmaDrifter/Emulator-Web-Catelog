@@ -5,6 +5,7 @@ native emulators (not in-browser emulation). Runs on the same machine as
 your emulators; browser is just the remote control.
 """
 import os
+import sys
 import re
 import io
 import ujson as json  # <-- This tells Python to use the ultra-fast parser everywhere
@@ -16,10 +17,18 @@ from pathlib import Path
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from PIL import Image
 
-BASE_DIR = Path(__file__).resolve().parent
+__version__ = "0.1.0"
+
+if getattr(sys, "frozen", False):
+    BUNDLE_DIR = Path(sys._MEIPASS)
+    BASE_DIR = Path(sys.executable).resolve().parent
+else:
+    BUNDLE_DIR = Path(__file__).resolve().parent
+    BASE_DIR = BUNDLE_DIR
+
 CONFIG_PATH = BASE_DIR / "config.yaml"
-CONFIG_EXAMPLE_PATH = BASE_DIR / "config.example.yaml"
-COVERS_DIR = BASE_DIR / "static" / "covers"
+CONFIG_EXAMPLE_PATH = BUNDLE_DIR / "config.example.yaml"
+COVERS_DIR = BASE_DIR / "covers" if getattr(sys, "frozen", False) else BASE_DIR / "static" / "covers"
 FAVORITES_PATH = BASE_DIR / "favorites.json"
 HIDDEN_PATH = BASE_DIR / "hidden.json"
 LIBRARY_CACHE_PATH = BASE_DIR / "library.json"
@@ -52,20 +61,42 @@ DEFAULT_SETTINGS = {
     }
 }
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=str(BUNDLE_DIR / "templates"),
+    static_folder=str(BUNDLE_DIR / "static")
+)
 
 # Global memory cache for library metadata
 _library_cache = None
 
 
+def get_contrast_color(hex_color: str) -> str:
+    if not hex_color:
+        return "#ffffff"
+    clean = hex_color.lstrip("#")
+    if len(clean) == 3:
+        clean = "".join(c + c for c in clean)
+    if len(clean) != 6:
+        return "#ffffff"
+    try:
+        r, g, b = int(clean[0:2], 16), int(clean[2:4], 16), int(clean[4:6], 16)
+        yiq = (r * 299 + g * 587 + b * 114) / 1000
+        return "#000000" if yiq >= 140 else "#ffffff"
+    except Exception:
+        return "#ffffff"
+
+
 def load_settings() -> dict:
     if not SETTINGS_PATH.exists():
-        return {
+        settings = {
             "title": DEFAULT_SETTINGS["title"],
             "icon": DEFAULT_SETTINGS["icon"],
             "theme": dict(DEFAULT_SETTINGS["theme"]),
             "visibility": dict(DEFAULT_SETTINGS["visibility"]),
         }
+        settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
+        return settings
     try:
         data = json.loads(SETTINGS_PATH.read_text())
         settings = {
@@ -83,14 +114,17 @@ def load_settings() -> dict:
                 settings["theme"].update(data["theme"])
             if "visibility" in data and isinstance(data["visibility"], dict):
                 settings["visibility"].update(data["visibility"])
+        settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
         return settings
     except Exception:
-        return {
+        settings = {
             "title": DEFAULT_SETTINGS["title"],
             "icon": DEFAULT_SETTINGS["icon"],
             "theme": dict(DEFAULT_SETTINGS["theme"]),
             "visibility": dict(DEFAULT_SETTINGS["visibility"]),
         }
+        settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
+        return settings
 
 
 def save_settings(settings: dict):
@@ -345,11 +379,15 @@ def favicon():
     )
 
 
-@app.route("/api/rescan")
+@app.route("/api/rescan", methods=["GET", "POST"])
 def api_rescan():
+    global _library_cache
+    _library_cache = None
     library_data = scan_library()
     save_library_cache(library_data)
-    return jsonify(library_data)
+    resp = {"ok": True, "library": library_data}
+    resp.update(library_data)
+    return jsonify(resp)
 
 
 @app.route("/api/favorite", methods=["POST"])
@@ -661,13 +699,18 @@ def api_save_config():
         _library_cache = None
         library = scan_library()
         save_library_cache(library)
-        return jsonify({"ok": True, "config": parsed, "library": library})
+        return jsonify({"ok": True, "config": parsed, "raw_yaml": raw_yaml, "library": library})
     except Exception as e:
         return jsonify({"ok": False, "error": f"YAML Error: {str(e)}"}), 400
 
 
 @app.route('/static/covers/<path:filename>')
 def serve_covers(filename):
+    if (COVERS_DIR / filename).exists():
+        return send_from_directory(COVERS_DIR, filename)
+    bundled_covers = BUNDLE_DIR / "static" / "covers"
+    if (bundled_covers / filename).exists():
+        return send_from_directory(bundled_covers, filename)
     return send_from_directory(COVERS_DIR, filename)
 
 
