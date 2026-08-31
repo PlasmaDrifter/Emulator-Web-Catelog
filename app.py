@@ -50,7 +50,10 @@ DEFAULT_SETTINGS = {
         "favorite_star_color": "#ffd700",
         "text_primary": "#e8e8e8",
         "text_muted": "#9aa4b2",
-        "border_color": "#2a2e37"
+        "border_color": "#2a2e37",
+        "font_family": "system-ui",
+        "custom_font_family": "",
+        "font_size": "14px"
     },
     "custom_themes": {},
     "visibility": {
