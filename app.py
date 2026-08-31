@@ -52,6 +52,7 @@ DEFAULT_SETTINGS = {
         "text_muted": "#9aa4b2",
         "border_color": "#2a2e37"
     },
+    "custom_themes": {},
     "visibility": {
         "show_search": True,
         "show_counts": True,
@@ -95,6 +96,7 @@ def load_settings() -> dict:
             "title": DEFAULT_SETTINGS["title"],
             "icon": DEFAULT_SETTINGS["icon"],
             "theme": dict(DEFAULT_SETTINGS["theme"]),
+            "custom_themes": dict(DEFAULT_SETTINGS["custom_themes"]),
             "visibility": dict(DEFAULT_SETTINGS["visibility"]),
         }
         settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
@@ -105,6 +107,7 @@ def load_settings() -> dict:
             "title": DEFAULT_SETTINGS["title"],
             "icon": DEFAULT_SETTINGS["icon"],
             "theme": dict(DEFAULT_SETTINGS["theme"]),
+            "custom_themes": dict(DEFAULT_SETTINGS["custom_themes"]),
             "visibility": dict(DEFAULT_SETTINGS["visibility"]),
         }
         if isinstance(data, dict):
@@ -114,6 +117,8 @@ def load_settings() -> dict:
                 settings["icon"] = str(data["icon"])
             if "theme" in data and isinstance(data["theme"], dict):
                 settings["theme"].update(data["theme"])
+            if "custom_themes" in data and isinstance(data["custom_themes"], dict):
+                settings["custom_themes"] = data["custom_themes"]
             if "visibility" in data and isinstance(data["visibility"], dict):
                 settings["visibility"].update(data["visibility"])
         settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
@@ -123,6 +128,7 @@ def load_settings() -> dict:
             "title": DEFAULT_SETTINGS["title"],
             "icon": DEFAULT_SETTINGS["icon"],
             "theme": dict(DEFAULT_SETTINGS["theme"]),
+            "custom_themes": dict(DEFAULT_SETTINGS["custom_themes"]),
             "visibility": dict(DEFAULT_SETTINGS["visibility"]),
         }
         settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
@@ -390,11 +396,59 @@ def api_settings():
             settings["icon"] = str(data["icon"]).strip() or DEFAULT_SETTINGS["icon"]
         if "theme" in data and isinstance(data["theme"], dict):
             settings["theme"].update(data["theme"])
+        if "custom_themes" in data and isinstance(data["custom_themes"], dict):
+            settings["custom_themes"] = data["custom_themes"]
         if "visibility" in data and isinstance(data["visibility"], dict):
             settings["visibility"].update(data["visibility"])
         save_settings(settings)
         return jsonify({"ok": True, "settings": settings})
     return jsonify(load_settings())
+
+
+@app.route("/api/theme/save", methods=["POST"])
+def api_save_theme():
+    data = request.get_json(force=True)
+    if not isinstance(data, dict):
+        return jsonify({"ok": False, "error": "invalid payload"}), 400
+    name = str(data.get("name") or "").strip()
+    theme_colors = data.get("theme")
+    if not name:
+        return jsonify({"ok": False, "error": "Theme name is required"}), 400
+    if len(name) > 40:
+        name = name[:40]
+    if not isinstance(theme_colors, dict):
+        return jsonify({"ok": False, "error": "Invalid theme color data"}), 400
+
+    settings = load_settings()
+    if "custom_themes" not in settings or not isinstance(settings["custom_themes"], dict):
+        settings["custom_themes"] = {}
+
+    clean_theme = {}
+    for k, v in theme_colors.items():
+        if isinstance(v, str) and (re.match(r"^#[0-9A-Fa-f]{6}$", v.strip()) or len(v.strip()) <= 20):
+            clean_theme[str(k)[:30]] = str(v).strip()
+
+    settings["custom_themes"][name] = clean_theme
+    save_settings(settings)
+    return jsonify({"ok": True, "name": name, "custom_themes": settings["custom_themes"]})
+
+
+@app.route("/api/theme/delete", methods=["POST"])
+def api_delete_theme():
+    data = request.get_json(force=True)
+    if not isinstance(data, dict):
+        return jsonify({"ok": False, "error": "invalid payload"}), 400
+    name = str(data.get("name") or "").strip()
+    if not name:
+        return jsonify({"ok": False, "error": "Theme name is required"}), 400
+
+    settings = load_settings()
+    if "custom_themes" in settings and isinstance(settings["custom_themes"], dict):
+        if name in settings["custom_themes"]:
+            del settings["custom_themes"][name]
+            save_settings(settings)
+            return jsonify({"ok": True, "custom_themes": settings["custom_themes"]})
+    return jsonify({"ok": False, "error": "Theme not found"}), 404
 
 
 @app.route("/api/upload_icon", methods=["POST"])

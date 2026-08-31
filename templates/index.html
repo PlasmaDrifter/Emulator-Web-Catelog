@@ -121,7 +121,7 @@
       <!-- Theme Presets -->
       <section class="settings-section">
         <h4>Theme Presets</h4>
-        <div class="preset-grid">
+        <div class="preset-grid" id="builtInPresetGrid">
           <button type="button" class="preset-btn" data-preset="default">
             <span class="preset-swatch" style="background: linear-gradient(135deg, #14161a 50%, #3a7bd5 50%);"></span>
             Default Dark
@@ -147,11 +147,30 @@
             Emerald
           </button>
         </div>
+
+        <!-- Custom Saved Themes -->
+        <div class="custom-themes-header" style="margin-top: 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Saved Custom Themes</span>
+          <span id="savedThemesCount" style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.8;"></span>
+        </div>
+        <div class="preset-grid" id="customThemesGrid"></div>
       </section>
 
       <!-- Custom Colors -->
       <section class="settings-section">
         <h4>Custom Colors</h4>
+
+        <div class="save-theme-box">
+          <div class="save-theme-row">
+            <input type="text" id="customThemeNameInput" class="theme-name-input" placeholder="Name your theme (e.g. Synthwave Pink)" maxlength="32">
+            <button type="button" class="btn btn-primary btn-save-theme" id="saveThemePresetBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              Save Theme
+            </button>
+          </div>
+          <div id="saveThemeMsg" class="save-theme-msg"></div>
+        </div>
+
         <div class="color-picker-grid">
           <div class="color-picker-row">
             <span>Body Background</span>
@@ -1089,9 +1108,154 @@ for (const [key, item] of Object.entries(colorInputs)) {
   });
 }
 
+// --- Custom Saved Themes Management ---
+let customThemes = {{ (settings.custom_themes or {}) | tojson }};
+const customThemesGrid = document.getElementById('customThemesGrid');
+const savedThemesCount = document.getElementById('savedThemesCount');
+const customThemeNameInput = document.getElementById('customThemeNameInput');
+const saveThemePresetBtn = document.getElementById('saveThemePresetBtn');
+const saveThemeMsg = document.getElementById('saveThemeMsg');
+
+function showSaveThemeMessage(msg, isSuccess = true) {
+  if (!saveThemeMsg) return;
+  saveThemeMsg.textContent = msg;
+  saveThemeMsg.className = 'save-theme-msg ' + (isSuccess ? 'success' : 'error');
+  saveThemeMsg.style.display = 'block';
+  setTimeout(() => {
+    if (saveThemeMsg) saveThemeMsg.style.display = 'none';
+  }, 3500);
+}
+
+function renderCustomThemes() {
+  if (!customThemesGrid) return;
+  customThemesGrid.innerHTML = '';
+  const entries = Object.entries(customThemes || {});
+  if (savedThemesCount) {
+    savedThemesCount.textContent = entries.length > 0 ? `(${entries.length})` : '';
+  }
+
+  if (entries.length === 0) {
+    const emptyDiv = document.createElement('div');
+    emptyDiv.className = 'custom-themes-empty';
+    emptyDiv.textContent = 'No custom themes saved yet. Pick colors below and click "Save Theme"!';
+    customThemesGrid.appendChild(emptyDiv);
+    return;
+  }
+
+  entries.forEach(([name, colors]) => {
+    const btn = document.createElement('div');
+    btn.className = 'custom-preset-btn';
+    btn.dataset.themeName = name;
+
+    const swatch = document.createElement('span');
+    swatch.className = 'preset-swatch';
+    const bg = colors.bg_body || '#14161a';
+    const accent = colors.accent_color || '#3a7bd5';
+    swatch.style.background = `linear-gradient(135deg, ${bg} 50%, ${accent} 50%)`;
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'theme-name-text';
+    nameSpan.textContent = name;
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'theme-delete-btn';
+    delBtn.title = `Delete theme "${name}"`;
+    delBtn.setAttribute('aria-label', `Delete theme ${name}`);
+    delBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+
+    delBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm(`Are you sure you want to delete the theme "${name}"?`)) return;
+      try {
+        const res = await fetch('/api/theme/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+        if (data.ok && data.custom_themes) {
+          customThemes = data.custom_themes;
+          renderCustomThemes();
+          showSaveThemeMessage(`Theme "${name}" deleted.`, true);
+        } else {
+          showSaveThemeMessage(data.error || 'Failed to delete theme.', false);
+        }
+      } catch (err) {
+        showSaveThemeMessage('Network error deleting theme: ' + err, false);
+      }
+    });
+
+    btn.appendChild(swatch);
+    btn.appendChild(nameSpan);
+    btn.appendChild(delBtn);
+
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.preset-btn, .custom-preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      for (const [key, val] of Object.entries(colors)) {
+        if (colorInputs[key]) {
+          colorInputs[key].picker.value = val;
+          colorInputs[key].hex.value = val;
+        }
+      }
+      applyLiveTheme();
+    });
+
+    customThemesGrid.appendChild(btn);
+  });
+}
+
+if (saveThemePresetBtn && customThemeNameInput) {
+  saveThemePresetBtn.addEventListener('click', async () => {
+    const name = customThemeNameInput.value.trim();
+    if (!name) {
+      showSaveThemeMessage('Please enter a theme name.', false);
+      customThemeNameInput.focus();
+      return;
+    }
+
+    const theme = {};
+    for (const [key, item] of Object.entries(colorInputs)) {
+      theme[key] = item.hex.value.trim() || item.picker.value;
+    }
+
+    saveThemePresetBtn.disabled = true;
+    try {
+      const res = await fetch('/api/theme/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, theme })
+      });
+      const data = await res.json();
+      if (data.ok && data.custom_themes) {
+        customThemes = data.custom_themes;
+        renderCustomThemes();
+        customThemeNameInput.value = '';
+        showSaveThemeMessage(`Theme "${name}" saved!`, true);
+      } else {
+        showSaveThemeMessage(data.error || 'Failed to save theme.', false);
+      }
+    } catch (err) {
+      showSaveThemeMessage('Network error saving theme: ' + err, false);
+    } finally {
+      saveThemePresetBtn.disabled = false;
+    }
+  });
+
+  customThemeNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveThemePresetBtn.click();
+    }
+  });
+}
+
 // Bind Preset Buttons
 document.querySelectorAll('.preset-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    document.querySelectorAll('.preset-btn, .custom-preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
     const presetKey = btn.dataset.preset;
     const preset = THEME_PRESETS[presetKey];
     if (!preset) return;
@@ -1249,6 +1413,7 @@ if (iconFileInput) {
 }
 
 renderIconGrid('all');
+renderCustomThemes();
 
 // Refresh & Rescan
 if (refreshBtn) {
@@ -1315,7 +1480,7 @@ async function saveAllSettings() {
     const res = await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, icon, theme, visibility })
+      body: JSON.stringify({ title, icon, theme, custom_themes: customThemes, visibility })
     });
     const data = await res.json();
 
