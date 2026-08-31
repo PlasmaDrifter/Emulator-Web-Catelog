@@ -249,10 +249,9 @@ def get_sort_title(title: str) -> str:
 
 def safe_key(system: str, filename: str) -> str:
     """Filesystem-safe cache key for a rom's cover image."""
-    safe_sys = secure_filename(str(system))
-    safe_fn = secure_filename(Path(filename).stem)
-    key = f"{safe_sys}_{safe_fn}"
-    clean_k = re.sub(r"[^a-zA-Z0-9_\-]", "_", key).strip("_")
+    stem = Path(filename).stem
+    key = f"{system}_{stem}"
+    clean_k = re.sub(r"[^a-zA-Z0-9_\-]", "_", key)
     return clean_k or "cover"
 
 
