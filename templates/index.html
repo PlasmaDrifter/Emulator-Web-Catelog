@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/style.css?v=4.1">
+<link rel="stylesheet" href="/static/css/style.css?v=4.0">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -22,8 +19,6 @@
     --tab-active-text: {{ settings.theme.tab_active_text or '#ffffff' }};
     --favorite-color: {{ settings.theme.favorite_color }};
     --favorite-star-color: {{ settings.theme.favorite_star_color or '#ffd700' }};
-    --font-family: {% if settings.theme.font_family == 'inter' %}"Inter", system-ui, -apple-system, sans-serif{% elif settings.theme.font_family == 'ubuntu' %}"Ubuntu", "Segoe UI", Roboto, sans-serif{% elif settings.theme.font_family == 'trebuchet' %}"Trebuchet MS", "Lucida Sans Unicode", sans-serif{% elif settings.theme.font_family == 'mono' %}ui-monospace, "JetBrains Mono", "Fira Code", monospace{% elif settings.theme.font_family == 'pixel' %}"Press Start 2P", "Courier New", monospace{% elif settings.theme.font_family == 'serif' %}Georgia, Cambria, "Times New Roman", serif{% elif settings.theme.font_family == 'custom' and settings.theme.custom_font_family %}{{ settings.theme.custom_font_family }}, sans-serif{% else %}-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif{% endif %};
-    --font-size-base: {{ settings.theme.font_size or '14px' }};
   }
 </style>
 </head>
@@ -240,57 +235,6 @@
               <input type="text" class="color-hex" id="hexTextMuted" value="{{ settings.theme.text_muted }}">
             </div>
           </div>
-        </div>
-      </section>
-
-      <!-- Typography & Font Size -->
-      <section class="settings-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h4 style="margin: 0;">Typography & Font Size</h4>
-          <button type="button" class="btn btn-secondary" id="resetTypographyBtn" style="padding: 4px 10px; font-size: 0.76rem;">Reset Fonts</button>
-        </div>
-
-        <div class="typography-settings-grid">
-          <!-- Font Family Selector -->
-          <div class="settings-field">
-            <label for="fontFamilySelect">Font Family</label>
-            <div class="font-select-wrapper">
-              <select id="fontFamilySelect" class="form-select">
-                <option value="system-ui" {% if settings.theme.font_family == 'system-ui' or not settings.theme.font_family %}selected{% endif %}>System Default (Clean UI)</option>
-                <option value="inter" {% if settings.theme.font_family == 'inter' %}selected{% endif %}>Inter / Modern Sans</option>
-                <option value="ubuntu" {% if settings.theme.font_family == 'ubuntu' %}selected{% endif %}>Ubuntu / Humanist Sans</option>
-                <option value="trebuchet" {% if settings.theme.font_family == 'trebuchet' %}selected{% endif %}>Trebuchet / Geometric</option>
-                <option value="mono" {% if settings.theme.font_family == 'mono' %}selected{% endif %}>Monospace / Terminal</option>
-                <option value="pixel" {% if settings.theme.font_family == 'pixel' %}selected{% endif %}>Pixel / Retro Arcade</option>
-                <option value="serif" {% if settings.theme.font_family == 'serif' %}selected{% endif %}>Editorial Serif</option>
-                <option value="custom" {% if settings.theme.font_family == 'custom' %}selected{% endif %}>Custom Font...</option>
-              </select>
-            </div>
-            <input type="text" id="customFontFamilyInput" class="theme-name-input" placeholder="Custom font family (e.g. 'Fira Code', 'Comic Sans MS')" value="{{ settings.theme.custom_font_family or '' }}" style="margin-top: 8px; {% if settings.theme.font_family != 'custom' %}display: none;{% endif %}">
-          </div>
-
-          <!-- Base Font Size Selector & Slider -->
-          <div class="settings-field">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label for="fontSizeRange" style="margin-bottom: 0;">Font Size</label>
-              <span id="fontSizeDisplay" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-color);">{{ settings.theme.font_size or '14px' }}</span>
-            </div>
-            <div class="font-size-controls">
-              <div class="font-size-presets">
-                <button type="button" class="btn-size-preset" data-size="12px">Small (12px)</button>
-                <button type="button" class="btn-size-preset" data-size="14px">Default (14px)</button>
-                <button type="button" class="btn-size-preset" data-size="16px">Medium (16px)</button>
-                <button type="button" class="btn-size-preset" data-size="18px">Large (18px)</button>
-              </div>
-              <input type="range" id="fontSizeRange" min="11" max="22" step="1" value="{{ (settings.theme.font_size or '14px') | replace('px', '') }}" class="font-size-slider">
-            </div>
-          </div>
-        </div>
-
-        <!-- Live Font Preview Box -->
-        <div class="font-preview-box" id="fontPreviewBox">
-          <div class="font-preview-title">Super Mario 64 • The Legend of Zelda</div>
-          <div class="font-preview-sub">128 Games Available • RetroArch (Mupen64Plus)</div>
         </div>
       </section>
 
@@ -1085,6 +1029,52 @@ function matchAndPopulateCategoryIcons() {
   });
 }
 
+function updateActivePresetState() {
+  const current = {};
+  for (const [key, item] of Object.entries(colorInputs)) {
+    current[key] = (item.hex.value.trim() || item.picker.value).toLowerCase();
+  }
+
+  let matchedElement = null;
+
+  // Check built-in presets
+  for (const [pKey, pColors] of Object.entries(THEME_PRESETS)) {
+    let match = true;
+    for (const [cKey, cVal] of Object.entries(pColors)) {
+      if (current[cKey] !== cVal.toLowerCase()) {
+        match = false;
+        break;
+      }
+    }
+    if (match) {
+      matchedElement = document.querySelector(`.preset-btn[data-preset="${pKey}"]`);
+      break;
+    }
+  }
+
+  // Check custom themes if not matched
+  if (!matchedElement && typeof customThemes === 'object' && customThemes) {
+    for (const [tName, tColors] of Object.entries(customThemes)) {
+      let match = true;
+      for (const [cKey, cVal] of Object.entries(tColors)) {
+        if (current[cKey] !== (cVal || '').toLowerCase()) {
+          match = false;
+          break;
+        }
+      }
+      if (match) {
+        matchedElement = document.querySelector(`.custom-preset-btn[data-theme-name="${tName}"]`);
+        break;
+      }
+    }
+  }
+
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  if (matchedElement) {
+    matchedElement.classList.add('active');
+  }
+}
+
 function applyLiveTheme() {
   for (const [key, item] of Object.entries(colorInputs)) {
     const val = item.hex.value.trim() || item.picker.value;
@@ -1097,6 +1087,8 @@ function applyLiveTheme() {
   const activeTextColor = colorInputs.tab_active_text.hex.value.trim() || colorInputs.tab_active_text.picker.value;
   const isDarkText = accentContrast === '#000000';
   document.body.classList.toggle('dark-tab-text', isDarkText || activeTextColor === '#000000');
+
+  updateActivePresetState();
 }
 
 function ensureValidActiveTab() {
@@ -1242,6 +1234,7 @@ function renderCustomThemes() {
 
     themePresetsGrid.appendChild(btn);
   });
+  updateActivePresetState();
 }
 
 if (saveThemePresetBtn && customThemeNameInput) {
@@ -1306,82 +1299,6 @@ document.querySelectorAll('.preset-btn').forEach(btn => {
     applyLiveTheme();
   });
 });
-
-// --- Typography & Font Size Management ---
-const fontFamilySelect = document.getElementById('fontFamilySelect');
-const customFontFamilyInput = document.getElementById('customFontFamilyInput');
-const fontSizeRange = document.getElementById('fontSizeRange');
-const fontSizeDisplay = document.getElementById('fontSizeDisplay');
-const fontPreviewBox = document.getElementById('fontPreviewBox');
-
-const FONT_MAP = {
-  'system-ui': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  'inter': '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-  'ubuntu': '"Ubuntu", "Segoe UI", Roboto, -apple-system, sans-serif',
-  'trebuchet': '"Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", sans-serif',
-  'mono': 'ui-monospace, "JetBrains Mono", "Fira Code", SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-  'pixel': '"Press Start 2P", "Courier New", Courier, monospace',
-  'serif': 'Georgia, Cambria, "Times New Roman", Times, serif',
-  'custom': ''
-};
-
-function applyLiveFont() {
-  const selectedKey = fontFamilySelect ? fontFamilySelect.value : 'system-ui';
-  let fontVal = FONT_MAP[selectedKey] || FONT_MAP['system-ui'];
-  if (selectedKey === 'custom' && customFontFamilyInput) {
-    const customVal = customFontFamilyInput.value.trim();
-    if (customVal) fontVal = `${customVal}, sans-serif`;
-    customFontFamilyInput.style.display = 'block';
-  } else if (customFontFamilyInput) {
-    customFontFamilyInput.style.display = 'none';
-  }
-
-  const sizeVal = fontSizeRange ? `${fontSizeRange.value}px` : '14px';
-  if (fontSizeDisplay) fontSizeDisplay.textContent = sizeVal;
-
-  document.documentElement.style.setProperty('--font-family', fontVal);
-  document.documentElement.style.setProperty('--font-size-base', sizeVal);
-
-  if (fontPreviewBox) {
-    fontPreviewBox.style.fontFamily = fontVal;
-  }
-
-  document.querySelectorAll('.btn-size-preset').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.size === sizeVal);
-  });
-}
-
-if (fontFamilySelect) {
-  fontFamilySelect.addEventListener('change', applyLiveFont);
-}
-if (customFontFamilyInput) {
-  customFontFamilyInput.addEventListener('input', applyLiveFont);
-}
-if (fontSizeRange) {
-  fontSizeRange.addEventListener('input', applyLiveFont);
-}
-document.querySelectorAll('.btn-size-preset').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const size = parseInt(btn.dataset.size);
-    if (fontSizeRange) {
-      fontSizeRange.value = size;
-      applyLiveFont();
-    }
-  });
-});
-
-const resetTypographyBtn = document.getElementById('resetTypographyBtn');
-if (resetTypographyBtn) {
-  resetTypographyBtn.addEventListener('click', () => {
-    if (fontFamilySelect) fontFamilySelect.value = 'system-ui';
-    if (customFontFamilyInput) {
-      customFontFamilyInput.value = '';
-      customFontFamilyInput.style.display = 'none';
-    }
-    if (fontSizeRange) fontSizeRange.value = 14;
-    applyLiveFont();
-  });
-}
 
 // Bind Live Title & Visibility
 catalogTitleInput.addEventListener('input', applyLiveTitle);
@@ -1528,7 +1445,6 @@ if (iconFileInput) {
 
 renderIconGrid('all');
 renderCustomThemes();
-applyLiveFont();
 
 // Refresh & Rescan
 if (refreshBtn) {
@@ -1581,9 +1497,6 @@ async function saveAllSettings() {
   for (const [key, item] of Object.entries(colorInputs)) {
     theme[key] = item.hex.value.trim() || item.picker.value;
   }
-  theme.font_family = fontFamilySelect ? fontFamilySelect.value : 'system-ui';
-  theme.custom_font_family = customFontFamilyInput ? customFontFamilyInput.value.trim() : '';
-  theme.font_size = fontSizeRange ? `${fontSizeRange.value}px` : '14px';
 
   const visibility = {};
   for (const [key, item] of Object.entries(visibilityToggles)) {
@@ -1668,13 +1581,6 @@ resetDefaultsBtn.addEventListener('click', () => {
     }
   }
   applyLiveTheme();
-  if (fontFamilySelect) fontFamilySelect.value = 'system-ui';
-  if (customFontFamilyInput) {
-    customFontFamilyInput.value = '';
-    customFontFamilyInput.style.display = 'none';
-  }
-  if (fontSizeRange) fontSizeRange.value = 14;
-  applyLiveFont();
 
   for (const [key, item] of Object.entries(visibilityToggles)) {
     if (item.el) {
