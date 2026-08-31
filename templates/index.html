@@ -1124,8 +1124,9 @@ function renderCustomThemes() {
 
   const entries = Object.entries(customThemes || {});
   entries.forEach(([name, colors]) => {
-    const btn = document.createElement('div');
-    btn.className = 'custom-preset-btn';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'preset-btn custom-preset-btn';
     btn.dataset.themeName = name;
 
     const swatch = document.createElement('span');

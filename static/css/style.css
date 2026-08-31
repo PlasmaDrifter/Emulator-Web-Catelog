@@ -475,7 +475,7 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 8px;
 }
-.preset-btn, .custom-preset-btn {
+.preset-btn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -484,27 +484,32 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
   border-radius: 6px;
   padding: 8px 10px;
   color: var(--text-primary);
+  font-family: inherit;
   font-size: 0.8rem;
+  font-weight: 500;
+  line-height: normal;
   text-align: left;
   cursor: pointer;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 38px;
   transition: border-color 0.15s, box-shadow 0.15s;
   position: relative;
-  overflow: hidden;
 }
-.preset-btn:hover, .custom-preset-btn:hover {
+.preset-btn:hover {
   border-color: var(--accent-color);
 }
-.preset-btn.active, .custom-preset-btn.active {
+.preset-btn.active {
   border-color: var(--accent-color);
   box-shadow: 0 0 0 1px var(--accent-color);
 }
-.custom-preset-btn .theme-name-text {
+.preset-btn .theme-name-text {
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.custom-preset-btn .theme-delete-btn {
+.preset-btn .theme-delete-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -519,10 +524,10 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
   margin-left: auto;
   flex-shrink: 0;
 }
-.custom-preset-btn .theme-delete-btn:hover {
+.preset-btn .theme-delete-btn:hover {
   opacity: 1;
   color: #ff5555;
-  background: rgba(255, 85, 85, 0.15);
+  background: rgba(255, 85, 85, 0.18);
 }
 .preset-swatch {
   width: 14px;
