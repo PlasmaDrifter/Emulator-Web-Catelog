@@ -4,7 +4,10 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=4.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css?v=4.1">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -242,7 +245,10 @@
 
       <!-- Typography & Font Size -->
       <section class="settings-section">
-        <h4>Typography & Font Size</h4>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h4 style="margin: 0;">Typography & Font Size</h4>
+          <button type="button" class="btn btn-secondary" id="resetTypographyBtn" style="padding: 4px 10px; font-size: 0.76rem;">Reset Fonts</button>
+        </div>
 
         <div class="typography-settings-grid">
           <!-- Font Family Selector -->
@@ -1364,6 +1370,19 @@ document.querySelectorAll('.btn-size-preset').forEach(btn => {
   });
 });
 
+const resetTypographyBtn = document.getElementById('resetTypographyBtn');
+if (resetTypographyBtn) {
+  resetTypographyBtn.addEventListener('click', () => {
+    if (fontFamilySelect) fontFamilySelect.value = 'system-ui';
+    if (customFontFamilyInput) {
+      customFontFamilyInput.value = '';
+      customFontFamilyInput.style.display = 'none';
+    }
+    if (fontSizeRange) fontSizeRange.value = 14;
+    applyLiveFont();
+  });
+}
+
 // Bind Live Title & Visibility
 catalogTitleInput.addEventListener('input', applyLiveTitle);
 for (const [key, item] of Object.entries(visibilityToggles)) {
@@ -1649,6 +1668,13 @@ resetDefaultsBtn.addEventListener('click', () => {
     }
   }
   applyLiveTheme();
+  if (fontFamilySelect) fontFamilySelect.value = 'system-ui';
+  if (customFontFamilyInput) {
+    customFontFamilyInput.value = '';
+    customFontFamilyInput.style.display = 'none';
+  }
+  if (fontSizeRange) fontSizeRange.value = 14;
+  applyLiveFont();
 
   for (const [key, item] of Object.entries(visibilityToggles)) {
     if (item.el) {

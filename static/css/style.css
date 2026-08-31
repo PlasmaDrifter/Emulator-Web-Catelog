@@ -14,10 +14,12 @@
 }
 
 * { box-sizing: border-box; }
+html {
+  font-size: var(--font-size-base, 14px);
+}
 body {
   margin: 0;
   font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
-  font-size: var(--font-size-base, 14px);
   background: var(--bg-body);
   color: var(--text-primary);
   transition: background-color 0.2s ease, color 0.2s ease;
