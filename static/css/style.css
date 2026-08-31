@@ -373,7 +373,10 @@ body.hide-favorites-tab .tab[data-target="favorites"] { display: none !important
 body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
 
 /* Settings Modal & UI */
-.settings-dialog {
+.settings-dialog,
+.validation-dialog,
+.scan-modal {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
   background: var(--bg-header);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
@@ -387,6 +390,32 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
   outline: none;
   z-index: 100;
   box-sizing: border-box;
+}
+
+.settings-dialog button,
+.settings-dialog input,
+.settings-dialog select,
+.settings-dialog textarea,
+.validation-dialog button,
+.validation-dialog input,
+.validation-dialog select,
+.validation-dialog textarea {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+/* Ensure code blocks inside modals keep their monospace font */
+.settings-dialog pre,
+.settings-dialog code,
+.settings-dialog .code-block,
+.validation-dialog pre,
+.validation-dialog code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+/* Live Font Preview Sample Box retains the selected custom font */
+.settings-dialog #fontPreviewBox,
+.settings-dialog #fontPreviewBox * {
+  font-family: var(--font-family) !important;
 }
 .settings-dialog:not([open]) {
   display: none !important;
