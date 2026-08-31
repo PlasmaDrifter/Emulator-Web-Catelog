@@ -15,17 +15,34 @@
 
 * { box-sizing: border-box; }
 html {
-  font-size: var(--font-size-base, 14px);
+  font-size: 14px;
 }
 body {
   margin: 0;
-  font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg-body);
   color: var(--text-primary);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-button, input, select, textarea {
+/* Main Catalog Area scales with selected font & font size */
+header,
+nav.tabs,
+main,
+#contextMenu,
+#appFooter {
+  font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: var(--font-size-base, 14px);
+}
+
+header button,
+header input,
+nav.tabs button,
+main button,
+main input,
+.card,
+.game-title,
+.game-system {
   font-family: inherit;
 }
 
@@ -43,7 +60,7 @@ header {
 }
 header h1 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.3em;
   letter-spacing: 0.02em;
   color: var(--text-primary);
 }
