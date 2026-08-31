@@ -647,20 +647,26 @@ def fetch_one_cover(api_key: str, title: str, key: str) -> bool:
         img_resp = requests.get(image_url, timeout=15)
         img_resp.raise_for_status()
 
-        covers_resolved = str(COVERS_DIR.resolve())
-        out_path = os.path.normpath(os.path.join(covers_resolved, f"{key}.jpg"))
-        if os.path.commonpath([covers_resolved, out_path]) != covers_resolved:
+        safe_name = secure_filename(f"{key}.jpg")
+        if not safe_name:
+            return False
+
+        covers_dir = COVERS_DIR.resolve()
+        out_path = covers_dir / safe_name
+        if not str(out_path.resolve()).startswith(str(covers_dir)):
             return False
 
         for old_ext in (".jpg", ".jpeg", ".png"):
-            old_path = os.path.normpath(os.path.join(covers_resolved, f"{key}{old_ext}"))
-            if os.path.commonpath([covers_resolved, old_path]) == covers_resolved and os.path.exists(old_path):
-                try:
-                    os.unlink(old_path)
-                except Exception:
-                    pass
+            old_safe = secure_filename(f"{key}{old_ext}")
+            if old_safe:
+                old_file = covers_dir / old_safe
+                if str(old_file.resolve()).startswith(str(covers_dir)) and old_file.is_file():
+                    try:
+                        old_file.unlink()
+                    except Exception:
+                        pass
 
-        return compress_and_save_image(img_resp.content, out_path)
+        return compress_and_save_image(img_resp.content, str(out_path))
     except Exception:
         return False
 
@@ -738,14 +744,25 @@ def api_fetch_covers():
                 img_resp = requests.get(image_url, timeout=15)
                 img_resp.raise_for_status()
 
-                for old_ext in (".jpg", ".jpeg", ".png"):
-                    old_path = COVERS_DIR / f"{game['key']}{old_ext}"
-                    if old_path.exists():
-                        old_path.unlink()
+                safe_key_name = secure_filename(game['key'])
+                if not safe_key_name:
+                    failed += 1
+                    continue
 
-                out_path = COVERS_DIR / f"{game['key']}.jpg"
-                if compress_and_save_image(img_resp.content, out_path):
-                    game["cover"] = f"/static/covers/{game['key']}.jpg"
+                covers_dir = COVERS_DIR.resolve()
+                for old_ext in (".jpg", ".jpeg", ".png"):
+                    old_safe = secure_filename(f"{safe_key_name}{old_ext}")
+                    if old_safe:
+                        old_file = covers_dir / old_safe
+                        if str(old_file.resolve()).startswith(str(covers_dir)) and old_file.is_file():
+                            try:
+                                old_file.unlink()
+                            except Exception:
+                                pass
+
+                out_path = covers_dir / f"{safe_key_name}.jpg"
+                if str(out_path.resolve()).startswith(str(covers_dir)) and compress_and_save_image(img_resp.content, str(out_path)):
+                    game["cover"] = f"/static/covers/{safe_key_name}.jpg"
                     fetched += 1
                 else:
                     failed += 1
