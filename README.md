@@ -8,10 +8,10 @@
 
 ## About
 
-**ROMcat** is a fast, lightweight catalog and launcher for your retro and modern ROM collection. It can be run in two primary ways:
+**ROMcat** is a fast, lightweight catalog and launcher for your retro and modern ROM collection that runs directly in your web browser. It can be run in two primary ways:
 
-- **Standalone Desktop Application**: Download the pre-packaged app to run ROMcat as a dedicated, self-contained desktop window with native desktop integration (Wayland and X11 app icon and launcher support)—no Python setup or terminal commands required.
 - **Always-Ready Web Service**: Run ROMcat as a persistent background service (or local web server) accessible in your web browser (`http://localhost:8420`) ready to launch games instantly whenever your system boots.
+- **Standalone Desktop Application**: Download the pre-packaged app to run ROMcat as a dedicated, self-contained desktop window with native desktop integration (Wayland and X11 app icon and launcher support)—no Python setup or terminal commands required.
 
 ROMcat provides an interactive dashboard with automated cover art scraping, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, or native binaries), and customizable themes.
 
