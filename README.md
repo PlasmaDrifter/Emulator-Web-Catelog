@@ -10,8 +10,8 @@
 
 **ROMcat** is a fast, lightweight catalog and launcher for your retro and modern ROM collection that runs directly in your web browser. It can be run in two primary ways:
 
-- **Always-Ready Web Service**: Run ROMcat as a persistent background service (or local web server) accessible in your web browser (`http://localhost:8420`) ready to launch games instantly whenever your system boots.
-- **Standalone Desktop Application**: Download the pre-packaged app to run ROMcat as a dedicated, self-contained desktop window with native desktop integration (Wayland and X11 app icon and launcher support)—no Python setup or terminal commands required.
+- **Always-Ready Web Service (Recommended for Linux)**: Run ROMcat as a persistent background service (or local web server) accessible in your web browser (`http://localhost:8420`) ready to launch games instantly whenever your system boots.
+- **Standalone Desktop Application (Recommended for Windows)**: Download the pre-packaged app to run ROMcat as a dedicated, self-contained desktop window with native desktop integration (Wayland, X11, and Windows)—no Python setup or terminal commands required.
 
 ROMcat provides an interactive dashboard with automated cover art scraping, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, or native binaries), and customizable themes.
 
@@ -57,7 +57,7 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 
 ## Ways to Run ROMcat
 
-### Option 1: Always-On Background Web Service
+### Option 1: Always-On Background Web Service (Recommended for Linux)
 
 Run ROMcat as a persistent background service so your catalog is always loaded, instantly accessible, and ready to launch games whenever your computer boots. Simply bookmark `http://localhost:8420` in your web browser and open it anytime.
 
@@ -104,9 +104,9 @@ journalctl --user -u romcat.service -f
 
 ---
 
-### Option 2: Standalone Desktop App (Self-Contained Executable)
+### Option 2: Standalone Desktop App (Recommended for Windows & Desktop Setups)
 
-The packaged standalone desktop app provides a self-contained executable with native desktop windowing and launcher integration. No Python installation is required.
+The packaged standalone desktop app provides a self-contained executable with native desktop windowing and launcher integration. No Python installation or command-line setup is required (ideal for Windows users).
 
 1. Download the latest Linux release bundle (`ROMCat-v0.1.5-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
 2. Extract the archive:
