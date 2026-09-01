@@ -57,7 +57,7 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 
 ## Ways to Run ROMcat
 
-### Option 1: Always-On Background Web Service (Recommended)
+### Option 1: Always-On Background Web Service
 
 Run ROMcat as a persistent background service so your catalog is always loaded, instantly accessible, and ready to launch games whenever your computer boots. Simply bookmark `http://localhost:8420` in your web browser and open it anytime.
 
