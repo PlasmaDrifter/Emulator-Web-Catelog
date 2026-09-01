@@ -57,34 +57,9 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 
 ## Ways to Run ROMcat
 
-### Option 1: Standalone Desktop App (Recommended for Desktop Users)
+### Option 1: Always-On Background Web Service (Recommended)
 
-The packaged standalone desktop app provides a self-contained executable with native desktop windowing and launcher integration. No Python installation is required.
-
-1. Download the latest Linux release bundle (`ROMCat-v0.1.5-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
-2. Extract the archive:
-   ```bash
-   tar -xzf ROMCat-v0.1.5-linux-x86_64.tar.gz
-   cd Standalone.app
-   ```
-3. Run the application directly:
-   ```bash
-   ./ROMCat
-   ```
-4. *(Optional)* Install the Desktop Launcher and Icon into your desktop environment:
-   ```bash
-   mkdir -p ~/.local/share/applications ~/.local/share/icons/hicolor/256x256/apps
-   cp icon.png ~/.local/share/icons/hicolor/256x256/apps/romcat.png
-   sed -i "s|Exec=.*|Exec=\"$(pwd)/ROMCat\"|" ROMCat.desktop
-   cp ROMCat.desktop ~/.local/share/applications/
-   update-desktop-database ~/.local/share/applications/
-   ```
-
----
-
-### Option 2: Always-On Background Service (Systemd)
-
-To keep ROMcat running automatically in the background so your catalog is always loaded, ready, and accessible at `http://localhost:8420` whenever your computer starts:
+Run ROMcat as a persistent background service so your catalog is always loaded, instantly accessible, and ready to launch games whenever your computer boots. Simply bookmark `http://localhost:8420` in your web browser and open it anytime.
 
 1. Clone the repository and install dependencies:
    ```bash
@@ -115,17 +90,42 @@ To keep ROMcat running automatically in the background so your catalog is always
    systemctl --user daemon-reload
    systemctl --user enable --now romcat.service
    ```
-4. Open your browser and navigate to:
+4. Open your browser, bookmark the URL, and navigate to:
    ```text
    http://localhost:8420
    ```
-   *(Or access from any device on your local network using `http://<your-ip>:8420`).*
+   *(Bookmark this address in your browser to access your game catalog instantly anytime, or connect from any device on your local network using `http://<your-ip>:8420`).*
 
 To check service status or view logs:
 ```bash
 systemctl --user status romcat.service
 journalctl --user -u romcat.service -f
 ```
+
+---
+
+### Option 2: Standalone Desktop App (Self-Contained Executable)
+
+The packaged standalone desktop app provides a self-contained executable with native desktop windowing and launcher integration. No Python installation is required.
+
+1. Download the latest Linux release bundle (`ROMCat-v0.1.5-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+2. Extract the archive:
+   ```bash
+   tar -xzf ROMCat-v0.1.5-linux-x86_64.tar.gz
+   cd Standalone.app
+   ```
+3. Run the application directly:
+   ```bash
+   ./ROMCat
+   ```
+4. *(Optional)* Install the Desktop Launcher and Icon into your desktop environment:
+   ```bash
+   mkdir -p ~/.local/share/applications ~/.local/share/icons/hicolor/256x256/apps
+   cp icon.png ~/.local/share/icons/hicolor/256x256/apps/romcat.png
+   sed -i "s|Exec=.*|Exec=\"$(pwd)/ROMCat\"|" ROMCat.desktop
+   cp ROMCat.desktop ~/.local/share/applications/
+   update-desktop-database ~/.local/share/applications/
+   ```
 
 ---
 
