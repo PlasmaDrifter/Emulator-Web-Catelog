@@ -20,22 +20,22 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 ## Screenshots
 
 ### Main Dashboard
-![ROM Catalog Dashboard](screenshots/catalog.png?raw=true&v=4)
+![ROM Catalog Dashboard](screenshots/catalog.png?raw=true&v=5)
 
 ### Theme Presets (Loop)
-![ROMcat Themes Animated Preview](screenshots/themes_preview.gif?raw=true&v=2)
+![ROMcat Themes Animated Preview](screenshots/themes_preview.gif?raw=true&v=3)
 
 ### Settings: Appearance Tab
-![Settings Appearance Tab](screenshots/settings_appearance.png?raw=true&v=4)
+![Settings Appearance Tab](screenshots/settings_appearance.png?raw=true&v=5)
 
 ### Settings: UI Tab
-![Settings UI Tab](screenshots/settings_ui.png?raw=true&v=4)
+![Settings UI Tab](screenshots/settings_ui.png?raw=true&v=5)
 
 ### Settings: Consoles & Emulators Tab
-![Settings Consoles & Emulators Tab](screenshots/settings_consoles.png?raw=true&v=4)
+![Settings Consoles & Emulators Tab](screenshots/settings_consoles.png?raw=true&v=5)
 
 ### Settings: Interactive Command Guide
-![Settings Command Guide](screenshots/settings_consoles_help.png?raw=true&v=4)
+![Settings Command Guide](screenshots/settings_consoles_help.png?raw=true&v=5)
 
 ---
 
