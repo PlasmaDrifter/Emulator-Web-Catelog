@@ -1,10 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <g transform="translate(10, 10) scale(0.8)">
-    <path d="M20 75V25l25 15v50L20 75z" fill="#22c55e"/>
-    <path d="M45 40l35-20v50l-35 20V40z" fill="#3b82f6"/>
-    <path d="M20 25l35-15 25 10-35 20L20 25z" fill="#dc2626"/>
-    <path d="M45 40l35 20-25 15-35-20 25-15z" fill="#eab308"/>
-    <path d="M55 10v50l25 15V20L55 10z" fill="#16a34a"/>
-    <path d="M20 75l35-20v50L20 75z" fill="#2563eb"/>
-  </g>
+  <!-- Controller Body -->
+  <path d="M 26 21
+           C 34 17, 66 17, 74 21
+           C 87 23, 94 33, 94 44
+           C 94 56, 88 74, 82 86
+           C 79 91, 71 90, 68 84
+           C 64 74, 62 58, 59 46
+           C 58 56, 57 78, 55 92
+           C 54 96, 46 96, 45 92
+           C 43 78, 42 56, 41 46
+           C 38 58, 36 74, 32 84
+           C 29 90, 21 91, 18 86
+           C 12 74, 6 56, 6 44
+           C 6 33, 13 23, 26 21 Z"
+        fill="#d1d5db" stroke="#374151" stroke-width="3.5" stroke-linejoin="round"/>
+
+  <!-- D-Pad (Left) -->
+  <circle cx="24" cy="38" r="11" fill="#9ca3af" opacity="0.5"/>
+  <path d="M 24 30 v 16 M 16 38 h 16" stroke="#1f2937" stroke-width="4.5" stroke-linecap="square"/>
+
+  <!-- Red Start Button (Center-Top) -->
+  <circle cx="50" cy="31" r="4" fill="#dc2626"/>
+
+  <!-- Analog Stick (Center) -->
+  <circle cx="50" cy="47" r="9" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
+  <circle cx="50" cy="47" r="5.5" fill="#e5e7eb" stroke="#374151" stroke-width="1.5"/>
+  <circle cx="50" cy="47" r="1.8" fill="#4b5563"/>
+
+  <!-- A & B Buttons (Right) -->
+  <circle cx="64" cy="46" r="4" fill="#16a34a"/>
+  <circle cx="72" cy="54" r="4" fill="#2563eb"/>
+
+  <!-- C Buttons (Yellow Diamond) -->
+  <circle cx="81" cy="31" r="2.5" fill="#eab308"/>
+  <circle cx="74" cy="38" r="2.5" fill="#eab308"/>
+  <circle cx="88" cy="38" r="2.5" fill="#eab308"/>
+  <circle cx="81" cy="45" r="2.5" fill="#eab308"/>
 </svg>

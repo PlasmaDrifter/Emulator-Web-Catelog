@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=4.0">
+<link rel="stylesheet" href="/static/css/style.css?v=4.3">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -46,7 +46,7 @@
     <span class="count"></span>
   </button>
   <button class="tab" data-target="favorites" data-sys-name="Favorites">
-    <span class="tab-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span>
+    <span class="tab-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span>
     <span class="tab-label">Favorites</span>
     <span class="count"></span>
   </button>
@@ -54,11 +54,11 @@
   <button class="tab" data-target="{{ sys_id }}" data-sys-name="{{ sys_data.name }}">
     <span class="tab-icon"></span>
     <span class="tab-label">{{ sys_data.name }}</span>
-    <span class="count">({{ sys_data.games|length }})</span>
+    <span class="count">{{ sys_data.games|length }}</span>
   </button>
   {% endfor %}
   <button class="tab" data-target="hidden" data-sys-name="Hidden">
-    <span class="tab-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg></span>
+    <span class="tab-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg></span>
     <span class="tab-label">Hidden</span>
     <span class="count"></span>
   </button>
@@ -785,11 +785,11 @@ function applyFilters() {
     }
 
     if (countSpan) {
-      if (target === 'all') countSpan.textContent = ` (${totalVisible})`;
-      else if (target === 'favorites') countSpan.textContent = ` (${favoritesVisible})`;
-      else if (target === 'hidden') countSpan.textContent = ` (${hiddenVisible})`;
+      if (target === 'all') countSpan.textContent = totalVisible;
+      else if (target === 'favorites') countSpan.textContent = favoritesVisible;
+      else if (target === 'hidden') countSpan.textContent = hiddenVisible;
       else if (systemCounts[target] !== undefined) {
-        countSpan.textContent = ` (${systemCounts[target]})`;
+        countSpan.textContent = systemCounts[target];
       }
     }
   });
@@ -952,7 +952,7 @@ const CONSOLE_ICON_MAP = [
   { pattern: /wii\s*u/i, src: '/static/icons/nintendo-wiiu.svg' },
   { pattern: /wii/i, src: '/static/icons/nintendo-wii.svg' },
   { pattern: /gamecube|ngc|\bgc\b/i, src: '/static/icons/nintendo-gamecube.svg' },
-  { pattern: /n64|nintendo\s*64/i, src: '/static/icons/nintendo-n64.svg' },
+  { pattern: /n64|nintendo\s*64/i, src: '/static/icons/nintendo-n64.svg?v=2' },
   { pattern: /snes|super\s*nintendo|sfc|super\s*famicom/i, src: '/static/icons/nintendo-snes.svg' },
   { pattern: /nes|famicom/i, src: '/static/icons/nintendo-nes.svg' },
   { pattern: /gba|game\s*boy\s*advance/i, src: '/static/icons/nintendo-gba.svg' },
@@ -1019,9 +1019,9 @@ function matchAndPopulateCategoryIcons() {
     if (target === 'all') {
       iconSpan.innerHTML = '<img src="/static/icons/retro-gamepad.svg" alt="" loading="lazy">';
     } else if (target === 'favorites') {
-      iconSpan.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
+      iconSpan.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
     } else if (target === 'hidden') {
-      iconSpan.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+      iconSpan.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
     } else {
       const iconSrc = matchIconForCategory(target, sysName);
       iconSpan.innerHTML = `<img src="${iconSrc}" alt="" loading="lazy">`;

@@ -95,41 +95,59 @@ button.icon-btn.spinning svg {
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 .tab {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text-muted);
-  border: 2px solid var(--accent-color);
-  border-radius: 999px;
-  padding: 5px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 5px 12px;
   cursor: pointer;
   font-size: 0.85rem;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  gap: 8px;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
 }
-.tab:hover { background: var(--bg-card); color: var(--text-primary); }
+.tab:hover {
+  background: var(--bg-card);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text-primary);
+}
 .tab.active {
-  background: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 22%, var(--bg-card));
   border-color: var(--accent-color);
   color: var(--tab-active-text);
   font-weight: 600;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent-color) 20%, transparent);
+}
+.tab.active:hover {
+  background: color-mix(in srgb, var(--accent-color) 28%, var(--bg-card));
+  border-color: var(--accent-color);
+  color: var(--tab-active-text);
 }
 .tab .tab-icon {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 .tab .tab-icon img {
   width: 18px;
   height: 18px;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
+  display: block;
 }
 .tab .tab-icon svg {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
 }
 .tab[data-target="favorites"] .tab-icon svg {
   color: var(--favorite-star-color, #ffd700);
@@ -137,7 +155,36 @@ button.icon-btn.spinning svg {
 body.show-tab-icons .tab .tab-icon {
   display: inline-flex;
 }
-.tab .count { color: inherit; opacity: 0.75; }
+.tab .count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  margin-left: 1px;
+  letter-spacing: 0.01em;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.tab .count:empty {
+  display: none;
+}
+.tab:hover .count {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-primary);
+}
+.tab.active .count {
+  background: color-mix(in srgb, var(--accent-color) 35%, rgba(255, 255, 255, 0.08));
+  color: var(--tab-active-text);
+}
+body.dark-tab-text .tab.active .count {
+  background: color-mix(in srgb, var(--accent-color) 25%, rgba(0, 0, 0, 0.12));
+  color: inherit;
+}
 
 .search-box {
   display: flex;
