@@ -108,10 +108,10 @@ journalctl --user -u romcat.service -f
 
 The packaged standalone desktop app provides a self-contained executable with native desktop windowing and launcher integration. No Python installation or command-line setup is required (ideal for Windows users).
 
-1. Download the latest Linux release bundle (`ROMCat-v0.1.5-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+1. Download the latest Linux release bundle (`ROMCat-v0.1.6-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
 2. Extract the archive:
    ```bash
-   tar -xzf ROMCat-v0.1.5-linux-x86_64.tar.gz
+   tar -xzf ROMCat-v0.1.6-linux-x86_64.tar.gz
    cd Standalone.app
    ```
 3. Run the application directly:
