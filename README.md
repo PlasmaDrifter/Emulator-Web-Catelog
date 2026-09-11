@@ -250,17 +250,30 @@ If your emulators are installed via Flatpak, use `flatpak run <Application-ID> {
 | **GBA** | mGBA | `flatpak run io.mgba.mGBA {rom}` |
 | **PSP** | PPSSPP | `flatpak run org.ppsspp.PPSSPP {rom}` |
 
-#### 2. Native Binaries & AppImages
+#### 2. Standalone Binaries & AppImages (e.g. `~/Applications/`)
 
-For standalone binaries or AppImages located in your system or applications directory:
+For standalone executables or AppImages kept in your user directories (such as `~/Applications/`, `~/AppImages/`, or `~/.local/bin/`), point directly to the full path of the executable.
+
+> [!TIP]
+> **Zero Environment Setup Required**: ROMcat automatically discovers your active desktop environment (`WAYLAND_DISPLAY`, `DISPLAY`, `XAUTHORITY`, `DBUS_SESSION_BUS_ADDRESS`) and automatically launches emulator binaries inside an independent user session scope (`systemd-run --user --scope`). You do **not** need to manually prefix commands with `env DISPLAY=...`.
 
 ```yaml
 Switch:
   name: "Switch"
   folder: "/path/to/roms/Switch/"
   extensions: [".nsp", ".xci"]
-  command: "env DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 /path/to/emulator/binary -g {rom}"
+  command: "/home/user/Applications/Eden -g {rom}"
 ```
+
+Common standalone and AppImage examples:
+
+| System | Emulator / Binary | Example Command in `config.yaml` |
+|---|---|---|
+| **Nintendo Switch** | Eden (AppImage / Binary) | `/home/user/Applications/Eden -g {rom}` |
+| **PlayStation 3** | RPCS3 (AppImage) | `/home/user/Applications/RPCS3.AppImage {rom}` |
+| **Nintendo Switch** | Ryujinx | `/home/user/Applications/Ryujinx/Ryujinx {rom}` |
+| **PlayStation 2** | PCSX2 (AppImage) | `/home/user/Applications/pcsx2.AppImage {rom}` |
+| **Nintendo 3DS** | Citra / Lime3DS | `/home/user/Applications/lime3ds {rom}` |
 
 #### 3. RetroArch with Libretro Cores
 
