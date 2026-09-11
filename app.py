@@ -602,12 +602,30 @@ def api_launch():
         # Linux / Unix execution
         cmd = cmd_template.format(rom=shlex.quote(matched_path))
         env = os.environ.copy()
+        uid = os.getuid() if hasattr(os, "getuid") else 1000
+        runtime_dir = f"/run/user/{uid}"
+
+        if "XDG_RUNTIME_DIR" not in env:
+            env["XDG_RUNTIME_DIR"] = runtime_dir
+        if "DBUS_SESSION_BUS_ADDRESS" not in env and os.path.exists(f"{runtime_dir}/bus"):
+            env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={runtime_dir}/bus"
         if "DISPLAY" not in env:
             env["DISPLAY"] = ":0"
-        if "WAYLAND_DISPLAY" not in env:
+        if "WAYLAND_DISPLAY" not in env and os.path.exists(f"{runtime_dir}/wayland-0"):
             env["WAYLAND_DISPLAY"] = "wayland-0"
-        if "XDG_RUNTIME_DIR" not in env and hasattr(os, "getuid"):
-            env["XDG_RUNTIME_DIR"] = f"/run/user/{os.getuid()}"
+
+        if "XAUTHORITY" not in env:
+            home_xauth = os.path.expanduser("~/.Xauthority")
+            if os.path.exists(home_xauth):
+                env["XAUTHORITY"] = home_xauth
+            elif os.path.isdir(runtime_dir):
+                try:
+                    for entry in os.listdir(runtime_dir):
+                        if entry.startswith("xauth_"):
+                            env["XAUTHORITY"] = os.path.join(runtime_dir, entry)
+                            break
+                except Exception:
+                    pass
 
         try:
             subprocess.Popen(
