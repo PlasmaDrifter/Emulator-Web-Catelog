@@ -13,6 +13,7 @@ import shlex
 import subprocess
 import yaml
 import requests
+import shutil
 from pathlib import Path
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
@@ -627,9 +628,13 @@ def api_launch():
                 except Exception:
                     pass
 
+        args = shlex.split(cmd)
+        if shutil.which("systemd-run") and os.path.exists(f"{runtime_dir}/bus"):
+            args = ["systemd-run", "--user", "--scope", "--quiet"] + args
+
         try:
             subprocess.Popen(
-                shlex.split(cmd),
+                args,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 env=env,
