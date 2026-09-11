@@ -17,6 +17,12 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 
 ---
 
+## Demo
+
+![ROMcat Demo](screenshots/demo.gif?raw=true&v=1)
+
+---
+
 ## Screenshots
 
 ### Main Dashboard
