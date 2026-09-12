@@ -51,7 +51,7 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 - **Two Flexible Modes**: Use the standalone desktop app with dedicated window management or run as an always-on background web service.
 - **System Tabs & Live Counters**: Instant switching between systems (e.g. NES, SNES, N64, GameCube, Wii U, Switch, Favorites, All, Hidden).
 - **Fast Search & Filtering**: Real-time title search across thousands of ROMs with automatic title normalization (stripping tags like `[!]`, `(USA)`, `(Rev 1)`, `.nkit`).
-- **Automated Cover Art Scraping**: One-click cover fetching from SteamGridDB with automatic image optimization and local caching in `static/covers/`.
+- **Automated Cover Art Scraping & Interactive Picker**: One-click cover fetching from SteamGridDB with per-console targeting, overwrite controls, multi-pass fallback title matching, and authentic portrait box-art filtering (600x900). Includes an interactive modal on game cards to search, browse, and select between alternative box arts with live previews.
 - **Manual Cover Art Override**: Drop custom cover art directly into the web UI or filesystem for unmatched or homebrew titles.
 - **Favorites & Visibility Management**: Toggle game favorites with custom glowing highlights, or hide unwanted duplicates/updates from the main catalog.
 - **Zero Heavy Databases**: Library state is indexed dynamically from your real directory structure, with cached metadata and settings stored in lightweight JSON files.
@@ -115,10 +115,10 @@ journalctl --user -u romcat.service -f
 
 The packaged standalone desktop app provides a self-contained executable with native desktop windowing and launcher integration. No Python installation or command-line setup is required (ideal for Windows users).
 
-1. Download the latest Linux release bundle (`ROMCat-v0.5.2-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+1. Download the latest Linux release bundle (`ROMCat-v0.5.3-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
 2. Extract the archive:
    ```bash
-   tar -xzf ROMCat-v0.5.2-linux-x86_64.tar.gz
+   tar -xzf ROMCat-v0.5.3-linux-x86_64.tar.gz
    cd Standalone.app
    ```
 3. Run the application directly:
@@ -336,16 +336,26 @@ To add a new console (for example, Game Boy Advance):
 
 1. **Automatic Scraping with SteamGridDB**:
    - Register for a free API key at [SteamGridDB API Preferences](https://www.steamgriddb.com/profile/preferences/api).
-   - Paste your key into `config.yaml` under `steamgriddb.api_key`.
-   - Click **Fetch cover art** in the header.
-   - The application automatically strips revision and dump tags (e.g. `(USA)`, `[!]`, `.nkit`), searches SteamGridDB, resizes the image to 300x400 JPG, and saves it to `static/covers/`.
-   - Re-running only downloads covers for games that are still missing art.
+   - Paste your key into Settings $\rightarrow$ Consoles tab (or directly into `config.yaml` under `steamgriddb.api_key`).
+   - Go to Settings $\rightarrow$ UI tab: choose **All Consoles** or a specific console from the dropdown, optionally check **Overwrite existing**, and click **Fetch Covers**.
+   - **Smart Multi-Pass Title Matching**: The engine automatically executes multiple fallback passes:
+     - Strips dump/region tags (e.g. `[!]`, `(USA)`, `(Rev 1)`, `.nkit`).
+     - Strips multi-disc markers (e.g. `(Disc 1)`).
+     - Resolves subtitle variants (e.g. searching both `The Legend of Zelda - Ocarina of Time` and `Ocarina of Time`).
+     - Normalizes Roman numerals (`II` $\leftrightarrow$ `2`).
+   - **Curated Box-Art Filtering**: Scraper queries authentic high-resolution vertical portrait covers (`600x900`, `342x482`, `660x930`) and filters out joke/meme art (`humor=false`) and adult content (`nsfw=false`).
+   - Fetched artwork is compressed, saved to `static/covers/`, and dynamically matched to your catalog.
 
-2. **Manual Cover Art Overrides**:
-   - For obscure or homebrew titles, type a custom search term into the cover card's **Find cover** input and click search.
-   - Alternatively, drop any image into `static/covers/` using the following naming convention:
+2. **Interactive In-Card Cover Picker**:
+   - For titles where you'd like to pick an alternate artwork style or region variant, click **Find cover** on the game card.
+   - An interactive modal displays authentic portrait box art choices from SteamGridDB with live image previews, author credits, and resolution badges.
+   - Type any custom keyword into the live search input, or click any box art thumbnail to apply it instantly with zero page reload.
+
+3. **Manual Cover Art Overrides**:
+   - Alternatively, drop any custom image directly into `static/covers/` using the naming formula:
      `static/covers/<system>_<rom_stem>.jpg`
      *(Spaces and punctuation in the ROM filename become underscores)*.
+   - Click **Rescan** in Settings $\rightarrow$ UI tab to immediately recognize the new files.
 
 ---
 

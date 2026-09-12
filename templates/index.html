@@ -306,22 +306,37 @@
       <section class="settings-section">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
           <h4 style="margin: 0;">Library Actions</h4>
-          <button type="button" id="toggleCoverHelpBtn" class="btn-secondary help-pill-btn" title="View Manual Cover Art Guide">
-            <span class="help-circle-icon">?</span> Manual Cover Art Guide
+          <button type="button" id="toggleCoverHelpBtn" class="btn-secondary help-pill-btn" title="View Cover Art & Smart Scraper Guide">
+            <span class="help-circle-icon">?</span> Cover Art &amp; Scraper Guide
           </button>
         </div>
 
         <!-- Manual Cover Art Help Box -->
         <div id="coverHelpBox" class="command-help-box hidden" style="margin-bottom: 12px;">
           <div class="command-help-header">
-            <h5>Manual Cover Art Placement Guide</h5>
+            <h5>Cover Art &amp; Smart Scraper Guide</h5>
             <button type="button" class="btn-close-help" id="closeCoverHelpBtn" title="Close guide">&times;</button>
           </div>
           <div class="command-help-content">
+            <h6>Smart Scraper Intelligence:</h6>
+            <div class="help-callout" style="border-left-color: #6366f1;">
+              <strong>Automatic Multi-Pass Search &amp; Portrait Filtering</strong>
+              <p style="margin: 4px 0 0 0; font-size: 0.8rem; line-height: 1.45;">
+                When you click <strong>Fetch Covers</strong> (or the in-card "Find cover" picker), ROMcat applies intelligent multi-pass matching before querying SteamGridDB:
+              </p>
+              <ul style="margin: 6px 0 0 18px; padding: 0; font-size: 0.8rem; line-height: 1.45;">
+                <li><strong>Noisy Tag Stripping:</strong> Automatically strips dump tags (<code>[!]</code>, <code>(USA)</code>, <code>(Rev 1)</code>), multi-disc labels (<code>(Disc 1)</code>), and format indicators (<code>.nkit</code>).</li>
+                <li><strong>Subtitle &amp; Numeral Fallbacks:</strong> Tries exact titles, subtitle splits (e.g. <em>Zelda - Ocarina of Time</em> &rarr; <em>Ocarina of Time</em>), and Roman numeral variations (<code>II</code> &harr; <code>2</code>).</li>
+                <li><strong>Authentic Box Art Dimensions:</strong> Prioritizes high-resolution vertical portrait covers (<code>600&times;900</code>, <code>342&times;482</code>, <code>660&times;930</code>).</li>
+                <li><strong>Curated Quality:</strong> Excludes joke/meme grids (<code>humor=false</code>) and adult artwork (<code>nsfw=false</code>).</li>
+              </ul>
+            </div>
+
+            <h6>Folder Location for Custom Box Art:</h6>
             <div class="help-callout" style="border-left-color: #10b981;">
-              <strong>Folder Location for Custom Box Art:</strong>
+              <strong>Manual Cover Placement:</strong>
               <p style="margin: 4px 0 0 0;">
-                Place your image files directly into the <code>static/covers/</code> directory in your ROMcat installation folder.
+                Place custom image files directly into the <code>static/covers/</code> directory in your ROMcat installation folder.
               </p>
             </div>
 
@@ -362,21 +377,29 @@
               <li><strong>Supported Formats:</strong> <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.webp</code></li>
               <li><strong>Recommended Aspect Ratio:</strong> Standard vertical box art ratio <strong>3:4</strong> (e.g. <strong>300 &times; 400</strong> or <strong>600 &times; 800</strong> pixels).</li>
               <li><strong>Instant Refresh:</strong> After copying images to <code>static/covers/</code>, click <strong>Rescan</strong> below to instantly update the catalog.</li>
-              <li><strong>In-Catalog Search:</strong> You can also click the <strong>Find cover</strong> input on any game card missing art to search SteamGridDB with custom search keywords directly.</li>
+              <li><strong>In-Catalog Search:</strong> Click <strong>Find cover</strong> on any game card missing art to browse and select from live SteamGridDB choices.</li>
             </ul>
           </div>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          <div class="toggle-row" style="cursor: default;">
-            <div class="toggle-info">
+          <div class="toggle-row" style="cursor: default; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <div class="toggle-info" style="min-width: 220px; flex: 1;">
               <span class="toggle-title">
                 Fetch Cover Art
-                <button type="button" id="btnInlineCoverHelp" class="btn-inline-help" title="Click for guide on manually adding custom cover art">?</button>
+                <button type="button" id="btnInlineCoverHelp" class="btn-inline-help" title="Click for guide on cover art and smart scraper intelligence">?</button>
               </span>
-              <span class="toggle-desc">Automatically download box art from SteamGridDB for games missing covers.</span>
+              <span class="toggle-desc">Download authentic vertical box art (600&times;900) from SteamGridDB with automatic multi-pass title matching (cleans region tags, disc numbers, Roman numerals, and subtitles).</span>
             </div>
-            <button type="button" id="modalFetchCoversBtn" class="btn-secondary" style="white-space: nowrap;">Fetch Covers</button>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+              <select id="fetchCoversSystemSelect" class="settings-input" style="width: auto; padding: 5px 10px; font-size: 0.8rem; font-weight: 500;">
+                <option value="all">All Consoles</option>
+              </select>
+              <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer; user-select: none;">
+                <input type="checkbox" id="fetchCoversOverwrite"> Overwrite existing
+              </label>
+              <button type="button" id="modalFetchCoversBtn" class="btn-secondary" style="white-space: nowrap;">Fetch Covers</button>
+            </div>
           </div>
           <div class="toggle-row" style="cursor: default;">
             <div class="toggle-info">
@@ -592,6 +615,30 @@
   </div>
 </dialog>
 
+<!-- Interactive Cover Art Picker Dialog -->
+<dialog id="coverPickerModal" class="validation-dialog" style="max-width: 720px; width: 95vw;">
+  <div class="validation-dialog-content">
+    <div class="validation-dialog-header">
+      <div class="validation-header-title">
+        <span class="validation-icon-badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.4);">&#128444;</span>
+        <h4 id="coverPickerTitle">Select Box Art</h4>
+      </div>
+      <button type="button" class="close-modal-btn" id="closeCoverPickerBtn" aria-label="Close">&times;</button>
+    </div>
+    <div class="validation-dialog-body" style="max-height: 70vh; overflow-y: auto;">
+      <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+        <input type="text" id="coverPickerSearchInput" class="settings-input" placeholder="Search game title on SteamGridDB..." style="flex: 1;">
+        <button type="button" id="coverPickerSearchBtn" class="btn-primary" style="padding: 6px 16px; font-size: 0.82rem;">Search</button>
+      </div>
+      <p style="font-size: 0.76rem; color: var(--text-muted); margin: 0 0 10px 0;">
+        Smart search automatically cleans region tags &amp; tests subtitle variations. You can also type custom keywords above.
+      </p>
+      <div id="coverPickerStatus" style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 10px; display: none;"></div>
+      <div id="coverPickerGrid" class="cover-picker-grid"></div>
+    </div>
+  </div>
+</dialog>
+
 <script>
 document.querySelectorAll('.card').forEach(card => {
   card.addEventListener('click', async (e) => {
@@ -616,37 +663,126 @@ document.querySelectorAll('.card').forEach(card => {
   });
 });
 
-document.querySelectorAll('.fix-btn').forEach(btn => {
-  btn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    const card = btn.closest('.card');
-    const input = card.querySelector('.fix-input');
-    const coverDiv = card.querySelector('.cover');
-    const system = card.dataset.system;
-    const filename = card.dataset.filename;
-    const query = input.value.trim();
+let currentPickerCard = null;
+const coverPickerModal = document.getElementById('coverPickerModal');
+const coverPickerTitle = document.getElementById('coverPickerTitle');
+const coverPickerSearchInput = document.getElementById('coverPickerSearchInput');
+const coverPickerSearchBtn = document.getElementById('coverPickerSearchBtn');
+const coverPickerStatus = document.getElementById('coverPickerStatus');
+const coverPickerGrid = document.getElementById('coverPickerGrid');
+const closeCoverPickerBtn = document.getElementById('closeCoverPickerBtn');
 
-    btn.disabled = true;
-    btn.textContent = 'Searching...';
-    try {
-      const res = await fetch('/api/fetch_cover_single', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({system, filename, query})
+if (closeCoverPickerBtn && coverPickerModal) {
+  closeCoverPickerBtn.addEventListener('click', () => coverPickerModal.close());
+  coverPickerModal.addEventListener('click', (e) => {
+    if (e.target === coverPickerModal) coverPickerModal.close();
+  });
+}
+
+async function searchAndRenderCovers(query) {
+  if (!currentPickerCard) return;
+  coverPickerStatus.style.display = 'block';
+  coverPickerStatus.textContent = `Searching SteamGridDB for "${query}"...`;
+  coverPickerGrid.innerHTML = '';
+  coverPickerSearchBtn.disabled = true;
+
+  try {
+    const res = await fetch('/api/search_covers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: query,
+        system: currentPickerCard.dataset.system,
+        filename: currentPickerCard.dataset.filename
+      })
+    });
+    const data = await res.json();
+    if (data.ok && data.grids && data.grids.length > 0) {
+      coverPickerStatus.textContent = `Found ${data.grids.length} box art choices. Click any cover to apply:`;
+      data.grids.forEach(grid => {
+        const item = document.createElement('div');
+        item.className = 'cover-picker-item';
+        item.title = `Click to select: ${grid.game_title || ''} (${grid.width}x${grid.height})`;
+        item.innerHTML = `
+          <img src="${escapeHtml(grid.thumb || grid.url)}" alt="Box Art" loading="lazy">
+          ${grid.width && grid.height ? `<span class="cover-picker-dim">${grid.width}&times;${grid.height}</span>` : ''}
+          ${grid.author ? `<span class="cover-picker-author">by ${escapeHtml(grid.author)}</span>` : ''}
+        `;
+        item.addEventListener('click', async () => {
+          item.style.opacity = '0.4';
+          coverPickerStatus.textContent = 'Downloading and applying box art...';
+          try {
+            const applyRes = await fetch('/api/apply_cover', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                system: currentPickerCard.dataset.system,
+                filename: currentPickerCard.dataset.filename,
+                image_url: grid.url
+              })
+            });
+            const applyData = await applyRes.json();
+            if (applyData.ok) {
+              const coverDiv = currentPickerCard.querySelector('.cover');
+              if (coverDiv) {
+                coverDiv.innerHTML = `<img src="${applyData.cover}?t=${Date.now()}" alt="${currentPickerCard.dataset.filename}" loading="lazy">`;
+              }
+              currentPickerCard.dataset.hasCover = 'true';
+              applyFilters();
+              coverPickerModal.close();
+            } else {
+              alert('Failed to apply cover: ' + (applyData.error || 'Unknown error'));
+              item.style.opacity = '1';
+            }
+          } catch (err) {
+            alert('Error applying cover: ' + err);
+            item.style.opacity = '1';
+          }
+        });
+        coverPickerGrid.appendChild(item);
       });
-      const data = await res.json();
-      if (data.ok) {
-        coverDiv.innerHTML = `<img src="${data.cover}" alt="${filename}" loading="lazy">`;
-        card.dataset.hasCover = 'true';
-        applyFilters();
-      } else {
-        btn.disabled = false;
-        btn.textContent = 'No match, try again';
-      }
-    } catch (err) {
-      btn.disabled = false;
-      btn.textContent = 'Error, try again';
+    } else {
+      coverPickerStatus.textContent = data.error || `No box art found for "${query}". Try searching a different title keyword above.`;
     }
+  } catch (err) {
+    coverPickerStatus.textContent = 'Error connecting to server: ' + err;
+  } finally {
+    coverPickerSearchBtn.disabled = false;
+  }
+}
+
+if (coverPickerSearchBtn && coverPickerSearchInput) {
+  coverPickerSearchBtn.addEventListener('click', () => {
+    const q = coverPickerSearchInput.value.trim();
+    if (q) searchAndRenderCovers(q);
+  });
+  coverPickerSearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const q = coverPickerSearchInput.value.trim();
+      if (q) searchAndRenderCovers(q);
+    }
+  });
+}
+
+function openCoverPicker(card) {
+  currentPickerCard = card;
+  const input = card.querySelector('.fix-input');
+  const filename = card.dataset.filename || '';
+  const initialQuery = (input && input.value.trim()) ? input.value.trim() : (card.querySelector('.title')?.textContent || filename);
+
+  if (coverPickerTitle) coverPickerTitle.textContent = `Select Box Art: ${card.querySelector('.title')?.textContent || filename}`;
+  if (coverPickerSearchInput) coverPickerSearchInput.value = initialQuery;
+  if (coverPickerModal) {
+    coverPickerModal.showModal();
+    searchAndRenderCovers(initialQuery);
+  }
+}
+
+document.querySelectorAll('.fix-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openCoverPicker(btn.closest('.card'));
   });
 });
 
@@ -655,7 +791,7 @@ document.querySelectorAll('.fix-input').forEach(input => {
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      input.closest('.card').querySelector('.fix-btn').click();
+      openCoverPicker(input.closest('.card'));
     }
   });
 });
@@ -1709,14 +1845,29 @@ modalNavTabs.forEach(tab => {
 
 if (modalFetchCoversBtn) {
   modalFetchCoversBtn.addEventListener('click', async () => {
+    const sysSelect = document.getElementById('fetchCoversSystemSelect');
+    const overwriteBox = document.getElementById('fetchCoversOverwrite');
+    const selectedSystem = sysSelect ? sysSelect.value : 'all';
+    const isOverwrite = overwriteBox ? overwriteBox.checked : false;
+
     modalFetchCoversBtn.textContent = 'Fetching...';
     modalFetchCoversBtn.disabled = true;
     modalStatusAlert.className = 'config-status-msg';
     modalStatusAlert.style.display = 'block';
-    modalStatusAlert.textContent = 'Fetching and compressing covers from SteamGridDB...';
+    const targetLabel = (selectedSystem && selectedSystem !== 'all')
+      ? (sysSelect.options[sysSelect.selectedIndex]?.text || selectedSystem)
+      : 'all consoles';
+    modalStatusAlert.textContent = `Fetching and compressing covers for ${targetLabel} from SteamGridDB${isOverwrite ? ' (overwrite enabled)' : ''}...`;
 
     try {
-      const res = await fetch('/api/fetch_covers', { method: 'POST' });
+      const res = await fetch('/api/fetch_covers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system: selectedSystem,
+          overwrite: isOverwrite
+        })
+      });
       const data = await res.json();
       if (data.ok) {
         modalStatusAlert.className = 'config-status-msg success';
@@ -2134,6 +2285,24 @@ function renderSystemsForm(systemsObj) {
   updateCardReorderButtons();
 }
 
+function populateFetchCoversSystemSelect(systemsObj) {
+  const select = document.getElementById('fetchCoversSystemSelect');
+  if (!select) return;
+  const currentVal = select.value;
+  select.innerHTML = '<option value="all">All Consoles</option>';
+  if (systemsObj && typeof systemsObj === 'object') {
+    Object.entries(systemsObj).forEach(([sysId, sysData]) => {
+      const opt = document.createElement('option');
+      opt.value = sysId;
+      opt.textContent = sysData?.name || sysId;
+      select.appendChild(opt);
+    });
+  }
+  if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+    select.value = currentVal;
+  }
+}
+
 function collectConfigFromForm() {
   const apiKey = steamgriddbApiKeyInput ? steamgriddbApiKeyInput.value.trim() : '';
   const systems = {};
@@ -2186,6 +2355,7 @@ async function loadConfigData() {
         yamlConfigEditor.value = data.raw_yaml || '';
       }
       renderSystemsForm(data.config?.systems || {});
+      populateFetchCoversSystemSelect(data.config?.systems || {});
       if (configStatusAlert) {
         configStatusAlert.className = 'config-status-msg';
         configStatusAlert.textContent = '';

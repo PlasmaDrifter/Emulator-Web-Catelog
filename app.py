@@ -19,7 +19,7 @@ from flask import Flask, render_template, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 from PIL import Image
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)
@@ -657,50 +657,101 @@ def api_launch():
     return jsonify({"ok": True})
 
 
+def generate_title_candidates(title: str) -> list:
+    """Generate progressive title variations to maximize SteamGridDB hit rate."""
+    candidates = []
+    cleaned = title.strip()
+    if cleaned:
+        candidates.append(cleaned)
+
+    # Subtitle separation (e.g. 'Metroid Prime 2 - Echoes' -> 'Metroid Prime 2')
+    for sep in (" - ", " : ", " – ", ": "):
+        if sep in cleaned:
+            base = cleaned.split(sep)[0].strip()
+            if base and base not in candidates:
+                candidates.append(base)
+
+    # Disc, version, edition markers (e.g. 'Resident Evil 2 (Disc 1)' -> 'Resident Evil 2')
+    disc_cleaned = re.sub(r"(?i)\b(disc|disk|cd|side)\s*\d+.*$", "", cleaned).strip()
+    disc_cleaned = re.sub(r"(?i)\b(v\d+(\.\d+)?|version\s*\d+(\.\d+)?|edition|remastered|anthology)\b.*$", "", disc_cleaned).strip()
+    if disc_cleaned and disc_cleaned not in candidates:
+        candidates.append(disc_cleaned)
+
+    # Roman numerals normalization
+    roman_map = [
+        (r"\bVIII\b", "8"), (r"\bVII\b", "7"), (r"\bVI\b", "6"),
+        (r"\bIV\b", "4"), (r"\bV\b", "5"), (r"\bIII\b", "3"),
+        (r"\bII\b", "2"), (r"\bIX\b", "9"), (r"\bX\b", "10")
+    ]
+    for c in list(candidates):
+        alt = c
+        for r_pat, arabic in roman_map:
+            alt = re.sub(r_pat, arabic, alt, flags=re.IGNORECASE)
+        alt = " ".join(alt.split())
+        if alt and alt not in candidates:
+            candidates.append(alt)
+
+    return candidates
+
+
 def fetch_one_cover(api_key: str, title: str, key: str) -> bool:
     headers = {"Authorization": f"Bearer {api_key}"}
-    try:
-        search_url = f"https://www.steamgriddb.com/api/v2/search/autocomplete/{requests.utils.quote(title)}"
-        r = requests.get(search_url, headers=headers, timeout=10)
-        r.raise_for_status()
-        results = r.json().get("data", [])
-        if not results:
-            return False
-        game_id = results[0]["id"]
+    candidates = generate_title_candidates(title)
 
-        grids_url = f"https://www.steamgriddb.com/api/v2/grids/game/{game_id}"
-        r = requests.get(grids_url, headers=headers, timeout=10)
-        r.raise_for_status()
-        grids = r.json().get("data", [])
-        if not grids:
-            return False
-        image_url = grids[0]["url"]
+    for cand in candidates:
+        try:
+            search_url = f"https://www.steamgriddb.com/api/v2/search/autocomplete/{requests.utils.quote(cand)}"
+            r = requests.get(search_url, headers=headers, timeout=10)
+            r.raise_for_status()
+            results = r.json().get("data", [])
+            if not results:
+                continue
+            game_id = results[0]["id"]
 
-        img_resp = requests.get(image_url, timeout=15)
-        img_resp.raise_for_status()
+            # Prioritize 600x900 / 342x482 / 660x930 portrait box-art and exclude humor / nsfw
+            grids_url = f"https://www.steamgriddb.com/api/v2/grids/game/{game_id}?dimensions=600x900,342x482,660x930&nsfw=false&humor=false"
+            r = requests.get(grids_url, headers=headers, timeout=10)
+            r.raise_for_status()
+            grids = r.json().get("data", [])
+            if not grids:
+                # Fallback to any dimensions without humor/nsfw
+                fallback_url = f"https://www.steamgriddb.com/api/v2/grids/game/{game_id}?nsfw=false&humor=false"
+                r = requests.get(fallback_url, headers=headers, timeout=10)
+                r.raise_for_status()
+                grids = r.json().get("data", [])
 
-        safe_name = secure_filename(f"{key}.jpg")
-        if not safe_name:
-            return False
+            if not grids:
+                continue
 
-        covers_dir = COVERS_DIR.resolve()
-        out_path = covers_dir / safe_name
-        if not str(out_path.resolve()).startswith(str(covers_dir)):
-            return False
+            image_url = grids[0]["url"]
+            img_resp = requests.get(image_url, timeout=15)
+            img_resp.raise_for_status()
 
-        for old_ext in (".jpg", ".jpeg", ".png"):
-            old_safe = secure_filename(f"{key}{old_ext}")
-            if old_safe:
-                old_file = covers_dir / old_safe
-                if str(old_file.resolve()).startswith(str(covers_dir)) and old_file.is_file():
-                    try:
-                        old_file.unlink()
-                    except Exception:
-                        pass
+            safe_name = secure_filename(f"{key}.jpg")
+            if not safe_name:
+                continue
 
-        return compress_and_save_image(img_resp.content, str(out_path))
-    except Exception:
-        return False
+            covers_dir = COVERS_DIR.resolve()
+            out_path = covers_dir / safe_name
+            if not str(out_path.resolve()).startswith(str(covers_dir)):
+                return False
+
+            for old_ext in (".jpg", ".jpeg", ".png"):
+                old_safe = secure_filename(f"{key}{old_ext}")
+                if old_safe:
+                    old_file = covers_dir / old_safe
+                    if str(old_file.resolve()).startswith(str(covers_dir)) and old_file.is_file():
+                        try:
+                            old_file.unlink()
+                        except Exception:
+                            pass
+
+            if compress_and_save_image(img_resp.content, str(out_path)):
+                return True
+        except Exception:
+            continue
+
+    return False
 
 
 @app.route("/api/fetch_cover_single", methods=["POST"])
@@ -713,18 +764,18 @@ def api_fetch_cover_single():
     config = load_config()
     api_key = config.get("steamgriddb", {}).get("api_key", "")
     if not api_key or api_key == "YOUR_API_KEY_HERE":
-        return jsonify({"ok": False, "error": "no SteamGridDB API key set in config.yaml"}), 400
+        return jsonify({"ok": False, "error": "No SteamGridDB API key set in settings."}), 400
 
     sys_cfg = config["systems"].get(system)
     if not sys_cfg or not filename:
-        return jsonify({"ok": False, "error": "unknown system or filename"}), 400
+        return jsonify({"ok": False, "error": "Unknown system or filename"}), 400
 
     key = safe_key(system, filename)
     title = query if query else clean_title(filename)
     success = fetch_one_cover(api_key, title, key)
 
     if not success:
-        return jsonify({"ok": False, "error": f"no match found for '{title}'"}), 404
+        return jsonify({"ok": False, "error": f"No cover found on SteamGridDB for '{title}'"}), 404
 
     # Update state variables instantly without triggering heavy scans
     library = load_cached_library()
@@ -738,67 +789,172 @@ def api_fetch_cover_single():
     return jsonify({"ok": True, "cover": f"/static/covers/{key}.jpg"})
 
 
+@app.route("/api/search_covers", methods=["POST"])
+def api_search_covers():
+    data = request.get_json(force=True)
+    query = (data.get("query") or "").strip()
+    filename = data.get("filename")
+
+    if not query and filename:
+        query = clean_title(filename)
+
+    config = load_config()
+    api_key = config.get("steamgriddb", {}).get("api_key", "")
+    if not api_key or api_key == "YOUR_API_KEY_HERE":
+        return jsonify({"ok": False, "error": "No SteamGridDB API key set in settings."}), 400
+
+    headers = {"Authorization": f"Bearer {api_key}"}
+    candidates = generate_title_candidates(query)
+
+    game_matches = []
+    for cand in candidates:
+        try:
+            search_url = f"https://www.steamgriddb.com/api/v2/search/autocomplete/{requests.utils.quote(cand)}"
+            r = requests.get(search_url, headers=headers, timeout=8)
+            if r.ok:
+                items = r.json().get("data", [])
+                for g in items:
+                    if not any(m["id"] == g["id"] for m in game_matches):
+                        game_matches.append(g)
+            if len(game_matches) >= 3:
+                break
+        except Exception:
+            pass
+
+    if not game_matches:
+        return jsonify({"ok": False, "error": f"No games found on SteamGridDB for '{query}'"}), 404
+
+    # Get vertical portrait box-art grids for the matched games
+    grids_found = []
+    for g in game_matches[:3]:
+        try:
+            g_id = g["id"]
+            grids_url = f"https://www.steamgriddb.com/api/v2/grids/game/{g_id}?dimensions=600x900,342x482,660x930&nsfw=false&humor=false"
+            r = requests.get(grids_url, headers=headers, timeout=8)
+            if r.ok:
+                items = r.json().get("data", [])
+                for item in items:
+                    grids_found.append({
+                        "id": item.get("id"),
+                        "game_title": g.get("name"),
+                        "thumb": item.get("thumb") or item.get("url"),
+                        "url": item.get("url"),
+                        "width": item.get("width"),
+                        "height": item.get("height"),
+                        "author": item.get("author", {}).get("name", "") if isinstance(item.get("author"), dict) else ""
+                    })
+                    if len(grids_found) >= 16:
+                        break
+            if len(grids_found) >= 12:
+                break
+        except Exception:
+            pass
+
+    if not grids_found:
+        # Fallback to any dimensions
+        try:
+            g_id = game_matches[0]["id"]
+            fallback_url = f"https://www.steamgriddb.com/api/v2/grids/game/{g_id}?nsfw=false&humor=false"
+            r = requests.get(fallback_url, headers=headers, timeout=8)
+            if r.ok:
+                for item in r.json().get("data", [])[:12]:
+                    grids_found.append({
+                        "id": item.get("id"),
+                        "game_title": game_matches[0].get("name"),
+                        "thumb": item.get("thumb") or item.get("url"),
+                        "url": item.get("url"),
+                        "width": item.get("width"),
+                        "height": item.get("height"),
+                    })
+        except Exception:
+            pass
+
+    return jsonify({"ok": True, "query": query, "games": game_matches[:3], "grids": grids_found})
+
+
+@app.route("/api/apply_cover", methods=["POST"])
+def api_apply_cover():
+    data = request.get_json(force=True)
+    system = data.get("system")
+    filename = data.get("filename")
+    image_url = data.get("image_url")
+
+    if not system or not filename or not image_url:
+        return jsonify({"ok": False, "error": "Missing system, filename, or image_url"}), 400
+
+    try:
+        img_resp = requests.get(image_url, timeout=15)
+        img_resp.raise_for_status()
+
+        key = safe_key(system, filename)
+        safe_name = secure_filename(f"{key}.jpg")
+        if not safe_name:
+            return jsonify({"ok": False, "error": "Invalid filename"}), 400
+
+        covers_dir = COVERS_DIR.resolve()
+        out_path = covers_dir / safe_name
+        if not str(out_path.resolve()).startswith(str(covers_dir)):
+            return jsonify({"ok": False, "error": "Directory traversal detected"}), 400
+
+        for old_ext in (".jpg", ".jpeg", ".png"):
+            old_safe = secure_filename(f"{key}{old_ext}")
+            if old_safe:
+                old_file = covers_dir / old_safe
+                if str(old_file.resolve()).startswith(str(covers_dir)) and old_file.is_file():
+                    try:
+                        old_file.unlink()
+                    except Exception:
+                        pass
+
+        if not compress_and_save_image(img_resp.content, str(out_path)):
+            return jsonify({"ok": False, "error": "Failed to process and save image"}), 500
+
+        library = load_cached_library()
+        if system in library:
+            for game in library[system]["games"]:
+                if game["filename"] == filename:
+                    game["cover"] = f"/static/covers/{key}.jpg"
+                    break
+            save_library_cache(library)
+
+        return jsonify({"ok": True, "cover": f"/static/covers/{key}.jpg"})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @app.route("/api/fetch_covers", methods=["POST"])
 def api_fetch_covers():
     config = load_config()
     api_key = config.get("steamgriddb", {}).get("api_key", "")
     if not api_key or api_key == "YOUR_API_KEY_HERE":
-        return jsonify({"ok": False, "error": "no SteamGridDB API key set in config.yaml"}), 400
+        return jsonify({"ok": False, "error": "No SteamGridDB API key set in settings."}), 400
 
-    headers = {"Authorization": f"Bearer {api_key}"}
+    data = request.get_json(silent=True) or {}
+    target_system = (data.get("system") or "").strip()
+    overwrite = bool(data.get("overwrite", False))
+
     library = load_cached_library()
     fetched, skipped, failed = 0, 0, 0
 
     for sys_id, sys_data in library.items():
+        if target_system and target_system != "all" and sys_id != target_system:
+            continue
+
         for game in sys_data["games"]:
-            if game["cover"]:
+            if game["cover"] and not overwrite:
                 skipped += 1
                 continue
-            try:
-                search_url = f"https://www.steamgriddb.com/api/v2/search/autocomplete/{requests.utils.quote(game['title'])}"
-                r = requests.get(search_url, headers=headers, timeout=10)
-                r.raise_for_status()
-                results = r.json().get("data", [])
-                if not results:
-                    failed += 1
-                    continue
-                game_id = results[0]["id"]
 
-                grids_url = f"https://www.steamgriddb.com/api/v2/grids/game/{game_id}"
-                r = requests.get(grids_url, headers=headers, timeout=10)
-                r.raise_for_status()
-                grids = r.json().get("data", [])
-                if not grids:
-                    failed += 1
-                    continue
-                image_url = grids[0]["url"]
+            safe_key_name = secure_filename(game['key'])
+            if not safe_key_name:
+                failed += 1
+                continue
 
-                img_resp = requests.get(image_url, timeout=15)
-                img_resp.raise_for_status()
-
-                safe_key_name = secure_filename(game['key'])
-                if not safe_key_name:
-                    failed += 1
-                    continue
-
-                covers_dir = COVERS_DIR.resolve()
-                for old_ext in (".jpg", ".jpeg", ".png"):
-                    old_safe = secure_filename(f"{safe_key_name}{old_ext}")
-                    if old_safe:
-                        old_file = covers_dir / old_safe
-                        if str(old_file.resolve()).startswith(str(covers_dir)) and old_file.is_file():
-                            try:
-                                old_file.unlink()
-                            except Exception:
-                                pass
-
-                out_path = covers_dir / f"{safe_key_name}.jpg"
-                if str(out_path.resolve()).startswith(str(covers_dir)) and compress_and_save_image(img_resp.content, str(out_path)):
-                    game["cover"] = f"/static/covers/{safe_key_name}.jpg"
-                    fetched += 1
-                else:
-                    failed += 1
-            except Exception:
+            success = fetch_one_cover(api_key, game['title'], safe_key_name)
+            if success:
+                game["cover"] = f"/static/covers/{safe_key_name}.jpg"
+                fetched += 1
+            else:
                 failed += 1
 
     save_library_cache(library)
