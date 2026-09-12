@@ -1774,6 +1774,17 @@ function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function updateCardReorderButtons() {
+  if (!systemsListContainer) return;
+  const cards = systemsListContainer.querySelectorAll('.system-config-card');
+  cards.forEach((c, idx) => {
+    const upBtn = c.querySelector('.btn-order-up');
+    const downBtn = c.querySelector('.btn-order-down');
+    if (upBtn) upBtn.disabled = (idx === 0);
+    if (downBtn) downBtn.disabled = (idx === cards.length - 1);
+  });
+}
+
 function renderSystemCard(sysId, sysData) {
   const card = document.createElement('div');
   card.className = 'system-config-card';
@@ -1796,9 +1807,16 @@ function renderSystemCard(sysId, sysData) {
 
   card.innerHTML = `
     <div class="system-card-header">
-      <div class="system-card-title-group">
-        <span class="system-card-name">${escapeHtml(name || 'New Console')}</span>
-        <span class="system-card-id-badge">${escapeHtml(key || 'unassigned')}</span>
+      <div class="system-card-left-group">
+        <span class="system-card-drag-handle" title="Drag to reorder" draggable="true">&#x283f;</span>
+        <div class="system-card-reorder-group">
+          <button type="button" class="btn-order-move btn-order-up" title="Move Up">&#9650;</button>
+          <button type="button" class="btn-order-move btn-order-down" title="Move Down">&#9660;</button>
+        </div>
+        <div class="system-card-title-group">
+          <span class="system-card-name">${escapeHtml(name || 'New Console')}</span>
+          <span class="system-card-id-badge">${escapeHtml(key || 'unassigned')}</span>
+        </div>
       </div>
       <button type="button" class="btn-remove-system" title="Remove Console">&times; Remove</button>
     </div>
@@ -1845,6 +1863,9 @@ function renderSystemCard(sysId, sysData) {
   const removeBtn = card.querySelector('.btn-remove-system');
   const inlineHelpBtn = card.querySelector('.btn-inline-help');
   const idHelpBtn = card.querySelector('.btn-id-help');
+  const upBtn = card.querySelector('.btn-order-up');
+  const downBtn = card.querySelector('.btn-order-down');
+  const dragHandle = card.querySelector('.system-card-drag-handle');
 
   if (inlineHelpBtn && commandHelpBox) {
     inlineHelpBtn.addEventListener('click', () => {
@@ -1859,6 +1880,76 @@ function renderSystemCard(sysId, sysData) {
       commandHelpBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
   }
+
+  upBtn.addEventListener('click', () => {
+    const prev = card.previousElementSibling;
+    if (prev && prev.classList.contains('system-config-card')) {
+      systemsListContainer.insertBefore(card, prev);
+      updateCardReorderButtons();
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  });
+
+  downBtn.addEventListener('click', () => {
+    const next = card.nextElementSibling;
+    if (next && next.classList.contains('system-config-card')) {
+      systemsListContainer.insertBefore(next, card);
+      updateCardReorderButtons();
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  });
+
+  dragHandle.addEventListener('dragstart', (e) => {
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+  });
+
+  dragHandle.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    if (systemsListContainer) {
+      const allCards = systemsListContainer.querySelectorAll('.system-config-card');
+      allCards.forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom'));
+    }
+    updateCardReorderButtons();
+  });
+
+  card.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const draggingCard = systemsListContainer ? systemsListContainer.querySelector('.system-config-card.dragging') : null;
+    if (!draggingCard || draggingCard === card) return;
+
+    const rect = card.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    if (e.clientY < midY) {
+      card.classList.add('drag-over-top');
+      card.classList.remove('drag-over-bottom');
+    } else {
+      card.classList.add('drag-over-bottom');
+      card.classList.remove('drag-over-top');
+    }
+  });
+
+  card.addEventListener('dragleave', () => {
+    card.classList.remove('drag-over-top', 'drag-over-bottom');
+  });
+
+  card.addEventListener('drop', (e) => {
+    e.preventDefault();
+    card.classList.remove('drag-over-top', 'drag-over-bottom');
+    const draggingCard = systemsListContainer ? systemsListContainer.querySelector('.system-config-card.dragging') : null;
+    if (!draggingCard || draggingCard === card) return;
+
+    const rect = card.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    if (e.clientY < midY) {
+      systemsListContainer.insertBefore(draggingCard, card);
+    } else {
+      systemsListContainer.insertBefore(draggingCard, card.nextSibling);
+    }
+    updateCardReorderButtons();
+  });
 
   nameInput.addEventListener('input', () => {
     nameDisplay.textContent = nameInput.value.trim() || 'New Console';
@@ -1877,6 +1968,7 @@ function renderSystemCard(sysId, sysData) {
     if (!confirm(`Remove console definition for "${displayName}"?`)) return;
 
     card.remove();
+    updateCardReorderButtons();
 
     const remainingCards = systemsListContainer ? systemsListContainer.querySelectorAll('.system-config-card') : [];
     if (remainingCards.length === 0 && systemsListContainer) {
@@ -1935,6 +2027,7 @@ function renderSystemsForm(systemsObj) {
     const card = renderSystemCard(sysId, sysData);
     systemsListContainer.appendChild(card);
   });
+  updateCardReorderButtons();
 }
 
 function collectConfigFromForm() {
@@ -2034,6 +2127,7 @@ if (addNewSystemCardBtn && systemsListContainer) {
       command: 'emulator-command {rom}'
     });
     systemsListContainer.appendChild(newCard);
+    updateCardReorderButtons();
     const nameInput = newCard.querySelector('.sys-name-input');
     if (nameInput) nameInput.focus();
     newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2249,7 +2343,8 @@ async function saveConsolesConfig() {
       setTimeout(() => {
         saveSettingsBtn.textContent = 'Save';
         saveSettingsBtn.disabled = false;
-      }, 1200);
+        location.reload();
+      }, 1000);
     } else {
       saveSettingsBtn.textContent = 'Save';
       saveSettingsBtn.disabled = false;
