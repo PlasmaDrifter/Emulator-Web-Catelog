@@ -160,9 +160,9 @@ If you prefer starting the web server manually via the command line:
 
 Updating ROMcat preserves all your existing configuration, scanned games, downloaded covers (`static/covers/`), favorites, and theme settings.
 
-### Updating the Always-On Background Service (or Git Installs)
+### Option A: Updating with Git (No GitHub Account Needed)
 
-Pull the latest code, update Python dependencies if any were added, and restart your user service:
+Because this repository is public, `git pull` does **not** require a GitHub account, token, or login.
 
 ```bash
 cd ~/romcat
@@ -171,6 +171,25 @@ source venv/bin/activate
 pip install -r requirements.txt
 systemctl --user restart romcat.service
 ```
+
+### Option B: Updating Manually Without Git (ZIP Archive)
+
+If you do not have Git installed, you can update directly via terminal or by clicking **Code &rarr; Download ZIP** on GitHub:
+
+```bash
+cd ~
+curl -LO https://github.com/PlasmaDrifter/Emulator-Web-Catelog/archive/refs/heads/main.zip
+unzip -q main.zip
+# Copy updated application files into your existing folder (overwriting app files, preserving configs & covers)
+cp -r Emulator-Web-Catelog-main/* ~/romcat/
+rm -rf main.zip Emulator-Web-Catelog-main
+
+cd ~/romcat
+source venv/bin/activate
+pip install -r requirements.txt
+systemctl --user restart romcat.service
+```
+*(Your custom `config.yaml`, downloaded covers in `static/covers/`, favorites, and theme settings are preserved).*
 
 ### Updating the Standalone Desktop Application
 
