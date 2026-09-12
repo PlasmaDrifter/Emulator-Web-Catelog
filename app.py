@@ -250,7 +250,8 @@ def safe_key(system: str, filename: str) -> str:
     stem = Path(filename).stem
     key = f"{system}_{stem}"
     clean_k = re.sub(r"[^a-zA-Z0-9_\-]", "_", key)
-    return clean_k or "cover"
+    safe = secure_filename(clean_k.strip("_"))
+    return safe or clean_k or "cover"
 
 
 def compress_and_save_image(img_bytes, out_path) -> bool:
@@ -325,9 +326,17 @@ def scan_library():
                     key = safe_key(sys_id, display_name)
 
                     cover_path = None
-                    for ext_type in (".jpg", ".jpeg", ".png"):
-                        if f"{key}{ext_type}" in existing_covers:
-                            cover_path = f"/static/covers/{key}{ext_type}"
+                    candidates = [key]
+                    legacy_k = re.sub(r"[^a-zA-Z0-9_\-]", "_", f"{sys_id}_{Path(display_name).stem}")
+                    if legacy_k not in candidates:
+                        candidates.append(legacy_k)
+
+                    for cand in candidates:
+                        for ext_type in (".jpg", ".jpeg", ".png"):
+                            if f"{cand}{ext_type}" in existing_covers:
+                                cover_path = f"/static/covers/{cand}{ext_type}"
+                                break
+                        if cover_path:
                             break
 
                     fav_key = f"{sys_id}:{display_name}"
