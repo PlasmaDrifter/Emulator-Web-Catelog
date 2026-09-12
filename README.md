@@ -156,6 +156,45 @@ If you prefer starting the web server manually via the command line:
 
 ---
 
+## Updating ROMcat
+
+Updating ROMcat preserves all your existing configuration, scanned games, downloaded covers (`static/covers/`), favorites, and theme settings.
+
+### Updating the Always-On Background Service (or Git Installs)
+
+Pull the latest code, update Python dependencies if any were added, and restart your user service:
+
+```bash
+cd ~/romcat
+git pull origin main
+source venv/bin/activate
+pip install -r requirements.txt
+systemctl --user restart romcat.service
+```
+
+### Updating the Standalone Desktop Application
+
+1. Download the latest Linux release bundle (`ROMCat-vX.Y.Z-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+2. Extract the archive and replace the `ROMCat` executable inside your `Standalone.app/` directory:
+   ```bash
+   tar -xzf ROMCat-v*-linux-x86_64.tar.gz
+   cp Standalone.app/ROMCat ~/path/to/your/Standalone.app/ROMCat
+   ```
+   *(Your `config.yaml`, `static/covers/`, and custom settings are untouched).*
+
+3. **Building from Source (Local Compilation)**:
+   If you compile the standalone binary locally on your system:
+   ```bash
+   cd ~/romcat
+   git pull origin main
+   source venv/bin/activate
+   pip install -r requirements.txt
+   pyinstaller ROMCat.spec --noconfirm
+   cp dist/ROMCat Standalone.app/ROMCat
+   ```
+
+---
+
 ## Settings and Customization
 
 ROMcat includes a tabbed Settings interface directly in the web UI (accessible via the gear icon in the top header).
