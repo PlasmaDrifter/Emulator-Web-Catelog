@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=4.3">
+<link rel="stylesheet" href="/static/css/style.css?v=5.0">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -1813,12 +1813,17 @@ function renderSystemCard(sysId, sysData) {
           <button type="button" class="btn-order-move btn-order-up" title="Move Up">&#9650;</button>
           <button type="button" class="btn-order-move btn-order-down" title="Move Down">&#9660;</button>
         </div>
-        <div class="system-card-title-group">
+        <div class="system-card-title-group" title="Click to collapse / expand">
+          <span class="system-card-collapse-icon">&#9662;</span>
           <span class="system-card-name">${escapeHtml(name || 'New Console')}</span>
           <span class="system-card-id-badge">${escapeHtml(key || 'unassigned')}</span>
+          <span class="system-card-error-container"></span>
         </div>
       </div>
-      <button type="button" class="btn-remove-system" title="Remove Console">&times; Remove</button>
+      <div class="system-card-right-group">
+        <button type="button" class="btn-toggle-minimize" title="Collapse or expand this console">Collapse</button>
+        <button type="button" class="btn-remove-system" title="Remove Console">&times; Remove</button>
+      </div>
     </div>
     <div class="system-card-body">
       <div class="form-row-2">
@@ -1866,6 +1871,46 @@ function renderSystemCard(sysId, sysData) {
   const upBtn = card.querySelector('.btn-order-up');
   const downBtn = card.querySelector('.btn-order-down');
   const dragHandle = card.querySelector('.system-card-drag-handle');
+  const cardBody = card.querySelector('.system-card-body');
+  const minimizeBtn = card.querySelector('.btn-toggle-minimize');
+  const collapseIcon = card.querySelector('.system-card-collapse-icon');
+  const titleGroup = card.querySelector('.system-card-title-group');
+
+  function toggleCollapse() {
+    const isCollapsed = card.classList.toggle('collapsed');
+    if (minimizeBtn) {
+      minimizeBtn.textContent = isCollapsed ? 'Expand' : 'Collapse';
+    }
+    if (collapseIcon) {
+      collapseIcon.innerHTML = isCollapsed ? '&#9656;' : '&#9662;';
+    }
+    if (cardBody) {
+      cardBody.style.display = isCollapsed ? 'none' : 'flex';
+    }
+  }
+
+  if (minimizeBtn) {
+    minimizeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleCollapse();
+    });
+  }
+
+  if (titleGroup) {
+    titleGroup.addEventListener('click', () => {
+      toggleCollapse();
+    });
+  }
+
+  function clearCardError() {
+    card.classList.remove('has-error');
+    const errContainer = card.querySelector('.system-card-error-container');
+    if (errContainer) errContainer.innerHTML = '';
+  }
+
+  card.querySelectorAll('.sys-name-input, .sys-id-input, .sys-folder-input, .sys-exts-input, .sys-cmd-input').forEach(input => {
+    input.addEventListener('input', clearCardError);
+  });
 
   if (inlineHelpBtn && commandHelpBox) {
     inlineHelpBtn.addEventListener('click', () => {
@@ -2290,6 +2335,13 @@ async function saveConsolesConfig() {
         return;
       }
 
+      // Clear previous error states
+      cards.forEach(card => {
+        card.classList.remove('has-error');
+        const errContainer = card.querySelector('.system-card-error-container');
+        if (errContainer) errContainer.innerHTML = '';
+      });
+
       const errors = [];
       cards.forEach((card, idx) => {
         const name = card.querySelector('.sys-name-input').value.trim();
@@ -2297,20 +2349,30 @@ async function saveConsolesConfig() {
         const exts = card.querySelector('.sys-exts-input').value.trim();
         const cmd = card.querySelector('.sys-cmd-input').value.trim();
         const label = name ? `Console "${name}"` : `Console #${idx + 1}`;
+        const cardErrors = [];
 
         if (!name) {
-          errors.push(`${label}: Display Name is required.`);
+          cardErrors.push('Display Name is required.');
         }
         if (!folder) {
-          errors.push(`${label}: ROM folder path is required.`);
+          cardErrors.push('ROM folder path is required.');
         }
         if (!exts) {
-          errors.push(`${label}: Allowed file extensions are required (e.g. .zip, .iso).`);
+          cardErrors.push('Allowed file extensions are required (e.g. .zip, .iso).');
         }
         if (!cmd) {
-          errors.push(`${label}: Emulator launch command is required.`);
+          cardErrors.push('Emulator launch command is required.');
         } else if (!cmd.includes('{rom}')) {
-          errors.push(`${label}: Launch command must include the '{rom}' token.`);
+          cardErrors.push("Launch command must include the '{rom}' token.");
+        }
+
+        if (cardErrors.length > 0) {
+          card.classList.add('has-error');
+          const errContainer = card.querySelector('.system-card-error-container');
+          if (errContainer) {
+            errContainer.innerHTML = `<span class="system-card-error-badge" title="${escapeHtml(cardErrors.join(' | '))}">&#9888; Error</span>`;
+          }
+          cardErrors.forEach(e => errors.push(`${label}: ${e}`));
         }
       });
 
