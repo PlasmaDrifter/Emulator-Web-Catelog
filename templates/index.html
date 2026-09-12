@@ -1774,6 +1774,35 @@ function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function getCollapsedConsoles() {
+  try {
+    const raw = localStorage.getItem('romcat_collapsed_consoles');
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr.map(s => String(s).toLowerCase()));
+    }
+  } catch(e) {
+    console.error('Error reading collapsed consoles from localStorage', e);
+  }
+  return new Set();
+}
+
+function saveConsoleCollapsed(sysId, isCollapsed) {
+  if (!sysId) return;
+  try {
+    const set = getCollapsedConsoles();
+    const cleanId = String(sysId).toLowerCase();
+    if (isCollapsed) {
+      set.add(cleanId);
+    } else {
+      set.delete(cleanId);
+    }
+    localStorage.setItem('romcat_collapsed_consoles', JSON.stringify(Array.from(set)));
+  } catch(e) {
+    console.error('Error saving collapsed consoles to localStorage', e);
+  }
+}
+
 function updateCardReorderButtons() {
   if (!systemsListContainer) return;
   const cards = systemsListContainer.querySelectorAll('.system-config-card');
@@ -1876,6 +1905,27 @@ function renderSystemCard(sysId, sysData) {
   const collapseIcon = card.querySelector('.system-card-collapse-icon');
   const titleGroup = card.querySelector('.system-card-title-group');
 
+  function getCurrentKey() {
+    return (idInput.value.trim().toLowerCase() || nameInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') || sysId || '').toLowerCase();
+  }
+
+  const collapsedSet = getCollapsedConsoles();
+  const initialKey = (sysId || '').toLowerCase();
+  const isInitiallyCollapsed = initialKey && collapsedSet.has(initialKey);
+
+  if (isInitiallyCollapsed) {
+    card.classList.add('collapsed');
+    if (minimizeBtn) {
+      minimizeBtn.textContent = 'Expand';
+    }
+    if (collapseIcon) {
+      collapseIcon.innerHTML = '&#9656;';
+    }
+    if (cardBody) {
+      cardBody.style.display = 'none';
+    }
+  }
+
   function toggleCollapse() {
     const isCollapsed = card.classList.toggle('collapsed');
     if (minimizeBtn) {
@@ -1886,6 +1936,10 @@ function renderSystemCard(sysId, sysData) {
     }
     if (cardBody) {
       cardBody.style.display = isCollapsed ? 'none' : 'flex';
+    }
+    const currentKey = getCurrentKey();
+    if (currentKey) {
+      saveConsoleCollapsed(currentKey, isCollapsed);
     }
   }
 
@@ -2011,6 +2065,11 @@ function renderSystemCard(sysId, sysData) {
   removeBtn.addEventListener('click', async () => {
     const displayName = nameInput.value.trim() || idInput.value.trim() || 'this console';
     if (!confirm(`Remove console definition for "${displayName}"?`)) return;
+
+    const currentKey = getCurrentKey();
+    if (currentKey) {
+      saveConsoleCollapsed(currentKey, false);
+    }
 
     card.remove();
     updateCardReorderButtons();
