@@ -1605,26 +1605,32 @@ if (refreshBtn) {
   });
 }
 
+let consolesConfigChanged = false;
+
+function closeSettingsWithCheck() {
+  settingsDialog.close();
+  if (consolesConfigChanged) {
+    consolesConfigChanged = false;
+    location.reload();
+  }
+}
+
 // Modal open/close
 settingsBtn.addEventListener('click', () => {
   settingsDialog.showModal();
   loadConfigData();
 });
-closeSettingsBtn.addEventListener('click', () => {
-  settingsDialog.close();
-});
+closeSettingsBtn.addEventListener('click', closeSettingsWithCheck);
 if (closeSettingsModalBtn) {
-  closeSettingsModalBtn.addEventListener('click', () => {
-    settingsDialog.close();
-  });
+  closeSettingsModalBtn.addEventListener('click', closeSettingsWithCheck);
 }
 if (closeConsolesModalBtn) {
-  closeConsolesModalBtn.addEventListener('click', () => {
-    settingsDialog.close();
-  });
+  closeConsolesModalBtn.addEventListener('click', closeSettingsWithCheck);
 }
-settingsDialog.addEventListener('click', (e) => {
-  if (e.target === settingsDialog) settingsDialog.close();
+
+// Never automatically close settings on accidental outside clicks or Escape key
+settingsDialog.addEventListener('cancel', (e) => {
+  e.preventDefault();
 });
 
 // Save settings to backend
@@ -2627,6 +2633,7 @@ async function saveConsolesConfig() {
       if (yamlConfigEditor && data.raw_yaml) {
         yamlConfigEditor.value = data.raw_yaml;
       }
+      consolesConfigChanged = true;
       configStatusAlert.className = 'config-status-msg success';
       configStatusAlert.textContent = 'Configuration saved and library rescanned successfully!';
       configStatusAlert.style.display = 'block';
@@ -2634,8 +2641,7 @@ async function saveConsolesConfig() {
       setTimeout(() => {
         saveSettingsBtn.textContent = 'Save';
         saveSettingsBtn.disabled = false;
-        location.reload();
-      }, 1000);
+      }, 1500);
     } else {
       saveSettingsBtn.textContent = 'Save';
       saveSettingsBtn.disabled = false;
