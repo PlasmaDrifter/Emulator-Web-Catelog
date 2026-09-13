@@ -888,11 +888,26 @@ def api_apply_cover():
         parsed_url = urllib.parse.urlparse(image_url)
         if parsed_url.scheme not in ("http", "https"):
             return jsonify({"ok": False, "error": "Invalid URL scheme"}), 400
+
         hostname = (parsed_url.hostname or "").lower()
-        if not (hostname == "steamgriddb.com" or hostname.endswith(".steamgriddb.com")):
+        if hostname == "cdn2.steamgriddb.com":
+            base_host = "cdn2.steamgriddb.com"
+        elif hostname == "images.steamgriddb.com":
+            base_host = "images.steamgriddb.com"
+        elif hostname in ("steamgriddb.com", "www.steamgriddb.com"):
+            base_host = "www.steamgriddb.com"
+        else:
             return jsonify({"ok": False, "error": "Only SteamGridDB image URLs are permitted"}), 400
 
-        img_resp = requests.get(image_url, timeout=15)
+        path = parsed_url.path
+        if not re.match(r"^/[a-zA-Z0-9_\-\./]+$", path) or ".." in path:
+            return jsonify({"ok": False, "error": "Invalid image URL path"}), 400
+
+        safe_url = f"https://{base_host}{path}"
+        if parsed_url.query and re.match(r"^[a-zA-Z0-9_=&-]+$", parsed_url.query):
+            safe_url = f"{safe_url}?{parsed_url.query}"
+
+        img_resp = requests.get(safe_url, timeout=15)
         img_resp.raise_for_status()
 
         key = safe_key(system, filename)
