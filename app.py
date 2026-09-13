@@ -672,8 +672,10 @@ def generate_title_candidates(title: str) -> list:
                 candidates.append(base)
 
     # Disc, version, edition markers (e.g. 'Resident Evil 2 (Disc 1)' -> 'Resident Evil 2')
-    disc_cleaned = re.sub(r"(?i)\b(disc|disk|cd|side)\s*\d+.*$", "", cleaned).strip()
-    disc_cleaned = re.sub(r"(?i)\b(v\d+(\.\d+)?|version\s*\d+(\.\d+)?|edition|remastered|anthology)\b.*$", "", disc_cleaned).strip()
+    disc_parts = re.split(r"(?i)\b(?:disc|disk|cd|side)\s*\d+", cleaned, maxsplit=1)
+    disc_cleaned = disc_parts[0].rstrip(" ([{:-_").strip() if disc_parts else cleaned
+    ver_parts = re.split(r"(?i)\b(?:v\d+(?:\.\d+)?|version\s*\d+|edition|remastered|anthology)\b", disc_cleaned, maxsplit=1)
+    disc_cleaned = ver_parts[0].rstrip(" ([{:-_").strip() if ver_parts else disc_cleaned
     if disc_cleaned and disc_cleaned not in candidates:
         candidates.append(disc_cleaned)
 
@@ -883,6 +885,13 @@ def api_apply_cover():
         return jsonify({"ok": False, "error": "Missing system, filename, or image_url"}), 400
 
     try:
+        parsed_url = urllib.parse.urlparse(image_url)
+        if parsed_url.scheme not in ("http", "https"):
+            return jsonify({"ok": False, "error": "Invalid URL scheme"}), 400
+        hostname = (parsed_url.hostname or "").lower()
+        if not (hostname == "steamgriddb.com" or hostname.endswith(".steamgriddb.com")):
+            return jsonify({"ok": False, "error": "Only SteamGridDB image URLs are permitted"}), 400
+
         img_resp = requests.get(image_url, timeout=15)
         img_resp.raise_for_status()
 
@@ -918,8 +927,10 @@ def api_apply_cover():
             save_library_cache(library)
 
         return jsonify({"ok": True, "cover": f"/static/covers/{key}.jpg"})
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 500
+    except requests.RequestException:
+        return jsonify({"ok": False, "error": "Failed to download image from SteamGridDB."}), 502
+    except Exception:
+        return jsonify({"ok": False, "error": "Failed to apply cover image."}), 500
 
 
 @app.route("/api/fetch_covers", methods=["POST"])
