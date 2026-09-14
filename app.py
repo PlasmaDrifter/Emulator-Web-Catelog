@@ -19,7 +19,7 @@ from flask import Flask, render_template, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 from PIL import Image
 
-__version__ = "0.5.7"
+__version__ = "0.5.8"
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)

@@ -103,6 +103,7 @@
   </div>
   <div class="modal-nav-tabs">
     <button type="button" class="modal-nav-tab active" data-tab-target="tabAppearance">Appearance</button>
+    <button type="button" class="modal-nav-tab" data-tab-target="tabWebpageIcon">Webpage & Tab Icon</button>
     <button type="button" class="modal-nav-tab" data-tab-target="tabUI">UI</button>
     <button type="button" class="modal-nav-tab" data-tab-target="tabConsoles">Consoles & Emulators</button>
   </div>
@@ -237,8 +238,10 @@
           </div>
         </div>
       </section>
+    </div>
 
-      <!-- Webpage & Tab Icon -->
+    <!-- Tab 2: Webpage & Tab Icon -->
+    <div id="tabWebpageIcon" class="settings-tab-pane hidden">
       <section class="settings-section">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
           <h4 style="margin: 0;">Webpage & Tab Icon</h4>
@@ -318,7 +321,10 @@
               <span class="details-chevron">▸</span>
               <span style="font-weight: 600; font-size: 0.88rem;">Customize Individual Tab Icons</span>
             </div>
-            <span class="tab-icons-count-badge" id="tabIconsOverrideCount">All Auto</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="tab-icons-count-badge" id="tabIconsOverrideCount">All Auto</span>
+              <button type="button" id="btnToggleTabIconsDetails" class="btn-toggle-minimize" title="Expand or collapse tab icons customization">Expand</button>
+            </div>
           </summary>
           <div class="tab-icons-custom-body" style="padding: 10px 0 4px 0;">
             <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0 0 10px 0; line-height: 1.4;">
@@ -331,13 +337,16 @@
         </details>
 
         <div class="settings-field">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;">
             <label style="margin: 0;">Header & Favicon Icon</label>
             <div style="display: flex; gap: 6px;">
               <button type="button" id="btnHeaderAddFolder" class="icon-action-btn" title="Create a new console folder in static/icons/">+ New Folder</button>
               <button type="button" id="btnHeaderOpenFolder" class="icon-action-btn" title="Open static/icons folder in system file manager">📁 Open Icons Folder</button>
             </div>
           </div>
+          <p style="color: var(--text-muted); font-size: 0.78rem; margin: 0 0 8px 0; line-height: 1.4;">
+            Selecting an icon below immediately sets it as your browser tab's <strong>Favicon</strong> and catalog <strong>Header Icon</strong>.
+          </p>
           <div class="icon-selector-container">
             <div class="icon-category-tabs" id="iconCatTabs">
               <!-- Dynamically populated from /api/icons -->
@@ -350,12 +359,15 @@
                 <input type="file" id="iconFileInput" accept=".png,.svg,.ico,.jpg,.jpeg,.webp" style="display:none">
               </label>
             </div>
+            <span style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; display: block;">
+              💡 <em>Clicking an icon or uploading/pasting a path sets it as your browser favicon and header icon.</em>
+            </span>
           </div>
         </div>
       </section>
     </div>
 
-    <!-- Tab 2: UI -->
+    <!-- Tab 3: UI -->
     <div id="tabUI" class="settings-tab-pane hidden">
       <!-- SteamGridDB Integration -->
       <section class="settings-section">
@@ -1835,6 +1847,8 @@ renderCustomThemes();
 
 // --- Tab Icon Overrides & Customization ---
 let tabIconsOverrides = {{ (settings.tab_icons or {}) | tojson }};
+const tabIconsCustomDetails = document.getElementById('tabIconsCustomDetails');
+const btnToggleTabIconsDetails = document.getElementById('btnToggleTabIconsDetails');
 const tabIconsList = document.getElementById('tabIconsList');
 const tabIconsOverrideCount = document.getElementById('tabIconsOverrideCount');
 const tabIconPickerModal = document.getElementById('tabIconPickerModal');
@@ -1843,6 +1857,18 @@ const tabIconPickerCatTabs = document.getElementById('tabIconPickerCatTabs');
 const tabIconPickerGrid = document.getElementById('tabIconPickerGrid');
 const closeTabIconPickerBtn = document.getElementById('closeTabIconPickerBtn');
 const cancelTabIconPickerBtn = document.getElementById('cancelTabIconPickerBtn');
+
+if (tabIconsCustomDetails && btnToggleTabIconsDetails) {
+  tabIconsCustomDetails.addEventListener('toggle', () => {
+    btnToggleTabIconsDetails.textContent = tabIconsCustomDetails.open ? 'Collapse' : 'Expand';
+  });
+  btnToggleTabIconsDetails.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    tabIconsCustomDetails.open = !tabIconsCustomDetails.open;
+    btnToggleTabIconsDetails.textContent = tabIconsCustomDetails.open ? 'Collapse' : 'Expand';
+  });
+}
 
 let activePickerTabTarget = null;
 let activePickerTabName = '';
@@ -2223,6 +2249,7 @@ if (viewHiddenBtn) {
 // --- Modal Nav Tabs & Config Management ---
 const modalNavTabs = document.querySelectorAll('.modal-nav-tab');
 const tabAppearance = document.getElementById('tabAppearance');
+const tabWebpageIcon = document.getElementById('tabWebpageIcon');
 const tabUI = document.getElementById('tabUI');
 const tabConsoles = document.getElementById('tabConsoles');
 const generalModalFooter = document.getElementById('generalModalFooter');
@@ -2298,18 +2325,28 @@ modalNavTabs.forEach(tab => {
     currentSettingsTab = target;
     if (target === 'tabAppearance') {
       tabAppearance.classList.remove('hidden');
+      if (tabWebpageIcon) tabWebpageIcon.classList.add('hidden');
+      tabUI.classList.add('hidden');
+      tabConsoles.classList.add('hidden');
+      if (resetDefaultsBtn) resetDefaultsBtn.classList.remove('hidden');
+      if (reloadConfigBtn) reloadConfigBtn.classList.add('hidden');
+    } else if (target === 'tabWebpageIcon') {
+      tabAppearance.classList.add('hidden');
+      if (tabWebpageIcon) tabWebpageIcon.classList.remove('hidden');
       tabUI.classList.add('hidden');
       tabConsoles.classList.add('hidden');
       if (resetDefaultsBtn) resetDefaultsBtn.classList.remove('hidden');
       if (reloadConfigBtn) reloadConfigBtn.classList.add('hidden');
     } else if (target === 'tabUI') {
       tabAppearance.classList.add('hidden');
+      if (tabWebpageIcon) tabWebpageIcon.classList.add('hidden');
       tabUI.classList.remove('hidden');
       tabConsoles.classList.add('hidden');
       if (resetDefaultsBtn) resetDefaultsBtn.classList.remove('hidden');
       if (reloadConfigBtn) reloadConfigBtn.classList.add('hidden');
     } else {
       tabAppearance.classList.add('hidden');
+      if (tabWebpageIcon) tabWebpageIcon.classList.add('hidden');
       tabUI.classList.add('hidden');
       tabConsoles.classList.remove('hidden');
       if (resetDefaultsBtn) resetDefaultsBtn.classList.add('hidden');
@@ -3189,12 +3226,18 @@ if (autoSettingsTab) {
     if (urlParams.get('help') && commandHelpBox) {
       commandHelpBox.classList.remove('hidden');
     }
+  } else if (autoSettingsTab === 'webpage_icon' || autoSettingsTab === 'icons' || autoSettingsTab === 'icon') {
+    const tabEl = document.querySelector('[data-tab-target="tabWebpageIcon"]');
+    if (tabEl) tabEl.click();
+    if (urlParams.get('help') && iconHelpBox) {
+      iconHelpBox.classList.remove('hidden');
+    }
   } else {
     const tabEl = document.querySelector('[data-tab-target="tabAppearance"]');
     if (tabEl) tabEl.click();
     if (urlParams.get('scroll_icon')) {
-      const mb = document.querySelector('.modal-body');
-      if (mb) mb.scrollTop = 450;
+      const iconTab = document.querySelector('[data-tab-target="tabWebpageIcon"]');
+      if (iconTab) iconTab.click();
     }
   }
   if (urlParams.get('test_error')) {
