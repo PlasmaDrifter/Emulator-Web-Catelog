@@ -229,8 +229,8 @@ ROMcat includes a tabbed Settings interface directly in the web UI (accessible v
 
 ### 2. Favicon and Console Icon Tab
 - **Favicon & Header Icon**: Select from retro and modern console icons (Nintendo, PlayStation, Xbox, Sega, Atari, Commodore, Retro, Custom) or upload custom images to immediately update your browser favicon and header icon.
-- **Category Tab Icons Toggle**: Automatically match and display console & system icons on navigation tabs.
-- **Customize Individual Tab Icons**: Expandable list to inspect and override icons for individual navigation tabs with custom uploads or system icons.
+- **Show Console Tab Icons Toggle**: Automatically match and display console & system icons on navigation tabs.
+- **Customize Console Tab Icons**: Expandable list to inspect and override icons for individual navigation tabs with custom uploads or system icons.
 - **Folder & Icon Management**: Open `static/icons/` in system file manager, create new console folders, and organize icons per console.
 
 ### 3. UI Tab
