@@ -3232,6 +3232,14 @@ if (autoSettingsTab) {
     if (urlParams.get('help') && iconHelpBox) {
       iconHelpBox.classList.remove('hidden');
     }
+    if (urlParams.get('expand')) {
+      const details = document.getElementById('tabIconsCustomDetails');
+      if (details) {
+        details.open = true;
+        const btn = document.getElementById('btnToggleTabIconsDetails');
+        if (btn) btn.textContent = 'Collapse';
+      }
+    }
   } else {
     const tabEl = document.querySelector('[data-tab-target="tabAppearance"]');
     if (tabEl) tabEl.click();
