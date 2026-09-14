@@ -103,7 +103,7 @@
   </div>
   <div class="modal-nav-tabs">
     <button type="button" class="modal-nav-tab active" data-tab-target="tabAppearance">Appearance</button>
-    <button type="button" class="modal-nav-tab" data-tab-target="tabWebpageIcon">Webpage & Tab Icon</button>
+    <button type="button" class="modal-nav-tab" data-tab-target="tabWebpageIcon">Favicon and Console Icon</button>
     <button type="button" class="modal-nav-tab" data-tab-target="tabUI">UI</button>
     <button type="button" class="modal-nav-tab" data-tab-target="tabConsoles">Consoles & Emulators</button>
   </div>
@@ -240,11 +240,11 @@
       </section>
     </div>
 
-    <!-- Tab 2: Webpage & Tab Icon -->
+    <!-- Tab 2: Favicon and Console Icon -->
     <div id="tabWebpageIcon" class="settings-tab-pane hidden">
       <section class="settings-section">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-          <h4 style="margin: 0;">Webpage & Tab Icon</h4>
+          <h4 style="margin: 0;">Favicon and Console Icon</h4>
           <button type="button" id="toggleIconHelpBtn" class="btn-secondary help-pill-btn" title="View Icon & Folder Management Guide">
             <span class="help-circle-icon">?</span> Icon &amp; Folder Guide
           </button>
@@ -3226,7 +3226,7 @@ if (autoSettingsTab) {
     if (urlParams.get('help') && commandHelpBox) {
       commandHelpBox.classList.remove('hidden');
     }
-  } else if (autoSettingsTab === 'webpage_icon' || autoSettingsTab === 'icons' || autoSettingsTab === 'icon') {
+  } else if (autoSettingsTab === 'favicon_and_console_icon' || autoSettingsTab === 'favicon' || autoSettingsTab === 'console_icon' || autoSettingsTab === 'webpage_icon' || autoSettingsTab === 'icons' || autoSettingsTab === 'icon') {
     const tabEl = document.querySelector('[data-tab-target="tabWebpageIcon"]');
     if (tabEl) tabEl.click();
     if (urlParams.get('help') && iconHelpBox) {

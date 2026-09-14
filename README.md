@@ -32,19 +32,19 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 ![ROMcat Themes Animated Preview](screenshots/themes_preview.gif?raw=true&v=3)
 
 ### Settings: Appearance Tab
-![Settings Appearance Tab](screenshots/settings_appearance.png?raw=true&v=6)
+![Settings Appearance Tab](screenshots/settings_appearance.png?raw=true&v=7)
 
-### Settings: Webpage & Tab Icon Tab
-![Settings Webpage & Tab Icon Tab](screenshots/settings_webpage_tab_icon.png?raw=true&v=6)
+### Settings: Favicon and Console Icon Tab
+![Settings Favicon and Console Icon Tab](screenshots/settings_favicon_console_icon.png?raw=true&v=7)
 
 ### Settings: UI Tab
-![Settings UI Tab](screenshots/settings_ui.png?raw=true&v=6)
+![Settings UI Tab](screenshots/settings_ui.png?raw=true&v=7)
 
 ### Settings: Consoles & Emulators Tab
-![Settings Consoles & Emulators Tab](screenshots/settings_consoles.png?raw=true&v=6)
+![Settings Consoles & Emulators Tab](screenshots/settings_consoles.png?raw=true&v=7)
 
 ### Settings: Interactive Command Guide
-![Settings Command Guide](screenshots/settings_consoles_help.png?raw=true&v=6)
+![Settings Command Guide](screenshots/settings_consoles_help.png?raw=true&v=7)
 
 ---
 
@@ -224,11 +224,16 @@ ROMcat includes a tabbed Settings interface directly in the web UI (accessible v
 ### 1. Appearance Tab
 - **General Settings**:
   - **Catalog Title**: Update the dashboard title and browser tab title on the fly.
-  - **Webpage & Tab Icon**: Select from 35+ retro and modern console icons (Nintendo, PlayStation, Xbox, Sega, Atari, Commodore, Retro) or upload a custom image.
 - **Theme Presets**: Switch instantly between 6 presets: Default Dark, Pure OLED, Catppuccin, Cyberpunk, Nord Frost, and Emerald.
 - **Custom Color Pickers**: Fine-tune every color element individually with real-time live preview (backgrounds, accents, glowing borders, active tab text, favorite star).
 
-### 2. UI Tab
+### 2. Favicon and Console Icon Tab
+- **Favicon & Header Icon**: Select from retro and modern console icons (Nintendo, PlayStation, Xbox, Sega, Atari, Commodore, Retro, Custom) or upload custom images to immediately update your browser favicon and header icon.
+- **Category Tab Icons Toggle**: Automatically match and display console & system icons on navigation tabs.
+- **Customize Individual Tab Icons**: Expandable list to inspect and override icons for individual navigation tabs with custom uploads or system icons.
+- **Folder & Icon Management**: Open `static/icons/` in system file manager, create new console folders, and organize icons per console.
+
+### 3. UI Tab
 - **Library Actions**:
   - **Fetch Cover Art**: One-click automated cover scraping from SteamGridDB with live status feedback.
   - **Rescan Library**: Scan storage paths for newly added, moved, or deleted ROM files.
@@ -241,7 +246,7 @@ ROMcat includes a tabbed Settings interface directly in the web UI (accessible v
   - **Show ROM Count Badges**: Display numeric game counts on system tabs (e.g. `(42)`).
   - **Show "Favorites" Tab**: Toggle favorites tab on the navigation bar.
 
-### 3. Consoles & Emulators Tab
+### 4. Consoles & Emulators Tab
 - **Console Category Reordering**:
   - **Move Up (▲) / Move Down (▼) Buttons**: Shift consoles up or down one position at a time with instant boundary detection (first/last buttons disable appropriately).
   - **Drag-and-Drop Handles (`⋮⋮`)**: Click and drag the handle icon on any console card to drop it into a new position, complete with dynamic drop-line indicators.
