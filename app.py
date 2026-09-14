@@ -17,9 +17,10 @@ import shutil
 from pathlib import Path
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
+from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.5.8"
+__version__ = "0.5.9"
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)
@@ -672,7 +673,8 @@ def api_open_icons_folder():
             os.startfile(str(icons_dir))
         return jsonify({"ok": True, "path": str(icons_dir)})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e), "path": str(icons_dir)})
+        print(f"Error opening icons folder: {e}", file=sys.stderr)
+        return jsonify({"ok": False, "error": "Unable to open folder in system file manager.", "path": str(icons_dir)}), 500
 
 
 @app.route("/api/create_icon_folder", methods=["POST"])
@@ -1320,27 +1322,35 @@ def serve_covers(filename):
 
 @app.route('/static/icons/<path:filename>')
 def serve_icons(filename):
-    clean_path = Path(filename)
+    clean_parts = [secure_filename(p) for p in Path(filename).parts if p and p not in ('.', '..')]
+    if not clean_parts:
+        return jsonify({"error": "Icon not found"}), 404
+    clean_rel = os.path.join(*clean_parts)
+
     icons_dir = (BASE_DIR / "static" / "icons").resolve()
     bundled_icons = (BUNDLE_DIR / "static" / "icons").resolve()
 
     # 1. Direct path check in BASE_DIR
-    target = (icons_dir / filename).resolve()
-    if os.path.commonpath([str(icons_dir), str(target)]) == str(icons_dir) and target.is_file():
-        return send_from_directory(target.parent, target.name)
+    target = safe_join(str(icons_dir), clean_rel)
+    if target and os.path.isfile(target):
+        return send_from_directory(icons_dir, clean_rel)
 
     # 2. Direct path check in BUNDLE_DIR
-    bundled_target = (bundled_icons / filename).resolve()
-    if os.path.commonpath([str(bundled_icons), str(bundled_target)]) == str(bundled_icons) and bundled_target.is_file():
-        return send_from_directory(bundled_target.parent, bundled_target.name)
+    bundled_target = safe_join(str(bundled_icons), clean_rel)
+    if bundled_target and os.path.isfile(bundled_target):
+        return send_from_directory(bundled_icons, clean_rel)
 
     # 3. Fallback: filename might be flat / legacy e.g. "nintendo-nes.svg"
-    base_name = clean_path.name
+    base_name = clean_parts[-1]
     for base in [icons_dir, bundled_icons]:
         if base.exists():
             for p in base.rglob(base_name):
                 if p.is_file():
-                    return send_from_directory(p.parent, p.name)
+                    try:
+                        rel = p.relative_to(base)
+                        return send_from_directory(base, str(rel))
+                    except ValueError:
+                        pass
 
     return jsonify({"error": "Icon not found"}), 404
 
