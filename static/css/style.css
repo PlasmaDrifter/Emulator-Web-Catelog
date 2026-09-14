@@ -1616,3 +1616,147 @@ body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
   padding: 1px 4px;
   border-radius: 3px;
 }
+
+/* Custom Tab Icons Details & List */
+.tab-icons-custom-details {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+.tab-icons-custom-details[open] {
+  border-color: var(--accent-color);
+}
+.tab-icons-details-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(255, 255, 255, 0.03);
+  transition: background 0.15s ease;
+}
+.tab-icons-details-summary:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.tab-icons-details-summary::-webkit-details-marker {
+  display: none;
+}
+.tab-icons-custom-details[open] .details-chevron {
+  transform: rotate(90deg);
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+.tab-icons-custom-details .details-chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+.tab-icons-count-badge {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  font-weight: 500;
+}
+.tab-icons-count-badge.has-custom {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border-color: #10b981;
+}
+.tab-icons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px 12px 10px 12px;
+}
+.tab-icon-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  flex-wrap: wrap;
+}
+.tab-icon-item-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tab-icon-thumb-wrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.tab-icon-thumb {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.tab-icon-thumb-wrapper svg {
+  width: 18px;
+  height: 18px;
+}
+.tab-icon-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tab-icon-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.tab-icon-id-badge {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+.tab-icon-status-badge {
+  font-size: 0.66rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.tab-icon-status-badge.auto {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+}
+.tab-icon-status-badge.custom {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.tab-icon-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab-icon-actions button,
+.tab-icon-actions label {
+  font-size: 0.74rem;
+  padding: 4px 10px;
+  margin: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}

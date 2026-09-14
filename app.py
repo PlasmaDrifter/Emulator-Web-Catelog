@@ -19,7 +19,7 @@ from flask import Flask, render_template, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 from PIL import Image
 
-__version__ = "0.5.3"
+__version__ = "0.5.4"
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)
@@ -54,6 +54,7 @@ DEFAULT_SETTINGS = {
         "border_color": "#2a2e37"
     },
     "custom_themes": {},
+    "tab_icons": {},
     "visibility": {
         "show_search": True,
         "show_counts": True,
@@ -408,6 +409,8 @@ def api_settings():
             settings["theme"].update(data["theme"])
         if "custom_themes" in data and isinstance(data["custom_themes"], dict):
             settings["custom_themes"] = data["custom_themes"]
+        if "tab_icons" in data and isinstance(data["tab_icons"], dict):
+            settings["tab_icons"] = data["tab_icons"]
         if "visibility" in data and isinstance(data["visibility"], dict):
             settings["visibility"].update(data["visibility"])
         save_settings(settings)
@@ -475,7 +478,12 @@ def api_upload_icon():
     icons_dir = (BASE_DIR / "static" / "icons").resolve()
     icons_dir.mkdir(parents=True, exist_ok=True)
     clean_stem = secure_filename(Path(file.filename).stem) or "custom_icon"
-    filename = f"custom_{clean_stem}{ext}"
+    icon_type = request.form.get("type", "header")
+    tab_id = request.form.get("tab_id", "").strip()
+    if icon_type == "tab" and tab_id:
+        filename = f"custom_tab_{secure_filename(tab_id)}_{clean_stem}{ext}"
+    else:
+        filename = f"custom_{clean_stem}{ext}"
     target_path = (icons_dir / filename).resolve()
     if os.path.commonpath([str(icons_dir), str(target_path)]) != str(icons_dir):
         return jsonify({"ok": False, "error": "Invalid path"}), 400
@@ -483,9 +491,15 @@ def api_upload_icon():
 
     icon_url = f"/static/icons/{filename}"
     settings = load_settings()
-    settings["icon"] = icon_url
-    save_settings(settings)
-    return jsonify({"ok": True, "icon": icon_url})
+    if icon_type == "tab" and tab_id:
+        if "tab_icons" not in settings or not isinstance(settings["tab_icons"], dict):
+            settings["tab_icons"] = {}
+        settings["tab_icons"][tab_id] = icon_url
+        save_settings(settings)
+    else:
+        settings["icon"] = icon_url
+        save_settings(settings)
+    return jsonify({"ok": True, "icon": icon_url, "tab_id": tab_id if icon_type == "tab" else None})
 
 
 @app.route("/favicon.ico")

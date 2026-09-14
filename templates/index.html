@@ -256,6 +256,25 @@
           </label>
         </div>
 
+        <!-- Collapsible Custom Tab Icons Override Section -->
+        <details class="tab-icons-custom-details" id="tabIconsCustomDetails" style="margin-bottom: 18px;">
+          <summary class="tab-icons-details-summary">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="details-chevron">▸</span>
+              <span style="font-weight: 600; font-size: 0.88rem;">Customize Individual Tab Icons</span>
+            </div>
+            <span class="tab-icons-count-badge" id="tabIconsOverrideCount">All Auto</span>
+          </summary>
+          <div class="tab-icons-custom-body" style="padding: 10px 0 4px 0;">
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0 0 10px 0; line-height: 1.4;">
+              Tab icons are matched automatically by default. You can override any individual tab with an existing system icon or upload your own image.
+            </p>
+            <div class="tab-icons-list" id="tabIconsList">
+              <!-- Dynamically populated rows for each tab -->
+            </div>
+          </div>
+        </details>
+
         <div class="settings-field">
           <label>Header & Favicon Icon</label>
           <div class="icon-selector-container">
@@ -611,6 +630,38 @@
     </div>
     <div class="validation-dialog-footer">
       <button type="button" class="btn-primary" id="dismissValidationErrorBtn" style="padding: 7px 20px; font-size: 0.85rem; font-weight: 600;">OK</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Interactive Tab Icon Picker Dialog -->
+<dialog id="tabIconPickerModal" class="validation-dialog" style="max-width: 560px; width: 95vw;">
+  <div class="validation-dialog-content">
+    <div class="validation-dialog-header">
+      <div class="validation-header-title">
+        <span class="validation-icon-badge" style="background: rgba(58, 123, 213, 0.2); color: var(--accent-color); border-color: var(--accent-color); font-size: 1.1rem;">🎮</span>
+        <h4 id="tabIconPickerTitle">Choose Tab Icon</h4>
+      </div>
+      <button type="button" class="close-modal-btn" id="closeTabIconPickerBtn" aria-label="Close">&times;</button>
+    </div>
+    <div class="validation-dialog-body" style="max-height: 65vh; overflow-y: auto;">
+      <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0 0 10px 0;">
+        Select an icon from the built-in catalog to use for this tab:
+      </p>
+      <div class="icon-category-tabs" id="tabIconPickerCatTabs" style="margin-bottom: 10px;">
+        <button type="button" class="icon-cat-btn active" data-cat="all">All</button>
+        <button type="button" class="icon-cat-btn" data-cat="nintendo">Nintendo</button>
+        <button type="button" class="icon-cat-btn" data-cat="playstation">PlayStation</button>
+        <button type="button" class="icon-cat-btn" data-cat="xbox">Xbox</button>
+        <button type="button" class="icon-cat-btn" data-cat="sega">Sega</button>
+        <button type="button" class="icon-cat-btn" data-cat="atari">Atari</button>
+        <button type="button" class="icon-cat-btn" data-cat="commodore">Commodore</button>
+        <button type="button" class="icon-cat-btn" data-cat="retro">Retro</button>
+      </div>
+      <div class="icon-grid" id="tabIconPickerGrid" style="max-height: 260px;"></div>
+    </div>
+    <div class="validation-dialog-footer">
+      <button type="button" class="btn-secondary" id="cancelTabIconPickerBtn" style="padding: 7px 18px; font-size: 0.85rem;">Cancel</button>
     </div>
   </div>
 </dialog>
@@ -1152,6 +1203,13 @@ function matchAndPopulateCategoryIcons() {
     const iconSpan = tab.querySelector('.tab-icon');
     if (!iconSpan) return;
 
+    // Check if a custom manual override is set for this tab
+    if (typeof tabIconsOverrides === 'object' && tabIconsOverrides && tabIconsOverrides[target]) {
+      const customSrc = tabIconsOverrides[target];
+      iconSpan.innerHTML = `<img src="${encodeURI(customSrc)}" alt="" loading="lazy">`;
+      return;
+    }
+
     if (target === 'all') {
       iconSpan.innerHTML = '<img src="/static/icons/retro-gamepad.svg" alt="" loading="lazy">';
     } else if (target === 'favorites') {
@@ -1582,6 +1640,215 @@ if (iconFileInput) {
 renderIconGrid('all');
 renderCustomThemes();
 
+// --- Tab Icon Overrides & Customization ---
+let tabIconsOverrides = {{ (settings.tab_icons or {}) | tojson }};
+const tabIconsList = document.getElementById('tabIconsList');
+const tabIconsOverrideCount = document.getElementById('tabIconsOverrideCount');
+const tabIconPickerModal = document.getElementById('tabIconPickerModal');
+const tabIconPickerTitle = document.getElementById('tabIconPickerTitle');
+const tabIconPickerCatTabs = document.getElementById('tabIconPickerCatTabs');
+const tabIconPickerGrid = document.getElementById('tabIconPickerGrid');
+const closeTabIconPickerBtn = document.getElementById('closeTabIconPickerBtn');
+const cancelTabIconPickerBtn = document.getElementById('cancelTabIconPickerBtn');
+
+let activePickerTabTarget = null;
+let activePickerTabName = '';
+
+function renderTabIconPickerGrid(filterCat = 'all') {
+  if (!tabIconPickerGrid) return;
+  tabIconPickerGrid.innerHTML = '';
+  const filtered = filterCat === 'all' ? SYSTEM_ICONS : SYSTEM_ICONS.filter(i => i.cat === filterCat);
+  filtered.forEach(icon => {
+    const tile = document.createElement('div');
+    const isSelected = activePickerTabTarget && tabIconsOverrides[activePickerTabTarget] === icon.src;
+    tile.className = 'icon-tile' + (isSelected ? ' selected' : '');
+    tile.dataset.src = icon.src;
+
+    const img = document.createElement('img');
+    img.src = encodeURI(icon.src);
+    img.alt = icon.name;
+    img.loading = 'lazy';
+
+    const span = document.createElement('span');
+    span.textContent = icon.name;
+
+    tile.appendChild(img);
+    tile.appendChild(span);
+
+    tile.addEventListener('click', () => {
+      if (activePickerTabTarget) {
+        tabIconsOverrides[activePickerTabTarget] = icon.src;
+        if (tabIconPickerModal) tabIconPickerModal.close();
+        renderTabIconsCustomList();
+        matchAndPopulateCategoryIcons();
+        saveAllSettings();
+      }
+    });
+    tabIconPickerGrid.appendChild(tile);
+  });
+}
+
+function openTabIconPicker(target, sysName) {
+  activePickerTabTarget = target;
+  activePickerTabName = sysName;
+  if (tabIconPickerTitle) {
+    tabIconPickerTitle.textContent = `Choose Icon for "${sysName || target}"`;
+  }
+  if (tabIconPickerCatTabs) {
+    tabIconPickerCatTabs.querySelectorAll('.icon-cat-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.cat === 'all');
+    });
+  }
+  renderTabIconPickerGrid('all');
+  if (tabIconPickerModal) tabIconPickerModal.showModal();
+}
+
+if (tabIconPickerCatTabs) {
+  tabIconPickerCatTabs.querySelectorAll('.icon-cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabIconPickerCatTabs.querySelectorAll('.icon-cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTabIconPickerGrid(btn.dataset.cat);
+    });
+  });
+}
+
+if (closeTabIconPickerBtn && tabIconPickerModal) {
+  closeTabIconPickerBtn.addEventListener('click', () => tabIconPickerModal.close());
+}
+if (cancelTabIconPickerBtn && tabIconPickerModal) {
+  cancelTabIconPickerBtn.addEventListener('click', () => tabIconPickerModal.close());
+}
+
+function renderTabIconsCustomList() {
+  if (!tabIconsList) return;
+  tabIconsList.innerHTML = '';
+
+  const tabs = [];
+  document.querySelectorAll('.tabs .tab').forEach(tab => {
+    const target = tab.dataset.target;
+    if (target) {
+      tabs.push({
+        target: target,
+        name: tab.dataset.sysName || target
+      });
+    }
+  });
+
+  const overrideKeys = Object.keys(tabIconsOverrides || {});
+  if (tabIconsOverrideCount) {
+    if (overrideKeys.length > 0) {
+      tabIconsOverrideCount.textContent = `${overrideKeys.length} custom`;
+      tabIconsOverrideCount.classList.add('has-custom');
+    } else {
+      tabIconsOverrideCount.textContent = 'All Auto';
+      tabIconsOverrideCount.classList.remove('has-custom');
+    }
+  }
+
+  tabs.forEach(t => {
+    const target = t.target;
+    const name = t.name;
+    const isCustom = Boolean(tabIconsOverrides && tabIconsOverrides[target]);
+
+    let previewHtml = '';
+    if (isCustom) {
+      previewHtml = `<img src="${encodeURI(tabIconsOverrides[target])}" class="tab-icon-thumb" alt="${escapeHtml(name)}" loading="lazy">`;
+    } else if (target === 'all') {
+      previewHtml = `<img src="/static/icons/retro-gamepad.svg" class="tab-icon-thumb" alt="All" loading="lazy">`;
+    } else if (target === 'favorites') {
+      previewHtml = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+    } else if (target === 'hidden') {
+      previewHtml = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+    } else {
+      const autoSrc = matchIconForCategory(target, name);
+      previewHtml = `<img src="${encodeURI(autoSrc)}" class="tab-icon-thumb" alt="${escapeHtml(name)}" loading="lazy">`;
+    }
+
+    const item = document.createElement('div');
+    item.className = 'tab-icon-item';
+    item.dataset.target = target;
+    item.innerHTML = `
+      <div class="tab-icon-item-info">
+        <div class="tab-icon-thumb-wrapper">
+          ${previewHtml}
+        </div>
+        <div class="tab-icon-meta">
+          <span class="tab-icon-name">${escapeHtml(name)}</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="tab-icon-id-badge">${escapeHtml(target)}</span>
+            <span class="tab-icon-status-badge ${isCustom ? 'custom' : 'auto'}">${isCustom ? 'Custom' : 'Auto'}</span>
+          </div>
+        </div>
+      </div>
+      <div class="tab-icon-actions">
+        <button type="button" class="btn-secondary tab-icon-choose-btn" data-target="${escapeHtml(target)}" data-name="${escapeHtml(name)}">Choose Icon</button>
+        <label class="btn-secondary tab-icon-upload-label" title="Upload custom image from file manager">
+          Upload
+          <input type="file" class="tab-icon-file-input" data-target="${escapeHtml(target)}" accept=".png,.svg,.ico,.jpg,.jpeg,.webp" style="display:none;">
+        </label>
+        <button type="button" class="btn-secondary tab-icon-reset-btn" data-target="${escapeHtml(target)}" ${isCustom ? '' : 'disabled style="opacity:0.35; cursor:not-allowed;"'} title="${isCustom ? 'Reset to auto-matched default' : 'Already using default icon'}">Reset</button>
+      </div>
+    `;
+
+    const chooseBtn = item.querySelector('.tab-icon-choose-btn');
+    if (chooseBtn) {
+      chooseBtn.addEventListener('click', () => {
+        openTabIconPicker(target, name);
+      });
+    }
+
+    const fileInput = item.querySelector('.tab-icon-file-input');
+    if (fileInput) {
+      fileInput.addEventListener('change', async () => {
+        if (!fileInput.files || fileInput.files.length === 0) return;
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', 'tab');
+        formData.append('tab_id', target);
+
+        const uploadLabel = item.querySelector('.tab-icon-upload-label');
+        if (uploadLabel) uploadLabel.textContent = '...';
+
+        try {
+          const res = await fetch('/api/upload_icon', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+          if (data.ok && data.icon) {
+            tabIconsOverrides[target] = data.icon;
+            renderTabIconsCustomList();
+            matchAndPopulateCategoryIcons();
+            saveAllSettings();
+          } else {
+            alert('Failed to upload icon: ' + (data.error || 'Unknown error'));
+            renderTabIconsCustomList();
+          }
+        } catch (err) {
+          alert('Upload error: ' + err);
+          renderTabIconsCustomList();
+        }
+      });
+    }
+
+    const resetBtn = item.querySelector('.tab-icon-reset-btn');
+    if (resetBtn && isCustom) {
+      resetBtn.addEventListener('click', () => {
+        delete tabIconsOverrides[target];
+        renderTabIconsCustomList();
+        matchAndPopulateCategoryIcons();
+        saveAllSettings();
+      });
+    }
+
+    tabIconsList.appendChild(item);
+  });
+}
+
+renderTabIconsCustomList();
+
 // Refresh & Rescan
 if (refreshBtn) {
   refreshBtn.addEventListener('click', async () => {
@@ -1619,6 +1886,7 @@ function closeSettingsWithCheck() {
 settingsBtn.addEventListener('click', () => {
   settingsDialog.showModal();
   loadConfigData();
+  renderTabIconsCustomList();
 });
 closeSettingsBtn.addEventListener('click', closeSettingsWithCheck);
 if (closeSettingsModalBtn) {
@@ -1654,7 +1922,7 @@ async function saveAllSettings() {
     const res = await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, icon, theme, custom_themes: customThemes, visibility })
+      body: JSON.stringify({ title, icon, theme, custom_themes: customThemes, tab_icons: tabIconsOverrides, visibility })
     });
     const data = await res.json();
 
@@ -1734,6 +2002,9 @@ resetDefaultsBtn.addEventListener('click', () => {
     }
   }
   applyLiveVisibility();
+  tabIconsOverrides = {};
+  renderTabIconsCustomList();
+  matchAndPopulateCategoryIcons();
   saveAllSettings();
 });
 
@@ -2303,6 +2574,9 @@ function renderSystemsForm(systemsObj, systemsOrder) {
     });
   }
   updateCardReorderButtons();
+  if (typeof renderTabIconsCustomList === 'function') {
+    renderTabIconsCustomList();
+  }
 }
 
 function populateFetchCoversSystemSelect(systemsObj, systemsOrder) {
