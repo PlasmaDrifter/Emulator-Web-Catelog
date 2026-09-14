@@ -276,17 +276,16 @@
         </details>
 
         <div class="settings-field">
-          <label>Header & Favicon Icon</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+            <label style="margin: 0;">Header & Favicon Icon</label>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" id="btnHeaderAddFolder" class="icon-action-btn" title="Create a new console folder in static/icons/">+ New Folder</button>
+              <button type="button" id="btnHeaderOpenFolder" class="icon-action-btn" title="Open static/icons folder in system file manager">📁 Open Icons Folder</button>
+            </div>
+          </div>
           <div class="icon-selector-container">
             <div class="icon-category-tabs" id="iconCatTabs">
-              <button type="button" class="icon-cat-btn active" data-cat="all">All</button>
-              <button type="button" class="icon-cat-btn" data-cat="nintendo">Nintendo</button>
-              <button type="button" class="icon-cat-btn" data-cat="playstation">PlayStation</button>
-              <button type="button" class="icon-cat-btn" data-cat="xbox">Xbox</button>
-              <button type="button" class="icon-cat-btn" data-cat="sega">Sega</button>
-              <button type="button" class="icon-cat-btn" data-cat="atari">Atari</button>
-              <button type="button" class="icon-cat-btn" data-cat="commodore">Commodore</button>
-              <button type="button" class="icon-cat-btn" data-cat="retro">Retro</button>
+              <!-- Dynamically populated from /api/icons -->
             </div>
             <div class="icon-grid" id="iconGrid"></div>
             <div class="custom-icon-row">
@@ -645,18 +644,17 @@
       <button type="button" class="close-modal-btn" id="closeTabIconPickerBtn" aria-label="Close">&times;</button>
     </div>
     <div class="validation-dialog-body" style="max-height: 65vh; overflow-y: auto;">
-      <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0 0 10px 0;">
-        Select an icon from the built-in catalog to use for this tab:
-      </p>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">
+          Select a console icon from the folders below:
+        </p>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" id="btnTabAddFolder" class="icon-action-btn" title="Create a new console folder in static/icons/">+ New Folder</button>
+          <button type="button" id="btnTabOpenFolder" class="icon-action-btn" title="Open static/icons folder in system file manager">📁 Open Icons Folder</button>
+        </div>
+      </div>
       <div class="icon-category-tabs" id="tabIconPickerCatTabs" style="margin-bottom: 10px;">
-        <button type="button" class="icon-cat-btn active" data-cat="all">All</button>
-        <button type="button" class="icon-cat-btn" data-cat="nintendo">Nintendo</button>
-        <button type="button" class="icon-cat-btn" data-cat="playstation">PlayStation</button>
-        <button type="button" class="icon-cat-btn" data-cat="xbox">Xbox</button>
-        <button type="button" class="icon-cat-btn" data-cat="sega">Sega</button>
-        <button type="button" class="icon-cat-btn" data-cat="atari">Atari</button>
-        <button type="button" class="icon-cat-btn" data-cat="commodore">Commodore</button>
-        <button type="button" class="icon-cat-btn" data-cat="retro">Retro</button>
+        <!-- Dynamically populated from /api/icons -->
       </div>
       <div class="icon-grid" id="tabIconPickerGrid" style="max-height: 260px;"></div>
     </div>
@@ -1187,13 +1185,20 @@ const CONSOLE_ICON_MAP = [
 ];
 
 function matchIconForCategory(sysId, sysName) {
+  const cleanId = (sysId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (Array.isArray(dynamicIconsList) && dynamicIconsList.length > 0) {
+    const matchInCat = dynamicIconsList.find(i => i.cat === cleanId);
+    if (matchInCat) {
+      return matchInCat.src;
+    }
+  }
   const text = (sysId + ' ' + (sysName || '')).trim();
   for (const item of CONSOLE_ICON_MAP) {
     if (item.pattern.test(text)) {
       return item.src;
     }
   }
-  return '/static/icons/retro-gamepad.svg';
+  return '/static/icons/retro/retro-gamepad.svg';
 }
 
 function matchAndPopulateCategoryIcons() {
@@ -1500,57 +1505,9 @@ for (const [key, item] of Object.entries(visibilityToggles)) {
   if (item.el) item.el.addEventListener('change', applyLiveVisibility);
 }
 
-// --- Icon Management ---
-const SYSTEM_ICONS = [
-  // Nintendo
-  { id: 'nintendo-switch', name: 'Switch', cat: 'nintendo', src: '/static/icons/nintendo-switch.svg' },
-  { id: 'nintendo-nes', name: 'NES', cat: 'nintendo', src: '/static/icons/nintendo-nes.svg' },
-  { id: 'nintendo-snes', name: 'SNES', cat: 'nintendo', src: '/static/icons/nintendo-snes.svg' },
-  { id: 'nintendo-n64', name: 'Nintendo 64', cat: 'nintendo', src: '/static/icons/nintendo-n64.svg' },
-  { id: 'nintendo-gamecube', name: 'GameCube', cat: 'nintendo', src: '/static/icons/nintendo-gamecube.svg' },
-  { id: 'nintendo-wii', name: 'Wii', cat: 'nintendo', src: '/static/icons/nintendo-wii.svg' },
-  { id: 'nintendo-wiiu', name: 'Wii U', cat: 'nintendo', src: '/static/icons/nintendo-wiiu.svg' },
-  { id: 'nintendo-gameboy', name: 'Game Boy', cat: 'nintendo', src: '/static/icons/nintendo-gameboy.svg' },
-  { id: 'nintendo-gba', name: 'GBA', cat: 'nintendo', src: '/static/icons/nintendo-gba.svg' },
-  { id: 'nintendo-ds', name: 'Nintendo DS', cat: 'nintendo', src: '/static/icons/nintendo-ds.svg' },
-  { id: 'nintendo-3ds', name: 'Nintendo 3DS', cat: 'nintendo', src: '/static/icons/nintendo-3ds.svg' },
-  // PlayStation
-  { id: 'playstation-ps1', name: 'PlayStation 1', cat: 'playstation', src: '/static/icons/playstation-ps1.svg' },
-  { id: 'playstation-ps2', name: 'PS2', cat: 'playstation', src: '/static/icons/playstation-ps2.svg' },
-  { id: 'playstation-ps3', name: 'PS3', cat: 'playstation', src: '/static/icons/playstation-ps3.svg' },
-  { id: 'playstation-ps4', name: 'PS4', cat: 'playstation', src: '/static/icons/playstation-ps4.svg' },
-  { id: 'playstation-ps5', name: 'PS5', cat: 'playstation', src: '/static/icons/playstation-ps5.svg' },
-  { id: 'playstation-psp', name: 'PSP', cat: 'playstation', src: '/static/icons/playstation-psp.svg' },
-  { id: 'playstation-psvita', name: 'PS Vita', cat: 'playstation', src: '/static/icons/playstation-psvita.svg' },
-  // Xbox
-  { id: 'xbox-original', name: 'Xbox', cat: 'xbox', src: '/static/icons/xbox-original.svg' },
-  { id: 'xbox-360', name: 'Xbox 360', cat: 'xbox', src: '/static/icons/xbox-360.svg' },
-  { id: 'xbox-one', name: 'Xbox One', cat: 'xbox', src: '/static/icons/xbox-one.svg' },
-  { id: 'xbox-series', name: 'Xbox Series', cat: 'xbox', src: '/static/icons/xbox-series.svg' },
-  // Sega
-  { id: 'sega-genesis', name: 'Genesis / MD', cat: 'sega', src: '/static/icons/sega-genesis.svg' },
-  { id: 'sega-dreamcast', name: 'Dreamcast', cat: 'sega', src: '/static/icons/sega-dreamcast.svg' },
-  { id: 'sega-saturn', name: 'Saturn', cat: 'sega', src: '/static/icons/sega-saturn.svg' },
-  { id: 'sega-master-system', name: 'Master System', cat: 'sega', src: '/static/icons/sega-master-system.svg' },
-  { id: 'sega-cd', name: 'Sega CD', cat: 'sega', src: '/static/icons/sega-cd.svg' },
-  { id: 'sega-32x', name: 'Sega 32X', cat: 'sega', src: '/static/icons/sega-32x.svg' },
-  { id: 'sega-gamegear', name: 'Game Gear', cat: 'sega', src: '/static/icons/sega-gamegear.svg' },
-  // Atari
-  { id: 'atari-2600', name: 'Atari 2600', cat: 'atari', src: '/static/icons/atari-2600.svg' },
-  { id: 'atari-5200', name: 'Atari 5200', cat: 'atari', src: '/static/icons/atari-5200.svg' },
-  { id: 'atari-7800', name: 'Atari 7800', cat: 'atari', src: '/static/icons/atari-7800.svg' },
-  { id: 'atari-lynx', name: 'Atari Lynx', cat: 'atari', src: '/static/icons/atari-lynx.svg' },
-  { id: 'atari-jaguar', name: 'Atari Jaguar', cat: 'atari', src: '/static/icons/atari-jaguar.svg' },
-  // Commodore
-  { id: 'commodore-64', name: 'Commodore 64', cat: 'commodore', src: '/static/icons/commodore-64.svg' },
-  { id: 'commodore-amiga', name: 'Amiga', cat: 'commodore', src: '/static/icons/commodore-amiga.svg' },
-  { id: 'commodore-vic20', name: 'VIC-20', cat: 'commodore', src: '/static/icons/commodore-vic20.svg' },
-  // Retro
-  { id: 'retro-gamepad', name: 'Gamepad', cat: 'retro', src: '/static/icons/retro-gamepad.svg' },
-  { id: 'retro-arcade', name: 'Arcade', cat: 'retro', src: '/static/icons/retro-arcade.svg' },
-  { id: 'neogeo', name: 'Neo Geo', cat: 'retro', src: '/static/icons/neogeo.svg' },
-  { id: 'default-favicon', name: 'Default', cat: 'retro', src: '/static/favicon.png' }
-];
+// --- Dynamic Console & Category Icons ---
+let dynamicIconCategories = [];
+let dynamicIconsList = [];
 
 const iconGrid = document.getElementById('iconGrid');
 const iconCatTabs = document.getElementById('iconCatTabs');
@@ -1558,10 +1515,59 @@ const customIconUrl = document.getElementById('customIconUrl');
 const iconFileInput = document.getElementById('iconFileInput');
 let selectedIconUrl = "{{ settings.icon or '/static/favicon.png' }}";
 
+async function loadDynamicIcons() {
+  try {
+    const res = await fetch('/api/icons');
+    const data = await res.json();
+    if (data.ok) {
+      dynamicIconCategories = data.categories || [];
+      dynamicIconsList = data.icons || [];
+      renderDynamicCategoryTabs();
+      renderIconGrid('all');
+      matchAndPopulateCategoryIcons();
+    }
+  } catch (err) {
+    console.error('Failed to load dynamic icons:', err);
+  }
+}
+
+function renderDynamicCategoryTabs() {
+  const configs = [
+    { el: iconCatTabs, onSelect: (cat) => renderIconGrid(cat) },
+    { el: tabIconPickerCatTabs, onSelect: (cat) => renderTabIconPickerGrid(cat) }
+  ];
+
+  configs.forEach(({ el, onSelect }) => {
+    if (!el) return;
+    const currentActive = el.querySelector('.icon-cat-btn.active')?.dataset.cat || 'all';
+    el.innerHTML = '';
+
+    dynamicIconCategories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'icon-cat-btn' + (cat.id === currentActive ? ' active' : '');
+      btn.dataset.cat = cat.id;
+      btn.textContent = cat.name;
+      btn.title = `${cat.name} (${cat.count || 0})`;
+
+      btn.addEventListener('click', () => {
+        el.querySelectorAll('.icon-cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        onSelect(cat.id);
+      });
+      el.appendChild(btn);
+    });
+  });
+}
+
 function renderIconGrid(filterCat = 'all') {
   if (!iconGrid) return;
   iconGrid.innerHTML = '';
-  const filtered = filterCat === 'all' ? SYSTEM_ICONS : SYSTEM_ICONS.filter(i => i.cat === filterCat);
+  const filtered = filterCat === 'all' ? dynamicIconsList : dynamicIconsList.filter(i => i.cat === filterCat);
+  if (filtered.length === 0) {
+    iconGrid.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.8rem;">No icons found in this folder. Drop files into this console folder to show them here!</div>';
+    return;
+  }
   filtered.forEach(icon => {
     const tile = document.createElement('div');
     tile.className = 'icon-tile' + (selectedIconUrl === icon.src ? ' selected' : '');
@@ -1597,16 +1603,6 @@ function setLiveIcon(src) {
   });
 }
 
-if (iconCatTabs) {
-  iconCatTabs.querySelectorAll('.icon-cat-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      iconCatTabs.querySelectorAll('.icon-cat-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderIconGrid(btn.dataset.cat);
-    });
-  });
-}
-
 if (customIconUrl) {
   customIconUrl.addEventListener('input', () => {
     const url = customIconUrl.value.trim();
@@ -1628,6 +1624,7 @@ if (iconFileInput) {
       const data = await res.json();
       if (data.ok && data.icon) {
         setLiveIcon(data.icon);
+        await loadDynamicIcons();
       } else {
         alert('Icon upload failed: ' + (data.error || 'Unknown error'));
       }
@@ -1637,7 +1634,50 @@ if (iconFileInput) {
   });
 }
 
-renderIconGrid('all');
+async function openSystemIconsFolder() {
+  try {
+    const res = await fetch('/api/open_icons_folder', { method: 'POST' });
+    const data = await res.json();
+    if (!data.ok) {
+      alert('Could not open folder automatically: ' + (data.error || 'Unknown error') + '\nPath: ' + data.path);
+    }
+  } catch (err) {
+    alert('Error opening icons folder: ' + err);
+  }
+}
+
+async function promptCreateIconFolder() {
+  const folderName = prompt('Enter new console folder name (e.g. "ps3", "3do", "saturn"):');
+  if (!folderName || !folderName.trim()) return;
+  try {
+    const res = await fetch('/api/create_icon_folder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folder: folderName.trim() })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      await loadDynamicIcons();
+      if (tabIconPickerCatTabs) {
+        tabIconPickerCatTabs.querySelectorAll('.icon-cat-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.cat === data.folder);
+        });
+      }
+      renderTabIconPickerGrid(data.folder);
+      alert(`Created console folder "${data.folder}". Drop icons into static/icons/${data.folder}/ to display them here!`);
+    } else {
+      alert('Failed to create folder: ' + (data.error || 'Unknown error'));
+    }
+  } catch (err) {
+    alert('Error creating folder: ' + err);
+  }
+}
+
+document.getElementById('btnHeaderOpenFolder')?.addEventListener('click', openSystemIconsFolder);
+document.getElementById('btnTabOpenFolder')?.addEventListener('click', openSystemIconsFolder);
+document.getElementById('btnHeaderAddFolder')?.addEventListener('click', promptCreateIconFolder);
+document.getElementById('btnTabAddFolder')?.addEventListener('click', promptCreateIconFolder);
+
 renderCustomThemes();
 
 // --- Tab Icon Overrides & Customization ---
@@ -1657,7 +1697,11 @@ let activePickerTabName = '';
 function renderTabIconPickerGrid(filterCat = 'all') {
   if (!tabIconPickerGrid) return;
   tabIconPickerGrid.innerHTML = '';
-  const filtered = filterCat === 'all' ? SYSTEM_ICONS : SYSTEM_ICONS.filter(i => i.cat === filterCat);
+  const filtered = filterCat === 'all' ? dynamicIconsList : dynamicIconsList.filter(i => i.cat === filterCat);
+  if (filtered.length === 0) {
+    tabIconPickerGrid.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.8rem;">No icons in this folder. Drop files into static/icons/' + escapeHtml(filterCat) + '/ to display them here!</div>';
+    return;
+  }
   filtered.forEach(icon => {
     const tile = document.createElement('div');
     const isSelected = activePickerTabTarget && tabIconsOverrides[activePickerTabTarget] === icon.src;
@@ -1694,23 +1738,23 @@ function openTabIconPicker(target, sysName) {
   if (tabIconPickerTitle) {
     tabIconPickerTitle.textContent = `Choose Icon for "${sysName || target}"`;
   }
+  
+  const cleanTarget = (target || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const cleanName = (sysName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  let defaultCat = 'all';
+  if (dynamicIconCategories.some(c => c.id === cleanTarget)) {
+    defaultCat = cleanTarget;
+  } else if (dynamicIconCategories.some(c => c.id === cleanName)) {
+    defaultCat = cleanName;
+  }
+
   if (tabIconPickerCatTabs) {
     tabIconPickerCatTabs.querySelectorAll('.icon-cat-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.cat === 'all');
+      b.classList.toggle('active', b.dataset.cat === defaultCat);
     });
   }
-  renderTabIconPickerGrid('all');
+  renderTabIconPickerGrid(defaultCat);
   if (tabIconPickerModal) tabIconPickerModal.showModal();
-}
-
-if (tabIconPickerCatTabs) {
-  tabIconPickerCatTabs.querySelectorAll('.icon-cat-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      tabIconPickerCatTabs.querySelectorAll('.icon-cat-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderTabIconPickerGrid(btn.dataset.cat);
-    });
-  });
 }
 
 if (closeTabIconPickerBtn && tabIconPickerModal) {
@@ -1848,6 +1892,7 @@ function renderTabIconsCustomList() {
 }
 
 renderTabIconsCustomList();
+loadDynamicIcons();
 
 // Refresh & Rescan
 if (refreshBtn) {
@@ -1885,6 +1930,7 @@ function closeSettingsWithCheck() {
 // Modal open/close
 settingsBtn.addEventListener('click', () => {
   settingsDialog.showModal();
+  loadDynamicIcons();
   loadConfigData();
   renderTabIconsCustomList();
 });

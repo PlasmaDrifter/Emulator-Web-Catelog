@@ -19,7 +19,7 @@ from flask import Flask, render_template, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 from PIL import Image
 
-__version__ = "0.5.5"
+__version__ = "0.5.6"
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)
@@ -464,6 +464,187 @@ def api_delete_theme():
     return jsonify({"ok": False, "error": "Theme not found"}), 404
 
 
+CONSOLE_DISPLAY_NAMES = {
+    "nes": "NES",
+    "snes": "SNES",
+    "n64": "Nintendo 64",
+    "gamecube": "GameCube",
+    "wii": "Wii",
+    "wiiu": "Wii U",
+    "switch": "Switch",
+    "gameboy": "Game Boy",
+    "gba": "GBA",
+    "ds": "Nintendo DS",
+    "3ds": "Nintendo 3DS",
+    "ps1": "PlayStation 1",
+    "ps2": "PS2",
+    "ps3": "PS3",
+    "ps4": "PS4",
+    "ps5": "PS5",
+    "psp": "PSP",
+    "psvita": "PS Vita",
+    "xbox": "Xbox",
+    "xbox360": "Xbox 360",
+    "xboxone": "Xbox One",
+    "xboxseries": "Xbox Series",
+    "genesis": "Genesis / Mega Drive",
+    "dreamcast": "Dreamcast",
+    "saturn": "Saturn",
+    "mastersystem": "Master System",
+    "segacd": "Sega CD",
+    "sega32x": "Sega 32X",
+    "gamegear": "Game Gear",
+    "atari2600": "Atari 2600",
+    "atari5200": "Atari 5200",
+    "atari7800": "Atari 7800",
+    "atarilynx": "Atari Lynx",
+    "atarijaguar": "Atari Jaguar",
+    "c64": "Commodore 64",
+    "amiga": "Amiga",
+    "vic20": "VIC-20",
+    "neogeo": "Neo Geo",
+    "arcade": "Arcade",
+    "retro": "Retro",
+    "ui": "UI",
+}
+
+
+def format_console_name(key: str) -> str:
+    k_lower = key.lower().replace("-", "").replace("_", "")
+    if k_lower in CONSOLE_DISPLAY_NAMES:
+        return CONSOLE_DISPLAY_NAMES[k_lower]
+    if key.lower() in CONSOLE_DISPLAY_NAMES:
+        return CONSOLE_DISPLAY_NAMES[key.lower()]
+    if len(key) <= 4:
+        return key.upper()
+    return key.replace("-", " ").replace("_", " ").title()
+
+
+def scan_icon_categories():
+    icons_dir = (BASE_DIR / "static" / "icons").resolve()
+    bundled_icons = (BUNDLE_DIR / "static" / "icons").resolve()
+    valid_exts = {".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico"}
+
+    cat_dirs = {}
+    for base in [bundled_icons, icons_dir]:
+        if base.exists() and base.is_dir():
+            for item in sorted(base.iterdir()):
+                if item.is_dir() and not item.name.startswith("."):
+                    cat_id = item.name.lower()
+                    if cat_id not in cat_dirs:
+                        cat_dirs[cat_id] = []
+                    cat_dirs[cat_id].append(item)
+
+    categories = []
+    icons = []
+
+    active_sys_order = []
+    try:
+        cfg = load_config()
+        if "systems" in cfg and isinstance(cfg["systems"], dict):
+            active_sys_order = [s.lower() for s in cfg["systems"].keys()]
+    except Exception:
+        pass
+
+    sorted_cat_keys = sorted(
+        cat_dirs.keys(),
+        key=lambda k: (0 if k in active_sys_order else 1, active_sys_order.index(k) if k in active_sys_order else k)
+    )
+
+    for cat_id in sorted_cat_keys:
+        paths = cat_dirs[cat_id]
+        cat_icons = []
+        seen_filenames = set()
+        for p_dir in paths:
+            for f in sorted(p_dir.iterdir()):
+                if f.is_file() and f.suffix.lower() in valid_exts and f.name not in seen_filenames and not f.name.startswith("."):
+                    seen_filenames.add(f.name)
+                    stem = f.stem.replace("-", " ").replace("_", " ").title()
+                    cat_icons.append({
+                        "id": f"{cat_id}/{f.name}",
+                        "name": stem,
+                        "cat": cat_id,
+                        "src": f"/static/icons/{cat_id}/{f.name}"
+                    })
+        if cat_icons:
+            categories.append({
+                "id": cat_id,
+                "name": format_console_name(cat_id),
+                "count": len(cat_icons)
+            })
+            icons.extend(cat_icons)
+
+    loose_icons = []
+    seen_loose = set()
+    for base in [bundled_icons, icons_dir]:
+        if base.exists() and base.is_dir():
+            for item in sorted(base.iterdir()):
+                if item.is_file() and item.suffix.lower() in valid_exts and item.name not in seen_loose and not item.name.startswith("."):
+                    seen_loose.add(item.name)
+                    stem = item.stem.replace("-", " ").replace("_", " ").title()
+                    loose_icons.append({
+                        "id": item.name,
+                        "name": stem,
+                        "cat": "custom",
+                        "src": f"/static/icons/{item.name}"
+                    })
+    if loose_icons:
+        categories.append({
+            "id": "custom",
+            "name": "Custom",
+            "count": len(loose_icons)
+        })
+        icons.extend(loose_icons)
+
+    categories.insert(0, {
+        "id": "all",
+        "name": "All",
+        "count": len(icons)
+    })
+
+    return {"ok": True, "categories": categories, "icons": icons}
+
+
+@app.route("/api/icons", methods=["GET"])
+def api_icons():
+    return jsonify(scan_icon_categories())
+
+
+@app.route("/api/open_icons_folder", methods=["POST"])
+def api_open_icons_folder():
+    icons_dir = (BASE_DIR / "static" / "icons").resolve()
+    icons_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        if sys.platform.startswith("linux"):
+            subprocess.Popen(["xdg-open", str(icons_dir)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif sys.platform == "darwin":
+            subprocess.Popen(["open", str(icons_dir)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif sys.platform == "win32":
+            os.startfile(str(icons_dir))
+        return jsonify({"ok": True, "path": str(icons_dir)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e), "path": str(icons_dir)})
+
+
+@app.route("/api/create_icon_folder", methods=["POST"])
+def api_create_icon_folder():
+    data = request.get_json() or {}
+    folder_name = data.get("folder", "").strip()
+    if not folder_name:
+        return jsonify({"ok": False, "error": "Folder name is required"}), 400
+    safe_name = secure_filename(folder_name).lower().replace(" ", "_")
+    if not safe_name:
+        return jsonify({"ok": False, "error": "Invalid folder name"}), 400
+
+    icons_dir = (BASE_DIR / "static" / "icons").resolve()
+    target_dir = (icons_dir / safe_name).resolve()
+    if os.path.commonpath([str(icons_dir), str(target_dir)]) != str(icons_dir):
+        return jsonify({"ok": False, "error": "Invalid path"}), 400
+
+    target_dir.mkdir(parents=True, exist_ok=True)
+    return jsonify({"ok": True, "folder": safe_name, "name": format_console_name(safe_name)})
+
+
 @app.route("/api/upload_icon", methods=["POST"])
 def api_upload_icon():
     if "file" not in request.files:
@@ -480,16 +661,30 @@ def api_upload_icon():
     clean_stem = secure_filename(Path(file.filename).stem) or "custom_icon"
     icon_type = request.form.get("type", "header")
     tab_id = request.form.get("tab_id", "").strip()
-    if icon_type == "tab" and tab_id:
-        filename = f"custom_tab_{secure_filename(tab_id)}_{clean_stem}{ext}"
-    else:
-        filename = f"custom_{clean_stem}{ext}"
-    target_path = (icons_dir / filename).resolve()
-    if os.path.commonpath([str(icons_dir), str(target_path)]) != str(icons_dir):
-        return jsonify({"ok": False, "error": "Invalid path"}), 400
-    file.save(str(target_path))
+    folder = request.form.get("folder", "").strip()
 
-    icon_url = f"/static/icons/{filename}"
+    target_folder = folder or (tab_id if tab_id not in ["all", "favorites", "hidden"] else "")
+    if target_folder:
+        safe_folder = secure_filename(target_folder).lower().replace(" ", "_")
+        dest_dir = (icons_dir / safe_folder).resolve()
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        filename = f"{clean_stem}{ext}"
+        target_path = (dest_dir / filename).resolve()
+        if os.path.commonpath([str(icons_dir), str(target_path)]) != str(icons_dir):
+            return jsonify({"ok": False, "error": "Invalid path"}), 400
+        file.save(str(target_path))
+        icon_url = f"/static/icons/{safe_folder}/{filename}"
+    else:
+        if icon_type == "tab" and tab_id:
+            filename = f"custom_tab_{secure_filename(tab_id)}_{clean_stem}{ext}"
+        else:
+            filename = f"custom_{clean_stem}{ext}"
+        target_path = (icons_dir / filename).resolve()
+        if os.path.commonpath([str(icons_dir), str(target_path)]) != str(icons_dir):
+            return jsonify({"ok": False, "error": "Invalid path"}), 400
+        file.save(str(target_path))
+        icon_url = f"/static/icons/{filename}"
+
     settings = load_settings()
     if icon_type == "tab" and tab_id:
         if "tab_icons" not in settings or not isinstance(settings["tab_icons"], dict):
@@ -1078,6 +1273,34 @@ def serve_covers(filename):
         return send_from_directory(BUNDLE_DIR / "static" / "covers", clean_name)
 
     return jsonify({"error": "Cover not found"}), 404
+
+
+@app.route('/static/icons/<path:filename>')
+def serve_icons(filename):
+    clean_path = Path(filename)
+    icons_dir = (BASE_DIR / "static" / "icons").resolve()
+    bundled_icons = (BUNDLE_DIR / "static" / "icons").resolve()
+
+    # 1. Direct path check in BASE_DIR
+    target = (icons_dir / filename).resolve()
+    if os.path.commonpath([str(icons_dir), str(target)]) == str(icons_dir) and target.is_file():
+        return send_from_directory(target.parent, target.name)
+
+    # 2. Direct path check in BUNDLE_DIR
+    bundled_target = (bundled_icons / filename).resolve()
+    if os.path.commonpath([str(bundled_icons), str(bundled_target)]) == str(bundled_icons) and bundled_target.is_file():
+        return send_from_directory(bundled_target.parent, bundled_target.name)
+
+    # 3. Fallback: filename might be flat / legacy e.g. "nintendo-nes.svg"
+    base_name = clean_path.name
+    for base in [icons_dir, bundled_icons]:
+        if base.exists():
+            for p in base.rglob(base_name):
+                if p.is_file():
+                    return send_from_directory(p.parent, p.name)
+
+    return jsonify({"error": "Icon not found"}), 404
+
 
 
 @app.after_request
