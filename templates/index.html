@@ -2276,32 +2276,61 @@ function renderSystemCard(sysId, sysData) {
   return card;
 }
 
-function renderSystemsForm(systemsObj) {
+function renderSystemsForm(systemsObj, systemsOrder) {
   if (!systemsListContainer) return;
   systemsListContainer.innerHTML = '';
-  const entries = Object.entries(systemsObj || {});
-  if (entries.length === 0) {
+  const order = Array.isArray(systemsOrder) && systemsOrder.length > 0
+    ? systemsOrder
+    : Object.keys(systemsObj || {});
+  if (order.length === 0) {
     systemsListContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; margin: 6px 0;">No consoles configured yet. Click "+ Add Console" above to define your first emulator system.</p>';
     return;
   }
-  entries.forEach(([sysId, sysData]) => {
-    const card = renderSystemCard(sysId, sysData);
-    systemsListContainer.appendChild(card);
+  const rendered = new Set();
+  order.forEach(sysId => {
+    if (systemsObj && systemsObj[sysId]) {
+      const card = renderSystemCard(sysId, systemsObj[sysId]);
+      systemsListContainer.appendChild(card);
+      rendered.add(sysId);
+    }
   });
+  if (systemsObj) {
+    Object.keys(systemsObj).forEach(sysId => {
+      if (!rendered.has(sysId)) {
+        const card = renderSystemCard(sysId, systemsObj[sysId]);
+        systemsListContainer.appendChild(card);
+      }
+    });
+  }
   updateCardReorderButtons();
 }
 
-function populateFetchCoversSystemSelect(systemsObj) {
+function populateFetchCoversSystemSelect(systemsObj, systemsOrder) {
   const select = document.getElementById('fetchCoversSystemSelect');
   if (!select) return;
   const currentVal = select.value;
   select.innerHTML = '<option value="all">All Consoles</option>';
   if (systemsObj && typeof systemsObj === 'object') {
-    Object.entries(systemsObj).forEach(([sysId, sysData]) => {
-      const opt = document.createElement('option');
-      opt.value = sysId;
-      opt.textContent = sysData?.name || sysId;
-      select.appendChild(opt);
+    const order = Array.isArray(systemsOrder) && systemsOrder.length > 0
+      ? systemsOrder
+      : Object.keys(systemsObj);
+    const added = new Set();
+    order.forEach(sysId => {
+      if (systemsObj[sysId]) {
+        const opt = document.createElement('option');
+        opt.value = sysId;
+        opt.textContent = systemsObj[sysId]?.name || sysId;
+        select.appendChild(opt);
+        added.add(sysId);
+      }
+    });
+    Object.keys(systemsObj).forEach(sysId => {
+      if (!added.has(sysId)) {
+        const opt = document.createElement('option');
+        opt.value = sysId;
+        opt.textContent = systemsObj[sysId]?.name || sysId;
+        select.appendChild(opt);
+      }
     });
   }
   if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
@@ -2360,8 +2389,8 @@ async function loadConfigData() {
       if (yamlConfigEditor) {
         yamlConfigEditor.value = data.raw_yaml || '';
       }
-      renderSystemsForm(data.config?.systems || {});
-      populateFetchCoversSystemSelect(data.config?.systems || {});
+      renderSystemsForm(data.config?.systems || {}, data.systems_order);
+      populateFetchCoversSystemSelect(data.config?.systems || {}, data.systems_order);
       if (configStatusAlert) {
         configStatusAlert.className = 'config-status-msg';
         configStatusAlert.textContent = '';
@@ -2529,7 +2558,7 @@ if (syncYamlToFormBtn && yamlConfigEditor) {
         if (steamgriddbApiKeyInput) {
           steamgriddbApiKeyInput.value = data.config?.steamgriddb?.api_key || '';
         }
-        renderSystemsForm(data.config?.systems || {});
+        renderSystemsForm(data.config?.systems || {}, data.systems_order);
         configStatusAlert.className = 'config-status-msg success';
         configStatusAlert.textContent = 'Form updated from YAML!';
         configStatusAlert.style.display = 'block';

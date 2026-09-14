@@ -70,6 +70,7 @@ app = Flask(
     template_folder=str(BUNDLE_DIR / "templates"),
     static_folder=str(BUNDLE_DIR / "static")
 )
+app.json.sort_keys = False
 
 # Global memory cache for library metadata
 _library_cache = None
@@ -992,7 +993,8 @@ def api_get_config():
     try:
         raw_yaml = CONFIG_PATH.read_text(encoding="utf-8") if CONFIG_PATH.exists() else ""
         parsed = resilient_yaml_load(raw_yaml) if raw_yaml else {}
-        return jsonify({"ok": True, "raw_yaml": raw_yaml, "config": parsed})
+        systems_order = list(parsed.get("systems", {}).keys()) if isinstance(parsed, dict) and isinstance(parsed.get("systems"), dict) else []
+        return jsonify({"ok": True, "raw_yaml": raw_yaml, "config": parsed, "systems_order": systems_order})
     except Exception:
         return jsonify({"ok": False, "error": "Failed to read configuration."}), 500
 
@@ -1039,7 +1041,8 @@ def api_save_config():
         _library_cache = None
         library = scan_library()
         save_library_cache(library)
-        return jsonify({"ok": True, "config": parsed, "raw_yaml": raw_yaml, "library": library})
+        systems_order = list(systems.keys()) if isinstance(systems, dict) else []
+        return jsonify({"ok": True, "config": parsed, "raw_yaml": raw_yaml, "library": library, "systems_order": systems_order})
     except Exception:
         return jsonify({"ok": False, "error": "Invalid YAML configuration syntax."}), 400
 
