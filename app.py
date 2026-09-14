@@ -19,7 +19,7 @@ from flask import Flask, render_template, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 from PIL import Image
 
-__version__ = "0.5.6"
+__version__ = "0.5.7"
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)
@@ -505,7 +505,67 @@ CONSOLE_DISPLAY_NAMES = {
     "neogeo": "Neo Geo",
     "arcade": "Arcade",
     "retro": "Retro",
+    "custom": "Custom",
     "ui": "UI",
+}
+
+MANUFACTURER_GROUPS = {
+    # Nintendo
+    "nes": (1, "Nintendo"),
+    "snes": (2, "Nintendo"),
+    "n64": (3, "Nintendo"),
+    "gamecube": (4, "Nintendo"),
+    "wii": (5, "Nintendo"),
+    "wiiu": (6, "Nintendo"),
+    "switch": (7, "Nintendo"),
+    "gameboy": (8, "Nintendo"),
+    "gba": (9, "Nintendo"),
+    "ds": (10, "Nintendo"),
+    "3ds": (11, "Nintendo"),
+
+    # PlayStation
+    "ps1": (20, "PlayStation"),
+    "ps2": (21, "PlayStation"),
+    "ps3": (22, "PlayStation"),
+    "ps4": (23, "PlayStation"),
+    "ps5": (24, "PlayStation"),
+    "psp": (25, "PlayStation"),
+    "psvita": (26, "PlayStation"),
+
+    # Xbox
+    "xbox": (30, "Xbox"),
+    "xbox360": (31, "Xbox"),
+    "xboxone": (32, "Xbox"),
+    "xboxseries": (33, "Xbox"),
+
+    # Sega
+    "mastersystem": (40, "Sega"),
+    "genesis": (41, "Sega"),
+    "segacd": (42, "Sega"),
+    "sega32x": (43, "Sega"),
+    "saturn": (44, "Sega"),
+    "dreamcast": (45, "Sega"),
+    "gamegear": (46, "Sega"),
+
+    # Atari
+    "atari2600": (50, "Atari"),
+    "atari5200": (51, "Atari"),
+    "atari7800": (52, "Atari"),
+    "atarilynx": (53, "Atari"),
+    "atarijaguar": (54, "Atari"),
+
+    # Commodore
+    "c64": (60, "Commodore"),
+    "amiga": (61, "Commodore"),
+    "vic20": (62, "Commodore"),
+
+    # Retro & Arcade
+    "neogeo": (70, "Retro"),
+    "arcade": (71, "Retro"),
+    "retro": (72, "Retro"),
+
+    # Custom
+    "custom": (99, "Custom"),
 }
 
 
@@ -535,21 +595,28 @@ def scan_icon_categories():
                         cat_dirs[cat_id] = []
                     cat_dirs[cat_id].append(item)
 
+    # Always ensure custom category folder exists
+    custom_dir = (icons_dir / "custom").resolve()
+    custom_dir.mkdir(parents=True, exist_ok=True)
+    if "custom" not in cat_dirs:
+        cat_dirs["custom"] = [custom_dir]
+    elif custom_dir not in cat_dirs["custom"]:
+        cat_dirs["custom"].append(custom_dir)
+
     categories = []
     icons = []
 
-    active_sys_order = []
-    try:
-        cfg = load_config()
-        if "systems" in cfg and isinstance(cfg["systems"], dict):
-            active_sys_order = [s.lower() for s in cfg["systems"].keys()]
-    except Exception:
-        pass
+    def get_sort_key(cat_id):
+        clean_k = cat_id.lower().replace("-", "").replace("_", "")
+        if clean_k in MANUFACTURER_GROUPS:
+            return (0, MANUFACTURER_GROUPS[clean_k][0], clean_k)
+        if cat_id in MANUFACTURER_GROUPS:
+            return (0, MANUFACTURER_GROUPS[cat_id][0], cat_id)
+        if cat_id == "custom":
+            return (0, 99, "custom")
+        return (1, 80, cat_id)
 
-    sorted_cat_keys = sorted(
-        cat_dirs.keys(),
-        key=lambda k: (0 if k in active_sys_order else 1, active_sys_order.index(k) if k in active_sys_order else k)
-    )
+    sorted_cat_keys = sorted(cat_dirs.keys(), key=get_sort_key)
 
     for cat_id in sorted_cat_keys:
         paths = cat_dirs[cat_id]
@@ -566,39 +633,21 @@ def scan_icon_categories():
                         "cat": cat_id,
                         "src": f"/static/icons/{cat_id}/{f.name}"
                     })
-        if cat_icons:
-            categories.append({
-                "id": cat_id,
-                "name": format_console_name(cat_id),
-                "count": len(cat_icons)
-            })
-            icons.extend(cat_icons)
-
-    loose_icons = []
-    seen_loose = set()
-    for base in [bundled_icons, icons_dir]:
-        if base.exists() and base.is_dir():
-            for item in sorted(base.iterdir()):
-                if item.is_file() and item.suffix.lower() in valid_exts and item.name not in seen_loose and not item.name.startswith("."):
-                    seen_loose.add(item.name)
-                    stem = item.stem.replace("-", " ").replace("_", " ").title()
-                    loose_icons.append({
-                        "id": item.name,
-                        "name": stem,
-                        "cat": "custom",
-                        "src": f"/static/icons/{item.name}"
-                    })
-    if loose_icons:
+        clean_k = cat_id.lower().replace("-", "").replace("_", "")
+        mfg = MANUFACTURER_GROUPS.get(clean_k, (99, "Other"))[1]
         categories.append({
-            "id": "custom",
-            "name": "Custom",
-            "count": len(loose_icons)
+            "id": cat_id,
+            "name": format_console_name(cat_id),
+            "manufacturer": mfg,
+            "count": len(cat_icons)
         })
-        icons.extend(loose_icons)
+        icons.extend(cat_icons)
 
+    # Prepend All
     categories.insert(0, {
         "id": "all",
         "name": "All",
+        "manufacturer": "All",
         "count": len(icons)
     })
 
@@ -663,27 +712,20 @@ def api_upload_icon():
     tab_id = request.form.get("tab_id", "").strip()
     folder = request.form.get("folder", "").strip()
 
+    # Determine target category folder
     target_folder = folder or (tab_id if tab_id not in ["all", "favorites", "hidden"] else "")
-    if target_folder:
-        safe_folder = secure_filename(target_folder).lower().replace(" ", "_")
-        dest_dir = (icons_dir / safe_folder).resolve()
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        filename = f"{clean_stem}{ext}"
-        target_path = (dest_dir / filename).resolve()
-        if os.path.commonpath([str(icons_dir), str(target_path)]) != str(icons_dir):
-            return jsonify({"ok": False, "error": "Invalid path"}), 400
-        file.save(str(target_path))
-        icon_url = f"/static/icons/{safe_folder}/{filename}"
-    else:
-        if icon_type == "tab" and tab_id:
-            filename = f"custom_tab_{secure_filename(tab_id)}_{clean_stem}{ext}"
-        else:
-            filename = f"custom_{clean_stem}{ext}"
-        target_path = (icons_dir / filename).resolve()
-        if os.path.commonpath([str(icons_dir), str(target_path)]) != str(icons_dir):
-            return jsonify({"ok": False, "error": "Invalid path"}), 400
-        file.save(str(target_path))
-        icon_url = f"/static/icons/{filename}"
+    if not target_folder or target_folder == "all":
+        target_folder = "custom"
+
+    safe_folder = secure_filename(target_folder).lower().replace(" ", "_")
+    dest_dir = (icons_dir / safe_folder).resolve()
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"{clean_stem}{ext}"
+    target_path = (dest_dir / filename).resolve()
+    if os.path.commonpath([str(icons_dir), str(target_path)]) != str(icons_dir):
+        return jsonify({"ok": False, "error": "Invalid path"}), 400
+    file.save(str(target_path))
+    icon_url = f"/static/icons/{safe_folder}/{filename}"
 
     settings = load_settings()
     if icon_type == "tab" and tab_id:
@@ -694,7 +736,8 @@ def api_upload_icon():
     else:
         settings["icon"] = icon_url
         save_settings(settings)
-    return jsonify({"ok": True, "icon": icon_url, "tab_id": tab_id if icon_type == "tab" else None})
+    return jsonify({"ok": True, "icon": icon_url, "tab_id": tab_id if icon_type == "tab" else None, "folder": safe_folder})
+
 
 
 @app.route("/favicon.ico")

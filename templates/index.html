@@ -240,7 +240,62 @@
 
       <!-- Webpage & Tab Icon -->
       <section class="settings-section">
-        <h4>Webpage & Tab Icon</h4>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+          <h4 style="margin: 0;">Webpage & Tab Icon</h4>
+          <button type="button" id="toggleIconHelpBtn" class="btn-secondary help-pill-btn" title="View Icon & Folder Management Guide">
+            <span class="help-circle-icon">?</span> Icon &amp; Folder Guide
+          </button>
+        </div>
+
+        <!-- Icon & Folder Management Help Box -->
+        <div id="iconHelpBox" class="command-help-box hidden" style="margin-bottom: 14px;">
+          <div class="command-help-header">
+            <h5>Console Icons &amp; Folder Organization Guide</h5>
+            <button type="button" class="btn-close-help" id="closeIconHelpBtn" title="Close guide">&times;</button>
+          </div>
+          <div class="command-help-content">
+            <h6>How Console Icon Folders Work:</h6>
+            <div class="help-callout" style="border-left-color: #6366f1;">
+              <strong>Per-Console Subfolders on Disk:</strong>
+              <p style="margin: 4px 0 0 0; font-size: 0.8rem; line-height: 1.45;">
+                All icons in ROMcat are organized into dedicated console folders inside <code>static/icons/</code>. Each folder represents a console (e.g. <code>nes/</code>, <code>snes/</code>, <code>ps3/</code>, <code>switch/</code>, <code>custom/</code>).
+              </p>
+              <ul style="margin: 6px 0 0 18px; padding: 0; font-size: 0.8rem; line-height: 1.45;">
+                <li><strong>Automatic Category Tabs:</strong> Creating a new folder inside <code>static/icons/</code> automatically creates a matching tab in the icon picker!</li>
+                <li><strong>Multiple Icons per Console:</strong> You can place multiple icons inside any console folder (for example: official logos, controllers, console artwork). Clicking that console's tab displays all icons in that folder.</li>
+                <li><strong>Supported Formats:</strong> <code>.png</code>, <code>.svg</code>, <code>.webp</code>, <code>.ico</code>, <code>.jpg</code>, <code>.jpeg</code>.</li>
+              </ul>
+            </div>
+
+            <h6>Uploading &amp; Adding Icons:</h6>
+            <div class="help-callout" style="border-left-color: #10b981;">
+              <strong>Category-Aware Uploads:</strong>
+              <ul style="margin: 4px 0 0 18px; padding: 0; font-size: 0.8rem; line-height: 1.45;">
+                <li><strong>Selected Category:</strong> When you select a console tab (e.g. <code>PS3</code>) and upload an icon, it is automatically saved directly into that console's folder (<code>static/icons/ps3/</code>).</li>
+                <li><strong>General / All:</strong> If <em>All</em> is selected, uploaded images are placed in <code>static/icons/custom/</code>.</li>
+                <li><strong>Tab Row Upload:</strong> Clicking <em>Upload</em> on an individual tab row under "Customize Individual Tab Icons" automatically saves the icon into that console's folder.</li>
+                <li><strong>File Manager Access:</strong> Click <strong>📁 Open Icons Folder</strong> to open <code>static/icons/</code> directly in your system file manager (Nautilus, Nemo, Dolphin) and drag &amp; drop files or create folders freely.</li>
+                <li><strong>New Folders:</strong> Click <strong>+ New Folder</strong> to create a new console directory right from the browser.</li>
+              </ul>
+            </div>
+
+            <h6>Manufacturer Tab Grouping:</h6>
+            <div class="help-callout">
+              <strong>Organized by Manufacturer:</strong>
+              <p style="margin: 4px 0 0 0; font-size: 0.8rem; line-height: 1.45;">
+                Tabs are ordered by manufacturer family: <strong>Nintendo &rarr; PlayStation &rarr; Xbox &rarr; Sega &rarr; Atari &rarr; Commodore &rarr; Retro &rarr; Custom</strong>.
+              </p>
+            </div>
+
+            <h6>Tab Icon Auto-Matching:</h6>
+            <div class="help-callout">
+              <strong>Automatic Discovery:</strong>
+              <p style="margin: 4px 0 0 0; font-size: 0.8rem; line-height: 1.45;">
+                When "Show Category Tab Icons" is toggled ON, ROMcat automatically checks if an icon exists in a matching console folder. You can always override any specific tab using the "Customize Individual Tab Icons" list below.
+              </p>
+            </div>
+          </div>
+        </div>
 
         <!-- Category Tab Icons Toggle -->
         <div class="toggle-list" style="margin-bottom: 14px;">
@@ -290,8 +345,8 @@
             <div class="icon-grid" id="iconGrid"></div>
             <div class="custom-icon-row">
               <input type="text" id="customIconUrl" class="settings-input" placeholder="Custom Icon URL / path" value="{{ settings.icon or '/static/favicon.png' }}">
-              <label class="btn-file-upload">
-                Upload
+              <label class="btn-file-upload" title="Upload image directly into the selected category folder">
+                <span id="headerUploadLabel">Upload</span>
                 <input type="file" id="iconFileInput" accept=".png,.svg,.ico,.jpg,.jpeg,.webp" style="display:none">
               </label>
             </div>
@@ -648,7 +703,11 @@
         <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">
           Select a console icon from the folders below:
         </p>
-        <div style="display: flex; gap: 6px;">
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <label class="icon-action-btn" title="Upload an icon directly to the selected console folder" style="cursor: pointer; margin: 0;">
+            <span id="tabPickerUploadLabel">⬆ Upload</span>
+            <input type="file" id="tabPickerUploadInput" accept=".png,.svg,.ico,.jpg,.jpeg,.webp" style="display:none;">
+          </label>
           <button type="button" id="btnTabAddFolder" class="icon-action-btn" title="Create a new console folder in static/icons/">+ New Folder</button>
           <button type="button" id="btnTabOpenFolder" class="icon-action-btn" title="Open static/icons folder in system file manager">📁 Open Icons Folder</button>
         </div>
@@ -1533,8 +1592,26 @@ async function loadDynamicIcons() {
 
 function renderDynamicCategoryTabs() {
   const configs = [
-    { el: iconCatTabs, onSelect: (cat) => renderIconGrid(cat) },
-    { el: tabIconPickerCatTabs, onSelect: (cat) => renderTabIconPickerGrid(cat) }
+    { 
+      el: iconCatTabs, 
+      onSelect: (cat, name) => {
+        renderIconGrid(cat);
+        const headerLabel = document.getElementById('headerUploadLabel');
+        if (headerLabel) {
+          headerLabel.textContent = (cat === 'all' || cat === 'custom') ? 'Upload to Custom' : `Upload to ${name}`;
+        }
+      } 
+    },
+    { 
+      el: tabIconPickerCatTabs, 
+      onSelect: (cat, name) => {
+        renderTabIconPickerGrid(cat);
+        const tabPickerLabel = document.getElementById('tabPickerUploadLabel');
+        if (tabPickerLabel) {
+          tabPickerLabel.textContent = (cat === 'all' || cat === 'custom') ? '⬆ Upload to Custom' : `⬆ Upload to ${name}`;
+        }
+      } 
+    }
   ];
 
   configs.forEach(({ el, onSelect }) => {
@@ -1547,13 +1624,14 @@ function renderDynamicCategoryTabs() {
       btn.type = 'button';
       btn.className = 'icon-cat-btn' + (cat.id === currentActive ? ' active' : '');
       btn.dataset.cat = cat.id;
+      btn.dataset.name = cat.name;
       btn.textContent = cat.name;
-      btn.title = `${cat.name} (${cat.count || 0})`;
+      btn.title = `${cat.name} [${cat.manufacturer || 'Console'}] (${cat.count || 0})`;
 
       btn.addEventListener('click', () => {
         el.querySelectorAll('.icon-cat-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        onSelect(cat.id);
+        onSelect(cat.id, cat.name);
       });
       el.appendChild(btn);
     });
@@ -1614,8 +1692,14 @@ if (iconFileInput) {
   iconFileInput.addEventListener('change', async () => {
     if (!iconFileInput.files || iconFileInput.files.length === 0) return;
     const file = iconFileInput.files[0];
+    const activeBtn = iconCatTabs?.querySelector('.icon-cat-btn.active');
+    const activeCat = activeBtn?.dataset.cat;
+    const targetFolder = (activeCat && activeCat !== 'all') ? activeCat : 'custom';
+
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('folder', targetFolder);
+
     try {
       const res = await fetch('/api/upload_icon', {
         method: 'POST',
@@ -1623,13 +1707,65 @@ if (iconFileInput) {
       });
       const data = await res.json();
       if (data.ok && data.icon) {
-        setLiveIcon(data.icon);
         await loadDynamicIcons();
+        if (iconCatTabs) {
+          iconCatTabs.querySelectorAll('.icon-cat-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.cat === targetFolder);
+          });
+        }
+        renderIconGrid(targetFolder);
+        setLiveIcon(data.icon);
       } else {
         alert('Icon upload failed: ' + (data.error || 'Unknown error'));
       }
     } catch (err) {
       alert('Failed to upload icon: ' + err);
+    }
+  });
+}
+
+const tabPickerUploadInput = document.getElementById('tabPickerUploadInput');
+if (tabPickerUploadInput) {
+  tabPickerUploadInput.addEventListener('change', async () => {
+    if (!tabPickerUploadInput.files || tabPickerUploadInput.files.length === 0) return;
+    const file = tabPickerUploadInput.files[0];
+    const activeBtn = tabIconPickerCatTabs?.querySelector('.icon-cat-btn.active');
+    const activeCat = activeBtn?.dataset.cat;
+    const targetFolder = (activeCat && activeCat !== 'all') ? activeCat : (activePickerTabTarget || 'custom');
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', targetFolder);
+    if (activePickerTabTarget) {
+      formData.append('type', 'tab');
+      formData.append('tab_id', activePickerTabTarget);
+    }
+
+    try {
+      const res = await fetch('/api/upload_icon', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.ok && data.icon) {
+        if (activePickerTabTarget) {
+          tabIconsOverrides[activePickerTabTarget] = data.icon;
+          renderTabIconsCustomList();
+          matchAndPopulateCategoryIcons();
+          saveAllSettings();
+        }
+        await loadDynamicIcons();
+        if (tabIconPickerCatTabs) {
+          tabIconPickerCatTabs.querySelectorAll('.icon-cat-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.cat === targetFolder);
+          });
+        }
+        renderTabIconPickerGrid(targetFolder);
+      } else {
+        alert('Upload failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Upload error: ' + err);
     }
   });
 }
@@ -1677,6 +1813,23 @@ document.getElementById('btnHeaderOpenFolder')?.addEventListener('click', openSy
 document.getElementById('btnTabOpenFolder')?.addEventListener('click', openSystemIconsFolder);
 document.getElementById('btnHeaderAddFolder')?.addEventListener('click', promptCreateIconFolder);
 document.getElementById('btnTabAddFolder')?.addEventListener('click', promptCreateIconFolder);
+
+const toggleIconHelpBtn = document.getElementById('toggleIconHelpBtn');
+const closeIconHelpBtn = document.getElementById('closeIconHelpBtn');
+const iconHelpBox = document.getElementById('iconHelpBox');
+if (toggleIconHelpBtn && iconHelpBox) {
+  toggleIconHelpBtn.addEventListener('click', () => {
+    iconHelpBox.classList.toggle('hidden');
+    if (!iconHelpBox.classList.contains('hidden')) {
+      iconHelpBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  });
+}
+if (closeIconHelpBtn && iconHelpBox) {
+  closeIconHelpBtn.addEventListener('click', () => {
+    iconHelpBox.classList.add('hidden');
+  });
+}
 
 renderCustomThemes();
 
