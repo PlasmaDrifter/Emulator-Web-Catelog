@@ -3,16 +3,16 @@
 block_cipher = None
 
 datas = [
-    ('/home/jmc/Source/romcat/templates', 'templates'),
-    ('/home/jmc/Source/romcat/static/css', 'static/css'),
-    ('/home/jmc/Source/romcat/static/icons', 'static/icons'),
-    ('/home/jmc/Source/romcat/static/favicon.png', 'static'),
-    ('/home/jmc/Source/romcat/config.example.yaml', '.'),
+    ('templates', 'templates'),
+    ('static/css', 'static/css'),
+    ('static/icons', 'static/icons'),
+    ('static/favicon.png', 'static'),
+    ('config.example.yaml', '.'),
 ]
 
 a = Analysis(
     ['desktop.py'],
-    pathex=['/home/jmc/Source/romcat'],
+    pathex=['.'],
     binaries=[],
     datas=datas,
     hiddenimports=[
@@ -79,7 +79,7 @@ exe = EXE(
     a.datas,
     [],
     name='ROMCat',
-    icon='/home/jmc/Source/romcat/static/favicon.png',
+    icon='static/favicon.png',
     debug=False,
     bootloader_ignore_signals=False,
     strip=True,
