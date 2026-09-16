@@ -20,7 +20,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)
