@@ -20,7 +20,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)
@@ -477,11 +477,11 @@ CONSOLE_DISPLAY_NAMES = {
     "gba": "GBA",
     "ds": "Nintendo DS",
     "3ds": "Nintendo 3DS",
-    "ps1": "PlayStation 1",
-    "ps2": "PS2",
-    "ps3": "PS3",
-    "ps4": "PS4",
-    "ps5": "PS5",
+    "ps1": "PS 1",
+    "ps2": "PS 2",
+    "ps3": "PS 3",
+    "ps4": "PS 4",
+    "ps5": "PS 5",
     "psp": "PSP",
     "psvita": "PS Vita",
     "xbox": "Xbox",
@@ -521,8 +521,13 @@ MANUFACTURER_GROUPS = {
     "switch": (7, "Nintendo"),
     "gameboy": (8, "Nintendo"),
     "gba": (9, "Nintendo"),
-    "ds": (10, "Nintendo"),
-    "3ds": (11, "Nintendo"),
+    "gbc": (10, "Nintendo"),
+    "ds": (11, "Nintendo"),
+    "3ds": (12, "Nintendo"),
+    "famicom": (13, "Nintendo"),
+    "sfc": (14, "Nintendo"),
+    "virtualboy": (15, "Nintendo"),
+    "pokemonmini": (16, "Nintendo"),
 
     # PlayStation
     "ps1": (20, "PlayStation"),
@@ -532,6 +537,7 @@ MANUFACTURER_GROUPS = {
     "ps5": (24, "PlayStation"),
     "psp": (25, "PlayStation"),
     "psvita": (26, "PlayStation"),
+    "playstation": (27, "PlayStation"),
 
     # Xbox
     "xbox": (30, "Xbox"),
@@ -547,27 +553,23 @@ MANUFACTURER_GROUPS = {
     "saturn": (44, "Sega"),
     "dreamcast": (45, "Sega"),
     "gamegear": (46, "Sega"),
-
-    # Atari
-    "atari2600": (50, "Atari"),
-    "atari5200": (51, "Atari"),
-    "atari7800": (52, "Atari"),
-    "atarilynx": (53, "Atari"),
-    "atarijaguar": (54, "Atari"),
-
-    # Commodore
-    "c64": (60, "Commodore"),
-    "amiga": (61, "Commodore"),
-    "vic20": (62, "Commodore"),
-
-    # Retro & Arcade
-    "neogeo": (70, "Retro"),
-    "arcade": (71, "Retro"),
-    "retro": (72, "Retro"),
+    "sg1000": (47, "Sega"),
 
     # Custom
     "custom": (99, "Custom"),
 }
+
+
+def get_manufacturer_group(cat_id: str) -> tuple[str, str]:
+    """Returns (group_id, group_name) for a console category folder."""
+    clean_k = cat_id.lower().replace("-", "").replace("_", "")
+    if clean_k == "custom":
+        return ("custom", "Custom")
+    if clean_k in MANUFACTURER_GROUPS:
+        mfg = MANUFACTURER_GROUPS[clean_k][1]
+        return (mfg.lower(), mfg)
+    # All other consoles (Atari, Commodore, Neo Geo, Arcade, etc.) belong to Retro
+    return ("retro", "Retro")
 
 
 def format_console_name(key: str) -> str:
@@ -579,6 +581,23 @@ def format_console_name(key: str) -> str:
     if len(key) <= 4:
         return key.upper()
     return key.replace("-", " ").replace("_", " ").title()
+
+
+def format_icon_name(stem: str, cat_id: str) -> str:
+    clean = stem.lower().replace("-", " ").replace("_", " ")
+    if clean in ("icon", "default", "logo") and cat_id:
+        return format_console_name(cat_id)
+    subbed = re.sub(r"\bplaystation\s+ps(\d+)\b", r"PS \1", clean, flags=re.IGNORECASE)
+    subbed = re.sub(r"\bplaystation\s+(\d+)\b", r"PS \1", subbed, flags=re.IGNORECASE)
+    subbed = re.sub(r"\bplaystation\s+psvita\b", "PS Vita", subbed, flags=re.IGNORECASE)
+    subbed = re.sub(r"\bplaystation\s+psp\b", "PSP", subbed, flags=re.IGNORECASE)
+    subbed = re.sub(r"\bplaystation\s+vita\b", "PS Vita", subbed, flags=re.IGNORECASE)
+    subbed = re.sub(r"\bps(\d+)\b", r"PS \1", subbed, flags=re.IGNORECASE)
+    subbed = re.sub(r"\bpsvita\b", "PS Vita", subbed, flags=re.IGNORECASE)
+    subbed = re.sub(r"\bpsp\b", "PSP", subbed, flags=re.IGNORECASE)
+    if subbed != clean:
+        return subbed.strip()
+    return stem.replace("-", " ").replace("_", " ").title()
 
 
 def scan_icon_categories():
@@ -619,40 +638,64 @@ def scan_icon_categories():
 
     sorted_cat_keys = sorted(cat_dirs.keys(), key=get_sort_key)
 
+    group_counts = {
+        "nintendo": 0,
+        "playstation": 0,
+        "xbox": 0,
+        "sega": 0,
+        "retro": 0,
+        "custom": 0,
+    }
+
     for cat_id in sorted_cat_keys:
         paths = cat_dirs[cat_id]
         cat_icons = []
         seen_filenames = set()
+        group_id, group_name = get_manufacturer_group(cat_id)
         for p_dir in paths:
             for f in sorted(p_dir.iterdir()):
                 if f.is_file() and f.suffix.lower() in valid_exts and f.name not in seen_filenames and not f.name.startswith("."):
                     seen_filenames.add(f.name)
-                    stem = f.stem.replace("-", " ").replace("_", " ").title()
+                    stem = format_icon_name(f.stem, cat_id)
                     cat_icons.append({
                         "id": f"{cat_id}/{f.name}",
                         "name": stem,
                         "cat": cat_id,
+                        "group": group_id,
+                        "manufacturer": group_name,
                         "src": f"/static/icons/{cat_id}/{f.name}"
                     })
-        clean_k = cat_id.lower().replace("-", "").replace("_", "")
-        mfg = MANUFACTURER_GROUPS.get(clean_k, (99, "Other"))[1]
+        group_counts[group_id] = group_counts.get(group_id, 0) + len(cat_icons)
         categories.append({
             "id": cat_id,
             "name": format_console_name(cat_id),
-            "manufacturer": mfg,
+            "group": group_id,
+            "manufacturer": group_name,
             "count": len(cat_icons)
         })
         icons.extend(cat_icons)
 
-    # Prepend All
+    # Prepend All to categories
     categories.insert(0, {
         "id": "all",
         "name": "All",
+        "group": "all",
         "manufacturer": "All",
         "count": len(icons)
     })
 
-    return {"ok": True, "categories": categories, "icons": icons}
+    # Manufacturer groups for the UI
+    groups = [
+        {"id": "all", "name": "All", "count": len(icons)},
+        {"id": "nintendo", "name": "Nintendo", "count": group_counts["nintendo"]},
+        {"id": "playstation", "name": "PlayStation", "count": group_counts["playstation"]},
+        {"id": "xbox", "name": "Xbox", "count": group_counts["xbox"]},
+        {"id": "sega", "name": "Sega", "count": group_counts["sega"]},
+        {"id": "retro", "name": "Retro", "count": group_counts["retro"]},
+        {"id": "custom", "name": "Custom", "count": group_counts["custom"]},
+    ]
+
+    return {"ok": True, "groups": groups, "categories": categories, "icons": icons}
 
 
 @app.route("/api/icons", methods=["GET"])
