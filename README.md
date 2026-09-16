@@ -35,7 +35,7 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 ![Settings Appearance Tab](screenshots/settings_appearance.png?raw=true&v=7)
 
 ### Settings: Favicon and Console Icon Tab
-![Settings Favicon and Console Icon Tab](screenshots/settings_favicon_console_icon.png?raw=true&v=7)
+![Settings Favicon and Console Icon Tab](screenshots/settings_favicon_console_icon.png?raw=true&v=8)
 
 ### Settings: UI Tab
 ![Settings UI Tab](screenshots/settings_ui.png?raw=true&v=7)
