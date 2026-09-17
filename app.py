@@ -20,7 +20,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.6.3"
+__version__ = "0.6.4"
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)
@@ -63,7 +63,8 @@ DEFAULT_SETTINGS = {
         "show_favorites_tab": True,
         "show_hidden_tab": False,
         "show_card_hide_buttons": False,
-        "show_tab_icons": False
+        "show_tab_icons": False,
+        "show_favorite_stars": True
     }
 }
 

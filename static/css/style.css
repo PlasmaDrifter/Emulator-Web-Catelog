@@ -421,6 +421,7 @@ body.hide-counts .count { display: none !important; }
 body.hide-all-tab .tab[data-target="all"] { display: none !important; }
 body.hide-favorites-tab .tab[data-target="favorites"] { display: none !important; }
 body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
+body.hide-favorite-stars .card .star { display: none !important; }
 
 /* Settings Modal & UI */
 .settings-dialog {
