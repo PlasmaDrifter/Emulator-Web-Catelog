@@ -1,11 +1,13 @@
 # ROMcat: Retro & Modern Emulator Web Catalog
 
-[![Reddit](https://img.shields.io/badge/Reddit-r%2FPlasmaDrifterProjects-FF4500?style=flat-square&logo=reddit&logoColor=white)](https://reddit.com/r/PlasmaDrifterProjects)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-Web%20Framework-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![SteamGridDB](https://img.shields.io/badge/SteamGridDB-API%20Cover%20Art-171a21)](https://www.steamgriddb.com)
 [![YAML](https://img.shields.io/badge/Config-YAML-CB171E?logo=yaml&logoColor=white)](https://yaml.org)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20macOS-blue)](https://python.org)
+
+> [!NOTE]
+> **Community Hub:** Have questions, custom configs, or feature ideas? Join our subreddit community at [**r/PlasmaDrifterProjects**](https://reddit.com/r/PlasmaDrifterProjects)!
 
 ## About
 
