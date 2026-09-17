@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=6.6">
+<link rel="stylesheet" href="/static/css/style.css?v=6.7">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -22,7 +22,7 @@
   }
 </style>
 </head>
-<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_all_tab %}hide-all-tab {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}{% if settings.visibility.show_tab_icons %}show-tab-icons {% endif %}">
+<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_all_tab %}hide-all-tab {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}{% if settings.visibility.show_tab_icons %}show-tab-icons {% endif %}{% if settings.visibility.show_favorite_stars == false %}hide-favorite-stars {% endif %}">
 <header>
   <div class="header-brand">
     <img id="headerIcon" src="{{ settings.icon or '/static/favicon.png' }}" class="header-icon" alt="">
@@ -564,6 +564,16 @@
             </div>
             <div class="switch">
               <input type="checkbox" id="toggleFavoritesTab" {% if settings.visibility.show_favorites_tab != false %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Show Favorite Badges on Cards</span>
+              <span class="toggle-desc">Display the star badge on game cards to mark and view favorites</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleFavoriteStars" {% if settings.visibility.show_favorite_stars != false %}checked{% endif %}>
               <span class="slider"></span>
             </div>
           </label>
@@ -1194,7 +1204,8 @@ const visibilityToggles = {
   show_favorites_tab: { el: document.getElementById('toggleFavoritesTab'), cls: 'hide-favorites-tab' },
   show_hidden_tab: { el: document.getElementById('toggleHiddenTab'), cls: 'hide-hidden-tab' },
   show_card_hide_buttons: { el: document.getElementById('toggleCardHideButtons'), cls: 'show-hide-controls', invert: true },
-  show_tab_icons: { el: document.getElementById('toggleTabIcons'), cls: 'show-tab-icons', invert: true }
+  show_tab_icons: { el: document.getElementById('toggleTabIcons'), cls: 'show-tab-icons', invert: true },
+  show_favorite_stars: { el: document.getElementById('toggleFavoriteStars'), cls: 'hide-favorite-stars' }
 };
 
 const CONSOLE_ICON_MAP = [
