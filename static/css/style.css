@@ -106,6 +106,8 @@ button.icon-btn.spinning svg {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  position: relative;
+  z-index: 2;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   user-select: none;
 }
@@ -126,6 +128,45 @@ button.icon-btn.spinning svg {
   border-color: var(--accent-color);
   color: var(--tab-active-text);
 }
+
+/* Sliding Active Pill Indicator */
+.tab-sliding-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-color) 22%, var(--bg-card));
+  border: 1px solid var(--accent-color);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent-color) 22%, transparent);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1),
+              width 0.28s cubic-bezier(0.2, 0.9, 0.3, 1),
+              height 0.28s cubic-bezier(0.2, 0.9, 0.3, 1),
+              opacity 0.18s ease;
+  will-change: transform, width, height;
+}
+
+.tabs.has-pill .tab.active {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+.tabs.has-pill .tab.active:hover {
+  background: transparent;
+  border-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-sliding-pill {
+    transition: none !important;
+  }
+}
+
 .tab .tab-icon {
   display: none;
   align-items: center;

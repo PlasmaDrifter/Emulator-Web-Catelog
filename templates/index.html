@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=6.7">
+<link rel="stylesheet" href="/static/css/style.css?v=6.8">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -39,7 +39,8 @@
   </div>
 </header>
 
-<nav class="tabs">
+<nav class="tabs" id="tabsNav">
+  <div class="tab-sliding-pill" id="tabSlidingPill" style="position: absolute; pointer-events: none;" aria-hidden="true"></div>
   <button class="tab active" data-target="all" data-sys-name="All">
     <span class="tab-icon"><img src="/static/icons/retro-gamepad.svg" alt=""></span>
     <span class="tab-label">All</span>
@@ -1056,12 +1057,67 @@ function applyFilters() {
   });
 }
 
+// --- Smooth Sliding Active Pill Indicator for Console Categories ---
+const tabsNav = document.getElementById('tabsNav');
+const tabSlidingPill = document.getElementById('tabSlidingPill');
+let pillInitialized = false;
+
+function updateSlidingPill(activeTab = null, animate = true) {
+  if (!tabsNav || !tabSlidingPill) return;
+  const targetTab = activeTab || tabsNav.querySelector('.tab.active');
+  if (!targetTab || window.getComputedStyle(targetTab).display === 'none') {
+    tabSlidingPill.style.opacity = '0';
+    return;
+  }
+
+  const navRect = tabsNav.getBoundingClientRect();
+  const tabRect = targetTab.getBoundingClientRect();
+  const x = tabRect.left - navRect.left + tabsNav.scrollLeft;
+  const y = tabRect.top - navRect.top + tabsNav.scrollTop;
+  const w = tabRect.width;
+  const h = tabRect.height;
+
+  if (w <= 0 || h <= 0) return;
+
+  if (!animate || !pillInitialized) {
+    const prevTransition = tabSlidingPill.style.transition;
+    tabSlidingPill.style.transition = 'none';
+    tabSlidingPill.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    tabSlidingPill.style.width = `${w}px`;
+    tabSlidingPill.style.height = `${h}px`;
+    tabSlidingPill.style.opacity = '1';
+    void tabSlidingPill.offsetWidth; // Force reflow
+    tabSlidingPill.style.transition = prevTransition;
+  } else {
+    tabSlidingPill.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    tabSlidingPill.style.width = `${w}px`;
+    tabSlidingPill.style.height = `${h}px`;
+    tabSlidingPill.style.opacity = '1';
+  }
+
+  if (!pillInitialized) {
+    tabsNav.classList.add('has-pill');
+    pillInitialized = true;
+  }
+}
+
+window.addEventListener('resize', () => updateSlidingPill(null, false));
+if (window.ResizeObserver && tabsNav) {
+  const ro = new ResizeObserver(() => updateSlidingPill(null, false));
+  ro.observe(tabsNav);
+}
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => updateSlidingPill(null, false));
+}
+window.addEventListener('load', () => updateSlidingPill(null, false));
+
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     activeTarget = tab.dataset.target;
     applyFilters();
+    updateSlidingPill(tab, true);
   });
 });
 
@@ -1379,6 +1435,7 @@ function ensureValidActiveTab() {
       applyFilters();
     }
   }
+  updateSlidingPill(null, false);
 }
 
 function applyLiveVisibility() {
@@ -2203,10 +2260,14 @@ if (viewHiddenBtn) {
   viewHiddenBtn.addEventListener('click', () => {
     settingsDialog.close();
     activeTarget = 'hidden';
+    let hiddenTab = null;
     document.querySelectorAll('.tab').forEach(t => {
-      t.classList.toggle('active', t.dataset.target === 'hidden');
+      const isHidden = t.dataset.target === 'hidden';
+      t.classList.toggle('active', isHidden);
+      if (isHidden) hiddenTab = t;
     });
     applyFilters();
+    if (hiddenTab) updateSlidingPill(hiddenTab, true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }
