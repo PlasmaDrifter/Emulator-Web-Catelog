@@ -6,9 +6,6 @@
 [![YAML](https://img.shields.io/badge/Config-YAML-CB171E?logo=yaml&logoColor=white)](https://yaml.org)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20macOS-blue)](https://python.org)
 
-> [!NOTE]
-> **Questions, custom configs, or ideas?** Join us on Reddit at <nobr>[**r/PlasmaDrifterProjects**](https://reddit.com/r/PlasmaDrifterProjects)</nobr>!
-
 ## About
 
 **ROMcat** is a fast, lightweight catalog and launcher for your retro and modern ROM collection that runs directly in your web browser. It can be run in two primary ways:
@@ -17,6 +14,9 @@
 - **Standalone Desktop Application**: Download the pre-packaged app to run ROMcat as a dedicated, self-contained desktop window with native desktop integration (Wayland, X11, and Windows)—no Python setup or terminal commands required.
 
 ROMcat provides an interactive dashboard with automated cover art scraping, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, or native binaries), and customizable themes.
+
+> [!NOTE]
+> **Questions, custom configs, or ideas?** Join us on Reddit at <nobr>[**r/PlasmaDrifterProjects**](https://reddit.com/r/PlasmaDrifterProjects)</nobr>!
 
 ---
 
