@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=6.8">
+<link rel="stylesheet" href="/static/css/style.css?v=7.0">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -707,16 +707,32 @@
 </dialog>
 
 <!-- Interactive Tab Icon Picker Dialog -->
-<dialog id="tabIconPickerModal" class="validation-dialog" style="max-width: 560px; width: 95vw; top: 22vh; bottom: auto; margin: 0 auto;">
+<dialog id="tabIconPickerModal" class="validation-dialog" style="max-width: 560px; width: 95vw; top: 18vh; bottom: auto; margin: 0 auto;">
   <div class="validation-dialog-content">
     <div class="validation-dialog-header">
       <div class="validation-header-title">
-        <span class="validation-icon-badge" style="background: rgba(58, 123, 213, 0.2); color: var(--accent-color); border-color: var(--accent-color); font-size: 1.1rem;">🎮</span>
+        <span class="validation-icon-badge" id="tabIconPickerHeaderBadge" style="background: rgba(58, 123, 213, 0.18); color: var(--accent-color); border-color: var(--accent-color); width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; padding: 2px; box-sizing: border-box;">🎮</span>
         <h4 id="tabIconPickerTitle">Choose Tab Icon</h4>
       </div>
       <button type="button" class="close-modal-btn" id="closeTabIconPickerBtn" aria-label="Close">&times;</button>
     </div>
-    <div class="validation-dialog-body" style="max-height: 65vh; overflow-y: auto;">
+    <div class="validation-dialog-body" style="max-height: 72vh; overflow-y: auto;">
+      <!-- Current Icon Display Banner -->
+      <div class="current-icon-display-bar" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.035); border: 1px solid var(--border-color); border-radius: 8px; padding: 7px 12px; margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div id="tabPickerCurrentIconPreview" style="width: 30px; height: 30px; border-radius: 6px; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-input); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+            <!-- Current icon preview -->
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 1px;">
+            <span style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600;">Current Icon</span>
+            <span id="tabPickerCurrentIconName" style="font-size: 0.84rem; font-weight: 600; color: var(--text-primary);">-</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="tabPickerCurrentIconBadge" class="tab-icons-count-badge" style="font-size: 0.72rem; padding: 3px 8px; border-radius: 5px; background: rgba(255, 255, 255, 0.06); color: var(--text-muted);">Auto</span>
+          <button type="button" id="tabPickerResetCurrentBtn" class="btn-secondary" style="display: none; padding: 3px 8px; font-size: 0.72rem; font-weight: 500;">Reset to Auto</button>
+        </div>
+      </div>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
         <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">
           Select a console icon from the folders below:
@@ -733,10 +749,10 @@
       <div class="icon-category-tabs" id="tabIconPickerCatTabs" style="margin-bottom: 10px;">
         <!-- Dynamically populated from /api/icons -->
       </div>
-      <div class="icon-grid" id="tabIconPickerGrid" style="max-height: 364px; align-content: start;"></div>
+      <div class="icon-grid" id="tabIconPickerGrid"></div>
     </div>
     <div class="validation-dialog-footer">
-      <button type="button" class="btn-secondary" id="cancelTabIconPickerBtn" style="padding: 7px 18px; font-size: 0.85rem;">Cancel</button>
+      <button type="button" class="btn-primary" id="cancelTabIconPickerBtn" style="padding: 7px 22px; font-size: 0.85rem; font-weight: 500;">Done</button>
     </div>
   </div>
 </dialog>
@@ -1927,6 +1943,87 @@ const cancelTabIconPickerBtn = document.getElementById('cancelTabIconPickerBtn')
 
 let activePickerTabTarget = null;
 let activePickerTabName = '';
+let activePickerCurrentSrc = '';
+
+function getTabCurrentIconInfo(target, name) {
+  const isCustom = Boolean(tabIconsOverrides && tabIconsOverrides[target]);
+  let src = '';
+  let displayName = '';
+  let previewHtml = '';
+  let group = 'all';
+
+  if (isCustom) {
+    src = tabIconsOverrides[target];
+    const matchedObj = Array.isArray(dynamicIconsList) ? dynamicIconsList.find(i => i.src === src) : null;
+    displayName = matchedObj ? matchedObj.name : src.split('/').pop().replace(/\.[^/.]+$/, '');
+    previewHtml = `<img src="${encodeURI(src)}" alt="${escapeHtml(name || '')}" loading="lazy">`;
+    group = matchedObj?.group?.toLowerCase() || 'custom';
+    return { src, name: displayName, previewHtml, isCustom: true, group };
+  }
+
+  if (target === 'all') {
+    src = '/static/icons/retro-gamepad.svg';
+    displayName = 'Retro Gamepad';
+    previewHtml = `<img src="/static/icons/retro-gamepad.svg" alt="All" loading="lazy">`;
+    return { src, name: displayName, previewHtml, isCustom: false, group: 'all' };
+  }
+  if (target === 'favorites') {
+    src = '';
+    displayName = 'Favorite Star';
+    previewHtml = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="color: var(--favorite-star-color, #ffd700);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+    return { src, name: displayName, previewHtml, isCustom: false, group: 'all' };
+  }
+  if (target === 'hidden') {
+    src = '';
+    displayName = 'Hidden Eye';
+    previewHtml = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+    return { src, name: displayName, previewHtml, isCustom: false, group: 'all' };
+  }
+
+  src = matchIconForCategory(target, name);
+  const matchedObj = Array.isArray(dynamicIconsList) ? dynamicIconsList.find(i => i.src === src) : null;
+  displayName = matchedObj ? matchedObj.name : (name || target);
+  previewHtml = `<img src="${encodeURI(src)}" alt="${escapeHtml(name || '')}" loading="lazy">`;
+  group = matchedObj?.group?.toLowerCase() || 'all';
+  return { src, name: displayName, previewHtml, isCustom: false, group };
+}
+
+function updateTabPickerCurrentDisplay() {
+  if (!activePickerTabTarget) return;
+  const info = getTabCurrentIconInfo(activePickerTabTarget, activePickerTabName);
+  activePickerCurrentSrc = info.src;
+
+  const headerBadge = document.getElementById('tabIconPickerHeaderBadge');
+  if (headerBadge) {
+    headerBadge.innerHTML = info.previewHtml;
+  }
+  const previewBox = document.getElementById('tabPickerCurrentIconPreview');
+  if (previewBox) {
+    previewBox.innerHTML = info.previewHtml;
+  }
+  const nameEl = document.getElementById('tabPickerCurrentIconName');
+  if (nameEl) {
+    nameEl.textContent = info.name || activePickerTabName || activePickerTabTarget;
+  }
+  const badgeEl = document.getElementById('tabPickerCurrentIconBadge');
+  if (badgeEl) {
+    if (info.isCustom) {
+      badgeEl.textContent = 'Custom Override';
+      badgeEl.style.background = 'rgba(58, 123, 213, 0.2)';
+      badgeEl.style.color = 'var(--accent-color)';
+      badgeEl.style.border = '1px solid var(--accent-color)';
+    } else {
+      badgeEl.textContent = 'Auto Matched';
+      badgeEl.style.background = 'rgba(255, 255, 255, 0.08)';
+      badgeEl.style.color = 'var(--text-muted)';
+      badgeEl.style.border = '1px solid transparent';
+    }
+  }
+  const resetBtn = document.getElementById('tabPickerResetCurrentBtn');
+  if (resetBtn) {
+    resetBtn.style.display = info.isCustom ? 'inline-block' : 'none';
+  }
+}
 
 function renderTabIconPickerGrid(filterCat = 'all') {
   if (!tabIconPickerGrid) return;
@@ -1941,9 +2038,14 @@ function renderTabIconPickerGrid(filterCat = 'all') {
   }
   filtered.forEach(icon => {
     const tile = document.createElement('div');
-    const isSelected = activePickerTabTarget && tabIconsOverrides[activePickerTabTarget] === icon.src;
-    tile.className = 'icon-tile' + (isSelected ? ' selected' : '');
+    const isOverride = activePickerTabTarget && tabIconsOverrides[activePickerTabTarget] === icon.src;
+    const isCurrent = activePickerCurrentSrc && (icon.src === activePickerCurrentSrc);
+    const isSelected = isOverride || isCurrent;
+    tile.className = 'icon-tile' + (isSelected ? ' selected' : '') + (isCurrent ? ' is-current' : '');
     tile.dataset.src = icon.src;
+    if (isCurrent) {
+      tile.title = `${icon.name} (Current Icon)`;
+    }
 
     const img = document.createElement('img');
     img.src = encodeURI(icon.src);
@@ -1959,7 +2061,19 @@ function renderTabIconPickerGrid(filterCat = 'all') {
     tile.addEventListener('click', () => {
       if (activePickerTabTarget) {
         tabIconsOverrides[activePickerTabTarget] = icon.src;
-        if (tabIconPickerModal) tabIconPickerModal.close();
+        updateTabPickerCurrentDisplay();
+        if (tabIconPickerGrid) {
+          tabIconPickerGrid.querySelectorAll('.icon-tile').forEach(t => {
+            const isThis = t.dataset.src === icon.src;
+            t.classList.toggle('selected', isThis);
+            t.classList.toggle('is-current', isThis);
+            if (isThis) {
+              t.title = `${icon.name} (Current Icon)`;
+            } else {
+              t.title = t.querySelector('span')?.textContent || '';
+            }
+          });
+        }
         renderTabIconsCustomList();
         matchAndPopulateCategoryIcons();
         saveAllSettings();
@@ -1975,19 +2089,21 @@ function openTabIconPicker(target, sysName) {
   if (tabIconPickerTitle) {
     tabIconPickerTitle.textContent = `Choose Icon for "${sysName || target}"`;
   }
-  
-  const cleanTarget = (target || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const cleanName = (sysName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  let defaultGroup = 'all';
+  updateTabPickerCurrentDisplay();
 
-  // Check if target or name matches an icon's cat or group
-  const matched = dynamicIconsList.find(i => (i.cat && (i.cat.toLowerCase() === cleanTarget || i.cat.toLowerCase() === cleanName)));
-  if (matched && matched.group) {
-    defaultGroup = matched.group.toLowerCase();
-  } else {
-    const catObj = dynamicIconCategories.find(c => c.id === cleanTarget || c.id === cleanName);
-    if (catObj && catObj.group) {
-      defaultGroup = catObj.group.toLowerCase();
+  const info = getTabCurrentIconInfo(target, sysName);
+  let defaultGroup = (info.group && info.group !== 'custom') ? info.group : 'all';
+  if (defaultGroup === 'all') {
+    const cleanTarget = (target || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanName = (sysName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const matched = dynamicIconsList.find(i => (i.cat && (i.cat.toLowerCase() === cleanTarget || i.cat.toLowerCase() === cleanName)));
+    if (matched && matched.group) {
+      defaultGroup = matched.group.toLowerCase();
+    } else {
+      const catObj = dynamicIconCategories.find(c => c.id === cleanTarget || c.id === cleanName);
+      if (catObj && catObj.group) {
+        defaultGroup = catObj.group.toLowerCase();
+      }
     }
   }
 
@@ -2009,6 +2125,21 @@ if (closeTabIconPickerBtn && tabIconPickerModal) {
 }
 if (cancelTabIconPickerBtn && tabIconPickerModal) {
   cancelTabIconPickerBtn.addEventListener('click', () => tabIconPickerModal.close());
+}
+
+const tabPickerResetCurrentBtn = document.getElementById('tabPickerResetCurrentBtn');
+if (tabPickerResetCurrentBtn) {
+  tabPickerResetCurrentBtn.addEventListener('click', () => {
+    if (activePickerTabTarget && tabIconsOverrides) {
+      delete tabIconsOverrides[activePickerTabTarget];
+      updateTabPickerCurrentDisplay();
+      const activeBtn = tabIconPickerCatTabs?.querySelector('.icon-cat-btn.active');
+      renderTabIconPickerGrid(activeBtn?.dataset.cat || 'all');
+      renderTabIconsCustomList();
+      matchAndPopulateCategoryIcons();
+      saveAllSettings();
+    }
+  });
 }
 
 function renderTabIconsCustomList() {
@@ -2040,21 +2171,9 @@ function renderTabIconsCustomList() {
   tabs.forEach(t => {
     const target = t.target;
     const name = t.name;
-    const isCustom = Boolean(tabIconsOverrides && tabIconsOverrides[target]);
-
-    let previewHtml = '';
-    if (isCustom) {
-      previewHtml = `<img src="${encodeURI(tabIconsOverrides[target])}" alt="${escapeHtml(name)}" loading="lazy">`;
-    } else if (target === 'all') {
-      previewHtml = `<img src="/static/icons/retro-gamepad.svg" alt="All" loading="lazy">`;
-    } else if (target === 'favorites') {
-      previewHtml = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
-    } else if (target === 'hidden') {
-      previewHtml = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
-    } else {
-      const autoSrc = matchIconForCategory(target, name);
-      previewHtml = `<img src="${encodeURI(autoSrc)}" alt="${escapeHtml(name)}" loading="lazy">`;
-    }
+    const info = getTabCurrentIconInfo(target, name);
+    const isCustom = info.isCustom;
+    const previewHtml = info.previewHtml;
 
     const item = document.createElement('button');
     item.type = 'button';
