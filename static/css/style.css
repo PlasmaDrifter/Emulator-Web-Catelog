@@ -53,7 +53,7 @@ header h1 {
 }
 .actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 
-button {
+button, .icon-btn {
   background: var(--border-color);
   color: var(--text-primary);
   border: 1px solid var(--border-input);
@@ -62,9 +62,11 @@ button {
   cursor: pointer;
   font-size: 0.85rem;
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  text-decoration: none;
+  box-sizing: border-box;
 }
-button:hover { background: #343a46; }
-button.icon-btn {
+button:hover, .icon-btn:hover { background: #343a46; color: var(--text-primary); }
+.icon-btn {
   padding: 6px 10px;
   font-size: 1rem;
   line-height: 1;
@@ -78,6 +80,35 @@ button.icon-btn.spinning svg {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+#githubRepoLink {
+  position: relative;
+}
+.update-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: 1.5px solid var(--bg-header);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
+  animation: pulse-update-badge 2s infinite ease-in-out;
+  pointer-events: none;
+}
+@keyframes pulse-update-badge {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
 
 #status { font-size: 0.8rem; color: var(--text-muted); }
@@ -463,6 +494,8 @@ body.hide-all-tab .tab[data-target="all"] { display: none !important; }
 body.hide-favorites-tab .tab[data-target="favorites"] { display: none !important; }
 body.hide-hidden-tab .tab[data-target="hidden"] { display: none !important; }
 body.hide-favorite-stars .card .star { display: none !important; }
+body.hide-github-link #githubRepoLink { display: none !important; }
+body.hide-update-badge .update-badge { display: none !important; }
 
 /* Settings Modal & UI */
 .settings-dialog {
@@ -517,6 +550,92 @@ body.hide-favorite-stars .card .star { display: none !important; }
 }
 .close-modal-btn:hover {
   color: var(--text-primary);
+}
+
+/* Settings Update Banner */
+.settings-update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(58, 123, 213, 0.12);
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 20px;
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  animation: fadeInHelp 0.2s ease;
+}
+.settings-update-banner.hidden {
+  display: none !important;
+}
+body.hide-update-badge .settings-update-banner {
+  display: none !important;
+}
+.update-banner-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+.update-banner-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.update-banner-text {
+  line-height: 1.4;
+}
+.update-banner-btn {
+  background: var(--accent-color);
+  color: var(--accent-contrast, #ffffff) !important;
+  padding: 5px 14px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  white-space: nowrap;
+  text-decoration: none;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 0.15s ease;
+}
+.update-banner-btn:hover {
+  opacity: 0.9;
+  color: var(--accent-contrast, #ffffff) !important;
+}
+.update-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.dismiss-banner-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 2px 7px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dismiss-banner-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-color);
 }
 
 .modal-body {

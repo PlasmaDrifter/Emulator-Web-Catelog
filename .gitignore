@@ -16,6 +16,7 @@ settings.json
 favorites.json
 hidden.json
 library.json
+update_cache.json
 
 # Packaging and Standalone builds
 Standalone.app/

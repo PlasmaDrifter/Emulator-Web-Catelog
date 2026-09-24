@@ -7,6 +7,7 @@ your emulators; browser is just the remote control.
 import os
 import sys
 import re
+import time
 import io
 import ujson as json  # <-- This tells Python to use the ultra-fast parser everywhere
 import shlex
@@ -22,7 +23,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.6.6"
+__version__ = "0.6.7"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -60,6 +61,8 @@ FAVORITES_PATH = BASE_DIR / "favorites.json"
 HIDDEN_PATH = BASE_DIR / "hidden.json"
 LIBRARY_CACHE_PATH = BASE_DIR / "library.json"
 SETTINGS_PATH = BASE_DIR / "settings.json"
+UPDATE_CACHE_PATH = BASE_DIR / "update_cache.json"
+UPDATE_CHECK_INTERVAL_SECONDS = 7 * 24 * 3600  # 1 week
 COVERS_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_SETTINGS = {
@@ -88,7 +91,9 @@ DEFAULT_SETTINGS = {
         "show_hidden_tab": False,
         "show_card_hide_buttons": False,
         "show_tab_icons": False,
-        "show_favorite_stars": True
+        "show_favorite_stars": True,
+        "show_github_link": True,
+        "show_update_notification": True
     }
 }
 
@@ -1423,6 +1428,78 @@ def api_logs():
 def api_logs_clear():
     LOG_BUFFER.clear()
     return jsonify({"ok": True})
+
+
+def parse_version(v_str: str) -> tuple:
+    parts = []
+    clean = str(v_str or "").strip().lstrip("vV")
+    for chunk in clean.split("."):
+        digits = "".join(ch for ch in chunk if ch.isdigit())
+        parts.append(int(digits) if digits else 0)
+    return tuple(parts)
+
+
+def get_update_status(force: bool = False) -> dict:
+    now = time.time()
+    cached = {}
+    if UPDATE_CACHE_PATH.exists():
+        try:
+            cached = json.loads(UPDATE_CACHE_PATH.read_text())
+        except Exception:
+            cached = {}
+
+    last_checked = cached.get("last_checked", 0)
+    # Check if we have valid cache within the 7-day interval
+    if not force and (now - last_checked < UPDATE_CHECK_INTERVAL_SECONDS) and ("has_update" in cached):
+        return cached
+
+    # Query GitHub API
+    try:
+        resp = requests.get(
+            "https://api.github.com/repos/PlasmaDrifter/Emulator-Web-Catelog/releases/latest",
+            headers={"User-Agent": f"ROMCat/{__version__}"},
+            timeout=5
+        )
+        if resp.status_code == 200:
+            rel = resp.json()
+            tag = rel.get("tag_name", "")
+            release_url = rel.get("html_url") or "https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases"
+            has_update = parse_version(tag) > parse_version(__version__) if tag else False
+            result = {
+                "ok": True,
+                "has_update": has_update,
+                "latest_version": tag,
+                "current_version": __version__,
+                "release_url": release_url,
+                "last_checked": now
+            }
+            try:
+                UPDATE_CACHE_PATH.write_text(json.dumps(result, indent=2))
+            except Exception:
+                pass
+            return result
+    except Exception as e:
+        logging.debug(f"Update check failed: {e}")
+
+    # Return cached if available, otherwise return safe defaults
+    if cached and "has_update" in cached:
+        return cached
+
+    return {
+        "ok": True,
+        "has_update": False,
+        "latest_version": f"v{__version__}",
+        "current_version": __version__,
+        "release_url": "https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases",
+        "last_checked": now
+    }
+
+
+@app.route("/api/check_update", methods=["GET"])
+def api_check_update():
+    force = request.args.get("force", "").lower() == "true"
+    status = get_update_status(force=force)
+    return jsonify(status)
 
 
 @app.route('/static/covers/<path:filename>')

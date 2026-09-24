@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=7.6">
+<link rel="stylesheet" href="/static/css/style.css?v=7.10">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -22,7 +22,7 @@
   }
 </style>
 </head>
-<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_all_tab %}hide-all-tab {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}{% if settings.visibility.show_tab_icons %}show-tab-icons {% endif %}{% if settings.visibility.show_favorite_stars == false %}hide-favorite-stars {% endif %}">
+<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_all_tab %}hide-all-tab {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}{% if settings.visibility.show_tab_icons %}show-tab-icons {% endif %}{% if settings.visibility.show_favorite_stars == false %}hide-favorite-stars {% endif %}{% if settings.visibility.show_github_link == false %}hide-github-link {% endif %}{% if settings.visibility.show_update_notification == false %}hide-update-badge {% endif %}">
 <header>
   <div class="header-brand">
     <img id="headerIcon" src="{{ settings.icon or '/static/favicon.png' }}" class="header-icon" alt="">
@@ -36,6 +36,7 @@
     <span id="status"></span>
     <button id="refreshBtn" title="Refresh library" class="icon-btn" aria-label="Refresh library"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
     <button id="settingsBtn" title="Settings" class="icon-btn" aria-label="Settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+    <a href="https://github.com/PlasmaDrifter/Emulator-Web-Catelog" target="_blank" rel="noopener noreferrer" id="githubRepoLink" class="icon-btn" title="GitHub Repository" aria-label="GitHub Repository"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg><span id="githubUpdateBadge" class="update-badge hidden" title="New release available">!</span></a>
   </div>
 </header>
 
@@ -101,6 +102,16 @@
   <div class="modal-header">
     <h3>Settings & Customization</h3>
     <button id="closeSettingsBtn" class="close-modal-btn" type="button" aria-label="Close">&times;</button>
+  </div>
+  <div id="settingsUpdateBanner" class="settings-update-banner hidden">
+    <div class="update-banner-info">
+      <span class="update-banner-badge">!</span>
+      <span id="settingsUpdateMsg" class="update-banner-text">Update Available: <strong id="settingsUpdateVersion">v0.6.8</strong> is now available on GitHub.</span>
+    </div>
+    <div class="update-banner-actions">
+      <a id="settingsUpdateLink" href="https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases" target="_blank" rel="noopener noreferrer" class="btn-primary update-banner-btn">View Release</a>
+      <button type="button" id="dismissUpdateBannerBtn" class="dismiss-banner-btn" title="Dismiss update notification" aria-label="Dismiss">&times;</button>
+    </div>
   </div>
   <div class="modal-nav-tabs">
     <button type="button" class="modal-nav-tab active" data-tab-target="tabAppearance">Appearance</button>
@@ -575,6 +586,26 @@
             </div>
             <div class="switch">
               <input type="checkbox" id="toggleFavoriteStars" {% if settings.visibility.show_favorite_stars != false %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Show GitHub Link in Header</span>
+              <span class="toggle-desc">Display icon shortcut to the GitHub repository</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleGithubLink" {% if settings.visibility.show_github_link != false %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Check for New Releases</span>
+              <span class="toggle-desc">Checks weekly and displays an exclamation mark on the GitHub icon when an update is available</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleCheckUpdates" {% if settings.visibility.show_update_notification != false %}checked{% endif %}>
               <span class="slider"></span>
             </div>
           </label>
@@ -1332,7 +1363,9 @@ const visibilityToggles = {
   show_hidden_tab: { el: document.getElementById('toggleHiddenTab'), cls: 'hide-hidden-tab' },
   show_card_hide_buttons: { el: document.getElementById('toggleCardHideButtons'), cls: 'show-hide-controls', invert: true },
   show_tab_icons: { el: document.getElementById('toggleTabIcons'), cls: 'show-tab-icons', invert: true },
-  show_favorite_stars: { el: document.getElementById('toggleFavoriteStars'), cls: 'hide-favorite-stars' }
+  show_favorite_stars: { el: document.getElementById('toggleFavoriteStars'), cls: 'hide-favorite-stars' },
+  show_github_link: { el: document.getElementById('toggleGithubLink'), cls: 'hide-github-link' },
+  show_update_notification: { el: document.getElementById('toggleCheckUpdates'), cls: 'hide-update-badge' }
 };
 
 const CONSOLE_ICON_MAP = [
@@ -3700,6 +3733,103 @@ if (clearLogsViewBtn) {
   });
 }
 
+// GitHub Release Update Checker
+let currentAvailableUpdateVersion = null;
+
+async function checkForUpdates() {
+  const badge = document.getElementById('githubUpdateBadge');
+  const link = document.getElementById('githubRepoLink');
+  const updateBanner = document.getElementById('settingsUpdateBanner');
+  const updateVersion = document.getElementById('settingsUpdateVersion');
+  const updateLink = document.getElementById('settingsUpdateLink');
+
+  const toggle = document.getElementById('toggleCheckUpdates');
+  if (toggle && !toggle.checked) {
+    if (badge) badge.classList.add('hidden');
+    if (updateBanner) updateBanner.classList.add('hidden');
+    return;
+  }
+
+  if (urlParams.get('test_update')) {
+    currentAvailableUpdateVersion = 'v0.6.8';
+    if (badge) badge.classList.remove('hidden');
+    if (link) link.title = 'New version available (v0.6.8) - Click to view on GitHub';
+    if (updateBanner) updateBanner.classList.remove('hidden');
+    if (updateVersion) updateVersion.textContent = 'v0.6.8';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/check_update');
+    const data = await res.json();
+    if (data.ok && data.has_update) {
+      currentAvailableUpdateVersion = data.latest_version;
+      const dismissed = localStorage.getItem('romcat_dismissed_update');
+      if (dismissed && dismissed === data.latest_version) {
+        if (badge) badge.classList.add('hidden');
+        if (updateBanner) updateBanner.classList.add('hidden');
+        return;
+      }
+
+      if (badge) badge.classList.remove('hidden');
+      if (link) {
+        link.title = `New version available (${data.latest_version}) - Click to view on GitHub`;
+        if (data.release_url) link.href = data.release_url;
+      }
+      if (updateBanner) updateBanner.classList.remove('hidden');
+      if (updateVersion && data.latest_version) updateVersion.textContent = data.latest_version;
+      if (updateLink && data.release_url) updateLink.href = data.release_url;
+    } else {
+      currentAvailableUpdateVersion = null;
+      if (badge) badge.classList.add('hidden');
+      if (link) {
+        link.title = 'GitHub Repository';
+        link.href = 'https://github.com/PlasmaDrifter/Emulator-Web-Catelog';
+      }
+      if (updateBanner) updateBanner.classList.add('hidden');
+    }
+  } catch (err) {
+    console.debug('Update check silent failure:', err);
+  }
+}
+
+const dismissUpdateBannerBtn = document.getElementById('dismissUpdateBannerBtn');
+if (dismissUpdateBannerBtn) {
+  dismissUpdateBannerBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const badge = document.getElementById('githubUpdateBadge');
+    const updateBanner = document.getElementById('settingsUpdateBanner');
+    const link = document.getElementById('githubRepoLink');
+
+    if (updateBanner) updateBanner.classList.add('hidden');
+    if (badge) badge.classList.add('hidden');
+    if (link) {
+      link.title = 'GitHub Repository';
+      link.href = 'https://github.com/PlasmaDrifter/Emulator-Web-Catelog';
+    }
+
+    if (currentAvailableUpdateVersion) {
+      try {
+        localStorage.setItem('romcat_dismissed_update', currentAvailableUpdateVersion);
+      } catch (err) {}
+    }
+  });
+}
+
+const toggleCheckUpdates = document.getElementById('toggleCheckUpdates');
+if (toggleCheckUpdates) {
+  toggleCheckUpdates.addEventListener('change', () => {
+    if (toggleCheckUpdates.checked) {
+      checkForUpdates();
+    } else {
+      const badge = document.getElementById('githubUpdateBadge');
+      if (badge) badge.classList.add('hidden');
+      const updateBanner = document.getElementById('settingsUpdateBanner');
+      if (updateBanner) updateBanner.classList.add('hidden');
+    }
+  });
+}
+
 matchAndPopulateCategoryIcons();
 applyLiveTheme();
 if (urlParams.get('test_hide')) {
@@ -3707,6 +3837,7 @@ if (urlParams.get('test_hide')) {
 }
 applyFilters();
 ensureValidActiveTab();
+checkForUpdates();
 </script>
 </body>
 </html>
