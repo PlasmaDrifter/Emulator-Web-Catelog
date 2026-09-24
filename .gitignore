@@ -22,3 +22,5 @@ Standalone.app/
 Standalone.app.windows/
 build/
 dist/
+ROMCat-*.tar.gz
+ROMCat-*.zip

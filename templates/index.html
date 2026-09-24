@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=7.0">
+<link rel="stylesheet" href="/static/css/style.css?v=7.6">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -675,11 +675,22 @@
 </div>
 
 <div class="modal-footer" id="modalFooter">
-  <div>
-    <button type="button" id="resetDefaultsBtn" class="btn-danger">Reset to Defaults</button>
+  <div class="modal-footer-left" style="display: flex; gap: 8px; align-items: center; flex: 1; justify-content: flex-start;">
+    <div id="resetDefaultsGroup" style="display: inline-flex; align-items: center; gap: 6px; position: relative;">
+      <button type="button" id="resetDefaultsBtn" class="btn-danger" title="Restore title, theme, and tab visibility to factory defaults">Reset to Defaults</button>
+      <button type="button" class="btn-inline-help" id="resetDefaultsHelpBtn" title="Restores catalog title, default dark theme, tab icons, and UI visibility switches. Does not affect ROMs, emulators, covers, or favorites." aria-label="Reset to Defaults Info">?</button>
+      <div id="resetDefaultsHelpPopup" class="reset-help-popover hidden">
+        <strong style="color: var(--text-primary); display: block; margin-bottom: 2px;">Reset to Defaults</strong>
+        <p style="margin: 0 0 5px 0; color: var(--text-muted);">Restores catalog title, default dark theme, tab icons, and UI visibility switches.</p>
+        <p style="margin: 0; color: #10b981; font-weight: 500;">Does not affect ROMs, emulators, covers, or favorites.</p>
+      </div>
+    </div>
     <button type="button" id="reloadConfigBtn" class="btn-secondary hidden">Reload From Disk</button>
   </div>
-  <div style="display: flex; gap: 8px; align-items: center;">
+  <div class="modal-footer-center" style="display: flex; justify-content: center; align-items: center; flex: 1;">
+    <button type="button" id="openLogsBtn" class="btn-secondary" title="View application and emulator launch logs">Logs</button>
+  </div>
+  <div class="modal-footer-right" style="display: flex; gap: 8px; align-items: center; flex: 1; justify-content: flex-end;">
     <button type="button" id="closeSettingsModalBtn" class="btn-secondary">Close</button>
     <button type="button" id="saveSettingsBtn" class="btn-primary">Save</button>
   </div>
@@ -711,7 +722,7 @@
   <div class="validation-dialog-content">
     <div class="validation-dialog-header">
       <div class="validation-header-title">
-        <span class="validation-icon-badge" id="tabIconPickerHeaderBadge" style="background: rgba(58, 123, 213, 0.18); color: var(--accent-color); border-color: var(--accent-color); width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; padding: 2px; box-sizing: border-box;">🎮</span>
+        <span class="validation-icon-badge" id="tabIconPickerHeaderBadge" style="background: rgba(58, 123, 213, 0.18); color: var(--accent-color); border-color: var(--accent-color); width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; padding: 2px; box-sizing: border-box;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg></span>
         <h4 id="tabIconPickerTitle">Choose Tab Icon</h4>
       </div>
       <button type="button" class="close-modal-btn" id="closeTabIconPickerBtn" aria-label="Close">&times;</button>
@@ -753,6 +764,50 @@
     </div>
     <div class="validation-dialog-footer">
       <button type="button" class="btn-primary" id="cancelTabIconPickerBtn" style="padding: 7px 22px; font-size: 0.85rem; font-weight: 500;">Done</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Interactive Application Logs Dialog -->
+<dialog id="logsModal" class="validation-dialog logs-dialog">
+  <div class="validation-dialog-content">
+    <div class="validation-dialog-header">
+      <div class="validation-header-title">
+        <span class="validation-icon-badge" style="background: rgba(58, 123, 213, 0.18); color: var(--accent-color); border-color: var(--accent-color); width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        </span>
+        <h4>Application &amp; System Logs</h4>
+        <span id="logsSourceBadge" class="tab-icons-count-badge" style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.06); color: var(--text-muted);">Active</span>
+      </div>
+      <button type="button" class="close-modal-btn" id="closeLogsBtn" aria-label="Close">&times;</button>
+    </div>
+    <div class="validation-dialog-body">
+      <div class="logs-toolbar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1;">
+          <input type="text" id="logsSearchInput" class="settings-input" placeholder="Filter logs (e.g. error, launch)..." style="width: 320px; min-width: 220px; padding: 5px 10px; font-size: 0.8rem;">
+          <select id="logsLineCountSelect" class="settings-input" style="width: auto; padding: 5px 8px; font-size: 0.8rem; cursor: pointer;">
+            <option value="50">50 lines</option>
+            <option value="100" selected>100 lines</option>
+            <option value="200">200 lines</option>
+          </select>
+          <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-muted); cursor: pointer; user-select: none;">
+            <input type="checkbox" id="logsAutoRefreshToggle" style="cursor: pointer;">
+            Auto-refresh (3s)
+          </label>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button type="button" id="refreshLogsBtn" class="btn-secondary" style="padding: 5px 10px; font-size: 0.78rem;" title="Refresh logs">Refresh</button>
+          <button type="button" id="copyLogsBtn" class="btn-secondary" style="padding: 5px 10px; font-size: 0.78rem;" title="Copy all logs to clipboard">Copy</button>
+          <button type="button" id="clearLogsViewBtn" class="btn-secondary" style="padding: 5px 10px; font-size: 0.78rem;" title="Clear display">Clear</button>
+        </div>
+      </div>
+      <div id="logsTerminal" class="logs-terminal" tabindex="0" role="region" aria-label="Log output">
+        <div class="logs-loading" style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">Loading logs...</div>
+      </div>
+    </div>
+    <div class="validation-dialog-footer" style="display: flex; justify-content: space-between; align-items: center;">
+      <span id="logsStatusLine" style="font-size: 0.74rem; color: var(--text-muted);">Showing 0 lines</span>
+      <button type="button" class="btn-primary" id="dismissLogsBtn" style="padding: 7px 22px; font-size: 0.85rem; font-weight: 500;">Done</button>
     </div>
   </div>
 </dialog>
@@ -2342,37 +2397,95 @@ saveSettingsBtn.addEventListener('click', () => {
   }
 });
 
-// Reset to Defaults
-resetDefaultsBtn.addEventListener('click', () => {
-  if (!confirm('Reset all title, icon, colors, and visibility settings to default?')) return;
-  catalogTitleInput.value = 'ROMcat';
-  applyLiveTitle();
-  setLiveIcon('/static/favicon.png');
+// Reset to Defaults (Two-Step Arm & Confirm)
+let resetArmedTimer = null;
 
-  const defTheme = THEME_PRESETS.default;
-  for (const [key, val] of Object.entries(defTheme)) {
-    if (colorInputs[key]) {
-      colorInputs[key].picker.value = val;
-      colorInputs[key].hex.value = val;
-    }
+function disarmResetBtn() {
+  if (resetArmedTimer) {
+    clearTimeout(resetArmedTimer);
+    resetArmedTimer = null;
   }
-  applyLiveTheme();
+  if (resetDefaultsBtn) {
+    resetDefaultsBtn.textContent = 'Reset to Defaults';
+    resetDefaultsBtn.classList.remove('is-armed');
+  }
+}
 
-  for (const [key, item] of Object.entries(visibilityToggles)) {
-    if (item.el) {
-      if (['show_hidden_tab', 'show_card_hide_buttons', 'show_tab_icons'].includes(key)) {
-        item.el.checked = false;
-      } else {
-        item.el.checked = true;
+if (resetDefaultsBtn) {
+  resetDefaultsBtn.addEventListener('click', () => {
+    if (!resetDefaultsBtn.classList.contains('is-armed')) {
+      // First click: Arm button with visual feedback and wait for confirmation click
+      resetDefaultsBtn.classList.add('is-armed');
+      resetDefaultsBtn.textContent = 'Click to Confirm Reset';
+      if (resetArmedTimer) clearTimeout(resetArmedTimer);
+      resetArmedTimer = setTimeout(disarmResetBtn, 4500);
+      return;
+    }
+
+    // Second click: Disarm and execute reset
+    disarmResetBtn();
+
+    catalogTitleInput.value = 'ROMcat';
+    applyLiveTitle();
+    setLiveIcon('/static/favicon.png');
+
+    const defTheme = THEME_PRESETS.default;
+    for (const [key, val] of Object.entries(defTheme)) {
+      if (colorInputs[key]) {
+        colorInputs[key].picker.value = val;
+        colorInputs[key].hex.value = val;
       }
     }
-  }
-  applyLiveVisibility();
-  tabIconsOverrides = {};
-  renderTabIconsCustomList();
-  matchAndPopulateCategoryIcons();
-  saveAllSettings();
-});
+    applyLiveTheme();
+
+    for (const [key, item] of Object.entries(visibilityToggles)) {
+      if (item.el) {
+        if (['show_hidden_tab', 'show_card_hide_buttons', 'show_tab_icons'].includes(key)) {
+          item.el.checked = false;
+        } else {
+          item.el.checked = true;
+        }
+      }
+    }
+    applyLiveVisibility();
+    tabIconsOverrides = {};
+    renderTabIconsCustomList();
+    matchAndPopulateCategoryIcons();
+    saveAllSettings();
+
+    resetDefaultsBtn.textContent = 'Defaults Restored';
+    setTimeout(() => {
+      resetDefaultsBtn.textContent = 'Reset to Defaults';
+    }, 2000);
+  });
+}
+
+const resetDefaultsGroup = document.getElementById('resetDefaultsGroup');
+const resetDefaultsHelpBtn = document.getElementById('resetDefaultsHelpBtn');
+const resetDefaultsHelpPopup = document.getElementById('resetDefaultsHelpPopup');
+
+// Disarm if settings modal closes
+if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', disarmResetBtn);
+if (closeSettingsModalBtn) closeSettingsModalBtn.addEventListener('click', disarmResetBtn);
+if (settingsDialog) {
+  settingsDialog.addEventListener('close', () => {
+    disarmResetBtn();
+    if (resetDefaultsHelpPopup) resetDefaultsHelpPopup.classList.add('hidden');
+  });
+}
+
+if (resetDefaultsHelpBtn && resetDefaultsHelpPopup) {
+  resetDefaultsHelpBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    resetDefaultsHelpPopup.classList.toggle('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!resetDefaultsHelpPopup.contains(e.target) && e.target !== resetDefaultsHelpBtn) {
+      resetDefaultsHelpPopup.classList.add('hidden');
+    }
+  });
+}
 
 const viewHiddenBtn = document.getElementById('viewHiddenBtn');
 if (viewHiddenBtn) {
@@ -2473,28 +2586,33 @@ modalNavTabs.forEach(tab => {
       if (tabWebpageIcon) tabWebpageIcon.classList.add('hidden');
       tabUI.classList.add('hidden');
       tabConsoles.classList.add('hidden');
-      if (resetDefaultsBtn) resetDefaultsBtn.classList.remove('hidden');
+      if (resetDefaultsGroup) resetDefaultsGroup.classList.remove('hidden');
+      else if (resetDefaultsBtn) resetDefaultsBtn.classList.remove('hidden');
       if (reloadConfigBtn) reloadConfigBtn.classList.add('hidden');
     } else if (target === 'tabWebpageIcon') {
       tabAppearance.classList.add('hidden');
       if (tabWebpageIcon) tabWebpageIcon.classList.remove('hidden');
       tabUI.classList.add('hidden');
       tabConsoles.classList.add('hidden');
-      if (resetDefaultsBtn) resetDefaultsBtn.classList.remove('hidden');
+      if (resetDefaultsGroup) resetDefaultsGroup.classList.remove('hidden');
+      else if (resetDefaultsBtn) resetDefaultsBtn.classList.remove('hidden');
       if (reloadConfigBtn) reloadConfigBtn.classList.add('hidden');
     } else if (target === 'tabUI') {
       tabAppearance.classList.add('hidden');
       if (tabWebpageIcon) tabWebpageIcon.classList.add('hidden');
       tabUI.classList.remove('hidden');
       tabConsoles.classList.add('hidden');
-      if (resetDefaultsBtn) resetDefaultsBtn.classList.remove('hidden');
+      if (resetDefaultsGroup) resetDefaultsGroup.classList.remove('hidden');
+      else if (resetDefaultsBtn) resetDefaultsBtn.classList.remove('hidden');
       if (reloadConfigBtn) reloadConfigBtn.classList.add('hidden');
     } else {
       tabAppearance.classList.add('hidden');
       if (tabWebpageIcon) tabWebpageIcon.classList.add('hidden');
       tabUI.classList.add('hidden');
       tabConsoles.classList.remove('hidden');
-      if (resetDefaultsBtn) resetDefaultsBtn.classList.add('hidden');
+      if (resetDefaultsGroup) resetDefaultsGroup.classList.add('hidden');
+      else if (resetDefaultsBtn) resetDefaultsBtn.classList.add('hidden');
+      if (resetDefaultsHelpPopup) resetDefaultsHelpPopup.classList.add('hidden');
       if (reloadConfigBtn) reloadConfigBtn.classList.remove('hidden');
       loadConfigData();
     }
@@ -3405,6 +3523,181 @@ if (urlParams.get('test_hide')) {
   const chb = document.getElementById('toggleCardHideButtons');
   if (chb) chb.checked = true;
   document.body.classList.add('show-hide-controls');
+}
+
+// Application Logs Modal Controller
+const openLogsBtn = document.getElementById('openLogsBtn');
+const logsModal = document.getElementById('logsModal');
+const closeLogsBtn = document.getElementById('closeLogsBtn');
+const dismissLogsBtn = document.getElementById('dismissLogsBtn');
+const logsTerminal = document.getElementById('logsTerminal');
+const logsSearchInput = document.getElementById('logsSearchInput');
+const logsLineCountSelect = document.getElementById('logsLineCountSelect');
+const logsAutoRefreshToggle = document.getElementById('logsAutoRefreshToggle');
+const refreshLogsBtn = document.getElementById('refreshLogsBtn');
+const copyLogsBtn = document.getElementById('copyLogsBtn');
+const clearLogsViewBtn = document.getElementById('clearLogsViewBtn');
+const logsStatusLine = document.getElementById('logsStatusLine');
+const logsSourceBadge = document.getElementById('logsSourceBadge');
+
+let logsAutoRefreshTimer = null;
+let rawLogsList = [];
+
+async function fetchLogs() {
+  const lineCount = logsLineCountSelect?.value || '100';
+
+  try {
+    const res = await fetch(`/api/logs?lines=${encodeURIComponent(lineCount)}`);
+    const data = await res.json();
+    if (data.ok && Array.isArray(data.logs)) {
+      rawLogsList = data.logs;
+      if (logsSourceBadge) {
+        logsSourceBadge.textContent = data.source === 'systemd' ? 'Systemd Service' : 'In-Memory Buffer';
+      }
+      renderLogs();
+    } else {
+      if (logsTerminal) {
+        logsTerminal.innerHTML = `<div style="color: #f85149; padding: 10px;">Failed to load logs: ${escapeHtml(data.error || 'Unknown error')}</div>`;
+      }
+    }
+  } catch (err) {
+    if (logsTerminal) {
+      logsTerminal.innerHTML = `<div style="color: #f85149; padding: 10px;">Error fetching logs: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+}
+
+function renderLogs() {
+  if (!logsTerminal) return;
+  const filterVal = logsSearchInput?.value.trim().toLowerCase() || '';
+  let filtered = rawLogsList;
+  if (filterVal) {
+    filtered = filtered.filter(l => l.toLowerCase().includes(filterVal));
+  }
+
+  if (filtered.length === 0) {
+    logsTerminal.innerHTML = '<div style="color: #8b949e; padding: 10px; font-style: italic;">No log entries found.</div>';
+    if (logsStatusLine) logsStatusLine.textContent = `Showing 0 of ${rawLogsList.length} lines`;
+    return;
+  }
+
+  // Detect if user was scrolled near bottom before update
+  const wasAtBottom = (logsTerminal.scrollHeight - logsTerminal.scrollTop - logsTerminal.clientHeight) < 40;
+
+  const html = filtered.map(line => {
+    let cls = 'log-line';
+    const lower = line.toLowerCase();
+    if (lower.includes('error') || lower.includes('failed') || lower.includes('exception') || lower.includes(' 500 ') || lower.includes(' 404 ')) {
+      cls += ' log-error';
+    } else if (lower.includes('warn')) {
+      cls += ' log-warn';
+    } else if (lower.includes('info') || lower.includes('launching') || lower.includes('scanned')) {
+      cls += ' log-info';
+    }
+    return `<div class="${cls}">${escapeHtml(line)}</div>`;
+  }).join('');
+
+  logsTerminal.innerHTML = html;
+  if (logsStatusLine) {
+    logsStatusLine.textContent = filterVal 
+      ? `Showing ${filtered.length} of ${rawLogsList.length} lines (filtered)` 
+      : `Showing ${filtered.length} lines`;
+  }
+
+  if (wasAtBottom) {
+    logsTerminal.scrollTop = logsTerminal.scrollHeight;
+  }
+}
+
+function startLogsAutoRefresh() {
+  stopLogsAutoRefresh();
+  logsAutoRefreshTimer = setInterval(fetchLogs, 3000);
+}
+
+function stopLogsAutoRefresh() {
+  if (logsAutoRefreshTimer) {
+    clearInterval(logsAutoRefreshTimer);
+    logsAutoRefreshTimer = null;
+  }
+}
+
+if (openLogsBtn && logsModal) {
+  openLogsBtn.addEventListener('click', () => {
+    logsModal.showModal();
+    fetchLogs();
+    if (logsAutoRefreshToggle?.checked) {
+      startLogsAutoRefresh();
+    }
+  });
+}
+
+const closeLogsAction = () => {
+  stopLogsAutoRefresh();
+  if (logsModal) logsModal.close();
+};
+
+if (closeLogsBtn) closeLogsBtn.addEventListener('click', closeLogsAction);
+if (dismissLogsBtn) dismissLogsBtn.addEventListener('click', closeLogsAction);
+if (logsModal) {
+  logsModal.addEventListener('click', (e) => {
+    if (e.target === logsModal) closeLogsAction();
+  });
+}
+
+if (refreshLogsBtn) {
+  refreshLogsBtn.addEventListener('click', () => {
+    fetchLogs();
+  });
+}
+
+if (logsSearchInput) {
+  logsSearchInput.addEventListener('input', () => {
+    renderLogs();
+  });
+}
+
+if (logsLineCountSelect) {
+  logsLineCountSelect.addEventListener('change', () => {
+    fetchLogs();
+  });
+}
+
+if (logsAutoRefreshToggle) {
+  logsAutoRefreshToggle.addEventListener('change', (e) => {
+    if (e.target.checked) {
+      startLogsAutoRefresh();
+    } else {
+      stopLogsAutoRefresh();
+    }
+  });
+}
+
+if (copyLogsBtn) {
+  copyLogsBtn.addEventListener('click', () => {
+    const filterVal = logsSearchInput?.value.trim().toLowerCase() || '';
+    let filtered = rawLogsList;
+    if (filterVal) {
+      filtered = filtered.filter(l => l.toLowerCase().includes(filterVal));
+    }
+    const textToCopy = filtered.join('\n');
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      const origText = copyLogsBtn.textContent;
+      copyLogsBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        copyLogsBtn.textContent = origText;
+      }, 1500);
+    }).catch(err => {
+      console.error('Failed to copy logs:', err);
+    });
+  });
+}
+
+if (clearLogsViewBtn) {
+  clearLogsViewBtn.addEventListener('click', () => {
+    rawLogsList = [];
+    renderLogs();
+    fetch('/api/logs/clear', { method: 'POST' }).catch(() => {});
+  });
 }
 
 matchAndPopulateCategoryIcons();

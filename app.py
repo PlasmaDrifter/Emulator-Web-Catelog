@@ -14,13 +14,37 @@ import subprocess
 import yaml
 import requests
 import shutil
+import logging
+from collections import deque
 from pathlib import Path
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.6.5"
+__version__ = "0.6.6"
+
+MAX_LOG_ENTRIES = 250
+LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
+
+
+class RingBufferLogHandler(logging.Handler):
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            LOG_BUFFER.append(msg)
+        except Exception:
+            self.handleError(record)
+
+
+log_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', datefmt='%b %d %H:%M:%S')
+log_handler = RingBufferLogHandler()
+log_handler.setFormatter(log_formatter)
+log_handler.setLevel(logging.INFO)
+
+logging.getLogger().addHandler(log_handler)
+logging.getLogger().setLevel(logging.INFO)
+logging.getLogger("werkzeug").addHandler(log_handler)
 
 if getattr(sys, "frozen", False):
     BUNDLE_DIR = Path(sys._MEIPASS)
@@ -893,19 +917,22 @@ def api_launch():
             break
 
     if not matched_path or not os.path.isfile(matched_path):
+        logging.warning(f"Launch failed: Game path '{path_param}' not found in library cache for [{system}]")
         return jsonify({"ok": False, "error": "Game not found in library cache"}), 404
 
     cmd_template = sys_cfg["command"]
     if os.name == "nt":
         # Windows execution (shell=False to prevent command injection)
         cmd = cmd_template.format(rom=f'"{matched_path}"')
+        logging.info(f"Launching [{system}] '{os.path.basename(matched_path)}' on Windows with command: {cmd}")
         try:
             subprocess.Popen(
                 shlex.split(cmd, posix=False),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-        except Exception:
+        except Exception as e:
+            logging.error(f"Failed to launch [{system}] on Windows: {e}")
             return jsonify({"ok": False, "error": "Emulator launch failed on Windows."}), 500
     else:
         # Linux / Unix execution
@@ -940,6 +967,8 @@ def api_launch():
         if shutil.which("systemd-run") and os.path.exists(f"{runtime_dir}/bus"):
             args = ["systemd-run", "--user", "--scope", "--quiet"] + args
 
+        exec_desc = ' '.join(args) if isinstance(args, list) else cmd
+        logging.info(f"Launching [{system}] '{os.path.basename(matched_path)}' with command: {exec_desc}")
         try:
             subprocess.Popen(
                 args,
@@ -949,8 +978,10 @@ def api_launch():
                 start_new_session=True,
             )
         except FileNotFoundError:
+            logging.error(f"Emulator executable not found for [{system}]. Command: {exec_desc}")
             return jsonify({"ok": False, "error": "Emulator executable not found. Please check your command in settings."}), 500
-        except Exception:
+        except Exception as e:
+            logging.error(f"Failed to launch emulator process for [{system}]: {e}")
             return jsonify({"ok": False, "error": "Failed to launch emulator process."}), 500
 
     return jsonify({"ok": True})
@@ -1340,9 +1371,58 @@ def api_save_config():
         library = scan_library()
         save_library_cache(library)
         systems_order = list(systems.keys()) if isinstance(systems, dict) else []
+        logging.info("Saved updated config.yaml and refreshed library")
         return jsonify({"ok": True, "config": parsed, "raw_yaml": raw_yaml, "library": library, "systems_order": systems_order})
     except Exception:
         return jsonify({"ok": False, "error": "Invalid YAML configuration syntax."}), 400
+
+
+@app.route("/api/logs", methods=["GET"])
+def api_logs():
+    lines_limit = request.args.get("lines", default=100, type=int)
+    lines_limit = max(10, min(lines_limit, 250))
+    filter_query = (request.args.get("filter") or "").strip().lower()
+
+    logs = []
+    source = "memory"
+
+    # Attempt to fetch from systemd journal if running as romcat.service on Linux
+    if os.name != "nt" and shutil.which("journalctl"):
+        try:
+            proc = subprocess.run(
+                ["journalctl", "--user", "-u", "romcat.service", "-n", str(lines_limit), "--no-pager"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            if proc.returncode == 0 and proc.stdout.strip():
+                journal_lines = [line for line in proc.stdout.splitlines() if line.strip() and not line.startswith("-- Logs begin")]
+                if journal_lines:
+                    logs = journal_lines
+                    source = "systemd"
+        except Exception:
+            pass
+
+    # Fall back to in-memory buffer if journalctl didn't return any logs (e.g. standalone app, docker, or not running under systemd)
+    if not logs:
+        logs = list(LOG_BUFFER)[-lines_limit:]
+        source = "memory"
+
+    if filter_query:
+        logs = [l for l in logs if filter_query in l.lower()]
+
+    return jsonify({
+        "ok": True,
+        "logs": logs,
+        "count": len(logs),
+        "source": source
+    })
+
+
+@app.route("/api/logs/clear", methods=["POST"])
+def api_logs_clear():
+    LOG_BUFFER.clear()
+    return jsonify({"ok": True})
 
 
 @app.route('/static/covers/<path:filename>')

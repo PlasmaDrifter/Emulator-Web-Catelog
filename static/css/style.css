@@ -852,6 +852,27 @@ body.hide-favorite-stars .card .star { display: none !important; }
   justify-content: space-between;
   padding: 14px 20px;
   border-top: 1px solid var(--border-color);
+  gap: 12px;
+}
+.modal-footer-left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
+  justify-content: flex-start;
+}
+.modal-footer-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+.modal-footer-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
+  justify-content: flex-end;
 }
 .btn-primary {
   background: var(--accent-color);
@@ -867,9 +888,50 @@ body.hide-favorite-stars .card .star { display: none !important; }
   background: transparent;
   border-color: #8b3434;
   color: #e07a7a;
+  transition: all 0.2s ease;
 }
 .btn-danger:hover {
   background: rgba(224, 122, 122, 0.15);
+}
+.btn-danger.is-armed {
+  background: #8b3434 !important;
+  border-color: #ef4444 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.45) !important;
+  animation: pulse-danger-armed 1.2s infinite ease-in-out;
+}
+@keyframes pulse-danger-armed {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.reset-help-popover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  width: 290px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 10005;
+  pointer-events: auto;
+  animation: fadeInHelp 0.15s ease;
+}
+.reset-help-popover::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 15px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--accent-color) transparent transparent transparent;
 }
 
 /* Icon Selector in Settings */
@@ -1864,4 +1926,90 @@ body.hide-favorite-stars .card .star { display: none !important; }
 .tab-reset-btn:hover {
   background: rgba(239, 68, 68, 0.2) !important;
   color: #ef4444 !important;
+}
+
+/* Logs Modal & Terminal Console (Dynamically Responsive & Expanded) */
+#logsModal[open] {
+  width: min(96vw, 1750px) !important;
+  max-width: 1750px !important;
+  height: 90vh !important;
+  max-height: 94vh !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+#logsModal .validation-dialog-content {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+#logsModal .validation-dialog-header {
+  flex-shrink: 0 !important;
+}
+
+#logsModal .validation-dialog-body {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding: 14px 18px !important;
+  max-height: none !important;
+  overflow: hidden !important;
+}
+
+#logsModal .logs-toolbar {
+  flex-shrink: 0 !important;
+}
+
+.logs-terminal {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  background: #0d1117;
+  color: #c9d1d9;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+  box-sizing: border-box;
+}
+.logs-terminal:focus {
+  outline: 1px solid var(--accent-color);
+}
+.log-line {
+  margin: 0;
+  padding: 2px 0;
+  transition: background 0.1s ease;
+}
+.log-line:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.log-line.log-error {
+  color: #f85149;
+}
+.log-line.log-warn {
+  color: #e3b341;
+}
+.log-line.log-info {
+  color: #79c0ff;
+}
+
+#logsModal .validation-dialog-footer {
+  flex-shrink: 0 !important;
 }
