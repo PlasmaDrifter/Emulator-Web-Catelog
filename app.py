@@ -1677,8 +1677,8 @@ def api_apply_update():
     try:
         result = apply_self_update(target_tag=latest_ver)
     except Exception as exc:
-        logging.error(f"Self-update failed: {exc}")
-        return jsonify({"ok": False, "error": str(exc)}), 500
+        logging.error(f"Self-update failed: {exc}", exc_info=True)
+        return jsonify({"ok": False, "error": "Self-update failed. Check application logs for details."}), 500
 
     trigger_server_restart()
     return jsonify({
