@@ -152,7 +152,8 @@ button.icon-btn.spinning svg {
   background: color-mix(in srgb, var(--accent-color) 22%, var(--bg-card));
   border-color: var(--accent-color);
   color: var(--tab-active-text);
-  font-weight: 600;
+  font-weight: 500;
+  text-shadow: 0 0 0.5px currentColor;
   box-shadow: 0 0 10px color-mix(in srgb, var(--accent-color) 20%, transparent);
 }
 .tab.active:hover {
@@ -183,6 +184,9 @@ button.icon-btn.spinning svg {
   will-change: transform, width, height;
 }
 
+.tabs.has-pill .tab {
+  transition: color 0.15s ease;
+}
 .tabs.has-pill .tab.active {
   background: transparent;
   border-color: transparent;
