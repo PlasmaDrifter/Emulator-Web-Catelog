@@ -26,7 +26,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.6.8"
+__version__ = "0.6.9"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
