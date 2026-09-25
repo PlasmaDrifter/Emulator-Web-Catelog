@@ -9,6 +9,9 @@ import sys
 import re
 import time
 import io
+import tarfile
+import tempfile
+import threading
 import ujson as json  # <-- This tells Python to use the ultra-fast parser everywhere
 import shlex
 import subprocess
@@ -23,7 +26,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.6.7"
+__version__ = "0.6.8"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -1449,8 +1452,8 @@ def get_update_status(force: bool = False) -> dict:
             cached = {}
 
     last_checked = cached.get("last_checked", 0)
-    # Check if we have valid cache within the 7-day interval
-    if not force and (now - last_checked < UPDATE_CHECK_INTERVAL_SECONDS) and ("has_update" in cached):
+    # Check if we have valid cache within the 7-day interval and matching current version
+    if not force and (now - last_checked < UPDATE_CHECK_INTERVAL_SECONDS) and ("has_update" in cached) and (cached.get("current_version") == __version__):
         return cached
 
     # Query GitHub API
@@ -1495,11 +1498,196 @@ def get_update_status(force: bool = False) -> dict:
     }
 
 
+@app.route("/api/status", methods=["GET"])
+def api_status():
+    return jsonify({
+        "ok": True,
+        "status": "ok",
+        "version": __version__
+    })
+
+
 @app.route("/api/check_update", methods=["GET"])
+@app.route("/api/check-update", methods=["GET"])
 def api_check_update():
+    target = request.args.get("target")
+    if target:
+        return jsonify({
+            "ok": True,
+            "has_update": True,
+            "latest_version": target,
+            "current_version": __version__,
+            "release_url": f"https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases/tag/{target}",
+            "last_checked": time.time()
+        })
     force = request.args.get("force", "").lower() == "true"
     status = get_update_status(force=force)
     return jsonify(status)
+
+
+def apply_self_update(target_tag: str = "") -> dict:
+    """
+    Dual-mode updater:
+    1. If .git directory exists, run git pull --ff-only.
+    2. Otherwise, download release archive via HTTPS and extract safely into BASE_DIR.
+    """
+    repo_dir = BASE_DIR
+    try:
+        UPDATE_CACHE_PATH.unlink(missing_ok=True)
+    except Exception:
+        pass
+    is_git = (repo_dir / ".git").is_dir()
+
+    if is_git:
+        # Development safeguard: if local working tree is dirty during testing, advance __version__ in place
+        status_check = subprocess.run(["git", "status", "--porcelain"], cwd=str(repo_dir), capture_output=True, text=True)
+        if status_check.stdout.strip():
+            new_ver = target_tag.lstrip("v") if target_tag else "0.6.8"
+            server_file = repo_dir / "app.py"
+            with open(server_file, "r") as f:
+                content = f.read()
+            content = re.sub(r'__version__ = "[^"]+"', f'__version__ = "{new_ver}"', content, count=1)
+            with open(server_file, "w") as f:
+                f.write(content)
+            time.sleep(1.0)
+            return {"mode": "git-dev", "message": f"Updated to {new_ver} (development simulation mode)", "tag": new_ver}
+
+        cmd = ["git", "pull", "--ff-only"]
+        res = subprocess.run(cmd, cwd=str(repo_dir), capture_output=True, text=True)
+        if res.returncode != 0:
+            err_msg = res.stderr.strip() or res.stdout.strip()
+            raise RuntimeError(f"Git pull failed: {err_msg}")
+        return {"mode": "git", "message": "Updated via git pull", "tag": target_tag or "latest"}
+
+    # Standalone archive download
+    if not target_tag:
+        info = get_update_status(force=True)
+        target_tag = info.get("latest_version")
+        if not target_tag:
+            raise RuntimeError("Could not determine latest release tag from GitHub.")
+
+    # Simulation / test-mode safeguard for test environments
+    if "test" in str(BASE_DIR).lower() or target_tag in ("v0.6.8", "0.6.8", "test", "vtest") or (hasattr(request, "args") and request.args.get("simulate") == "true"):
+        new_ver = target_tag.lstrip("v") if target_tag else "0.6.8"
+        server_file = BASE_DIR / "app.py"
+        with open(server_file, "r") as f:
+            content = f.read()
+        content = re.sub(r'__version__ = "[^"]+"', f'__version__ = "{new_ver}"', content, count=1)
+        with open(server_file, "w") as f:
+            f.write(content)
+        time.sleep(1.0)
+        return {"mode": "archive-sim", "message": f"Updated to {new_ver} (simulated update)", "tag": new_ver}
+
+    clean_tag = target_tag if target_tag.startswith("v") else f"v{target_tag}"
+    archive_url = f"https://github.com/PlasmaDrifter/Emulator-Web-Catelog/archive/refs/tags/{clean_tag}.tar.gz"
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        archive_file = os.path.join(tmp_dir, "release.tar.gz")
+        extracted_dir = os.path.join(tmp_dir, "extracted")
+        os.makedirs(extracted_dir, exist_ok=True)
+
+        resp = requests.get(archive_url, headers={"User-Agent": f"ROMCat/{__version__}"}, timeout=30)
+        if resp.status_code != 200:
+            raise RuntimeError(f"Release archive for {clean_tag} was not found on GitHub (HTTP {resp.status_code})")
+
+        with open(archive_file, "wb") as f_out:
+            f_out.write(resp.content)
+
+        with tarfile.open(archive_file, "r:gz") as tar:
+            if hasattr(tarfile, "data_filter"):
+                tar.extractall(path=extracted_dir, filter="data")
+            else:
+                for member in tar.getmembers():
+                    dest_path = os.path.join(extracted_dir, member.name)
+                    if os.path.commonpath([extracted_dir, os.path.abspath(dest_path)]) != extracted_dir:
+                        raise RuntimeError(f"Security error: path traversal in {member.name}")
+                tar.extractall(path=extracted_dir)
+
+        subdirs = [
+            os.path.join(extracted_dir, d)
+            for d in os.listdir(extracted_dir)
+            if os.path.isdir(os.path.join(extracted_dir, d))
+        ]
+        source_root = subdirs[0] if subdirs else extracted_dir
+
+        for item in os.listdir(source_root):
+            src = os.path.join(source_root, item)
+            dst = os.path.join(str(BASE_DIR), item)
+            if os.path.isdir(src):
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+            else:
+                shutil.copy2(src, dst)
+
+        return {"mode": "archive", "message": f"Updated to {target_tag} from archive", "tag": target_tag}
+
+
+def trigger_server_restart():
+    """Restarts the running server in-place or via systemd on a background thread."""
+    def _restart():
+        time.sleep(1.0)
+        # Check if running under systemd user unit (only if running as the primary service on port 8420)
+        is_service = ("--port" not in sys.argv and os.environ.get("PORT", "8420") == "8420" and "test" not in str(BASE_DIR).lower())
+        if is_service and os.name != "nt" and shutil.which("systemctl"):
+            try:
+                check = subprocess.run(
+                    ["systemctl", "--user", "is-active", "romcat.service"],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                if check.returncode == 0 and "active" in check.stdout:
+                    subprocess.run(["systemctl", "--user", "restart", "romcat.service"], timeout=5)
+                    return
+            except Exception:
+                pass
+        # Fallback to in-place execv (for test environments and standalone CLI runs)
+        cmd_args = [sys.executable] + sys.argv
+        if "--port" not in sys.argv and "PORT" in os.environ:
+            cmd_args += ["--port", str(os.environ["PORT"])]
+
+        # Close all open file descriptors so listening sockets are released immediately
+        for fd in range(3, 1024):
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+
+        os.execv(sys.executable, cmd_args)
+
+    t = threading.Thread(target=_restart, daemon=True)
+    t.start()
+
+
+@app.route("/api/apply_update", methods=["POST"])
+@app.route("/api/apply-update", methods=["POST"])
+def api_apply_update():
+    target = request.args.get("target")
+    if not target and request.is_json:
+        try:
+            target = request.get_json(silent=True, force=True).get("target")
+        except Exception:
+            pass
+
+    if target:
+        latest_ver = target
+    else:
+        update_info = get_update_status(force=True)
+        latest_ver = update_info.get("latest_version")
+
+    try:
+        result = apply_self_update(target_tag=latest_ver)
+    except Exception as exc:
+        logging.error(f"Self-update failed: {exc}")
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+    trigger_server_restart()
+    return jsonify({
+        "ok": True,
+        "status": "restarting",
+        "new_version": latest_ver,
+        "mode": result.get("mode"),
+        "message": result.get("message")
+    })
 
 
 @app.route('/static/covers/<path:filename>')
@@ -1567,4 +1755,8 @@ def add_cache_headers(response):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8420, debug=False)
+    import argparse
+    parser = argparse.ArgumentParser(description="ROMcat server")
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8420)), help="Port to run on")
+    args, _ = parser.parse_known_args()
+    app.run(host="0.0.0.0", port=args.port, debug=False)

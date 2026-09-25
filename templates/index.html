@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=7.10">
+<link rel="stylesheet" href="/static/css/style.css?v=7.12">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -35,8 +35,8 @@
   <div class="actions">
     <span id="status"></span>
     <button id="refreshBtn" title="Refresh library" class="icon-btn" aria-label="Refresh library"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
-    <button id="settingsBtn" title="Settings" class="icon-btn" aria-label="Settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
-    <a href="https://github.com/PlasmaDrifter/Emulator-Web-Catelog" target="_blank" rel="noopener noreferrer" id="githubRepoLink" class="icon-btn" title="GitHub Repository" aria-label="GitHub Repository"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg><span id="githubUpdateBadge" class="update-badge hidden" title="New release available">!</span></a>
+    <button id="settingsBtn" title="Settings" class="icon-btn" aria-label="Settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span id="settingsUpdateBadge" class="update-badge hidden" title="New release available">!</span></button>
+    <a href="https://github.com/PlasmaDrifter/Emulator-Web-Catelog" target="_blank" rel="noopener noreferrer" id="githubRepoLink" class="icon-btn" title="GitHub Repository" aria-label="GitHub Repository"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg></a>
   </div>
 </header>
 
@@ -100,16 +100,20 @@
 
 <dialog id="settingsDialog" class="settings-dialog">
   <div class="modal-header">
-    <h3>Settings & Customization</h3>
+    <div class="settings-title-row">
+      <h3>Settings & Customization</h3>
+      <span class="settings-version-tag" id="settingsAppVersion">v{{ version }}</span>
+    </div>
     <button id="closeSettingsBtn" class="close-modal-btn" type="button" aria-label="Close">&times;</button>
   </div>
   <div id="settingsUpdateBanner" class="settings-update-banner hidden">
     <div class="update-banner-info">
       <span class="update-banner-badge">!</span>
-      <span id="settingsUpdateMsg" class="update-banner-text">Update Available: <strong id="settingsUpdateVersion">v0.6.8</strong> is now available on GitHub.</span>
+      <span id="settingsUpdateMsg" class="update-banner-text">Update Available: Version <strong id="settingsUpdateVersion">v0.6.8</strong> is available.</span>
+      <a id="settingsUpdateLink" href="https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases" target="_blank" rel="noopener noreferrer" class="update-banner-link" title="View release notes and changelog">Release Notes &rarr;</a>
     </div>
     <div class="update-banner-actions">
-      <a id="settingsUpdateLink" href="https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases" target="_blank" rel="noopener noreferrer" class="btn-primary update-banner-btn">View Release</a>
+      <button type="button" id="btnApplyUpdate" class="btn-primary update-banner-apply-btn" title="Automatically update application and restart server">Update Now</button>
       <button type="button" id="dismissUpdateBannerBtn" class="dismiss-banner-btn" title="Dismiss update notification" aria-label="Dismiss">&times;</button>
     </div>
   </div>
@@ -602,7 +606,7 @@
           <label class="toggle-row">
             <div class="toggle-info">
               <span class="toggle-title">Check for New Releases</span>
-              <span class="toggle-desc">Checks weekly and displays an exclamation mark on the GitHub icon when an update is available</span>
+              <span class="toggle-desc">Checks weekly and displays an update notification badge on the Settings button when a new release is available</span>
             </div>
             <div class="switch">
               <input type="checkbox" id="toggleCheckUpdates" {% if settings.visibility.show_update_notification != false %}checked{% endif %}>
@@ -3733,27 +3737,34 @@ if (clearLogsViewBtn) {
   });
 }
 
-// GitHub Release Update Checker
+// GitHub Release Update Checker & Self-Updater
 let currentAvailableUpdateVersion = null;
+let appUpdateData = null;
 
 async function checkForUpdates() {
-  const badge = document.getElementById('githubUpdateBadge');
-  const link = document.getElementById('githubRepoLink');
+  const settingsBadge = document.getElementById('settingsUpdateBadge');
   const updateBanner = document.getElementById('settingsUpdateBanner');
   const updateVersion = document.getElementById('settingsUpdateVersion');
   const updateLink = document.getElementById('settingsUpdateLink');
+  const settingsBtn = document.getElementById('settingsBtn');
 
   const toggle = document.getElementById('toggleCheckUpdates');
   if (toggle && !toggle.checked) {
-    if (badge) badge.classList.add('hidden');
+    if (settingsBadge) settingsBadge.classList.add('hidden');
     if (updateBanner) updateBanner.classList.add('hidden');
+    if (settingsBtn) settingsBtn.title = 'Settings';
     return;
   }
 
   if (urlParams.get('test_update')) {
     currentAvailableUpdateVersion = 'v0.6.8';
-    if (badge) badge.classList.remove('hidden');
-    if (link) link.title = 'New version available (v0.6.8) - Click to view on GitHub';
+    appUpdateData = {
+      has_update: true,
+      latest_version: 'v0.6.8',
+      release_url: 'https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases'
+    };
+    if (settingsBadge) settingsBadge.classList.remove('hidden');
+    if (settingsBtn) settingsBtn.title = 'Settings (Update v0.6.8 available)';
     if (updateBanner) updateBanner.classList.remove('hidden');
     if (updateVersion) updateVersion.textContent = 'v0.6.8';
     return;
@@ -3764,28 +3775,33 @@ async function checkForUpdates() {
     const data = await res.json();
     if (data.ok && data.has_update) {
       currentAvailableUpdateVersion = data.latest_version;
+      appUpdateData = data;
+      const cleanVer = data.latest_version.startsWith('v') ? data.latest_version : `v${data.latest_version}`;
       const dismissed = localStorage.getItem('romcat_dismissed_update');
-      if (dismissed && dismissed === data.latest_version) {
-        if (badge) badge.classList.add('hidden');
+      const isDismissed = Boolean(dismissed && (dismissed === data.latest_version || dismissed === cleanVer));
+
+      if (isDismissed) {
+        if (settingsBadge) settingsBadge.classList.add('hidden');
+        if (settingsBtn) settingsBtn.title = 'Settings';
         if (updateBanner) updateBanner.classList.add('hidden');
         return;
       }
 
-      if (badge) badge.classList.remove('hidden');
-      if (link) {
-        link.title = `New version available (${data.latest_version}) - Click to view on GitHub`;
-        if (data.release_url) link.href = data.release_url;
+      if (settingsBadge) {
+        settingsBadge.classList.remove('hidden');
+        settingsBadge.title = `Update available: ${data.latest_version}`;
+      }
+      if (settingsBtn) {
+        settingsBtn.title = `Settings (Update ${data.latest_version} available)`;
       }
       if (updateBanner) updateBanner.classList.remove('hidden');
-      if (updateVersion && data.latest_version) updateVersion.textContent = data.latest_version;
+      if (updateVersion && data.latest_version) updateVersion.textContent = cleanVer;
       if (updateLink && data.release_url) updateLink.href = data.release_url;
     } else {
       currentAvailableUpdateVersion = null;
-      if (badge) badge.classList.add('hidden');
-      if (link) {
-        link.title = 'GitHub Repository';
-        link.href = 'https://github.com/PlasmaDrifter/Emulator-Web-Catelog';
-      }
+      appUpdateData = null;
+      if (settingsBadge) settingsBadge.classList.add('hidden');
+      if (settingsBtn) settingsBtn.title = 'Settings';
       if (updateBanner) updateBanner.classList.add('hidden');
     }
   } catch (err) {
@@ -3797,16 +3813,13 @@ const dismissUpdateBannerBtn = document.getElementById('dismissUpdateBannerBtn')
 if (dismissUpdateBannerBtn) {
   dismissUpdateBannerBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    const badge = document.getElementById('githubUpdateBadge');
+    const settingsBadge = document.getElementById('settingsUpdateBadge');
     const updateBanner = document.getElementById('settingsUpdateBanner');
-    const link = document.getElementById('githubRepoLink');
+    const settingsBtn = document.getElementById('settingsBtn');
 
     if (updateBanner) updateBanner.classList.add('hidden');
-    if (badge) badge.classList.add('hidden');
-    if (link) {
-      link.title = 'GitHub Repository';
-      link.href = 'https://github.com/PlasmaDrifter/Emulator-Web-Catelog';
-    }
+    if (settingsBadge) settingsBadge.classList.add('hidden');
+    if (settingsBtn) settingsBtn.title = 'Settings';
 
     if (currentAvailableUpdateVersion) {
       try {
@@ -3822,11 +3835,115 @@ if (toggleCheckUpdates) {
     if (toggleCheckUpdates.checked) {
       checkForUpdates();
     } else {
-      const badge = document.getElementById('githubUpdateBadge');
-      if (badge) badge.classList.add('hidden');
+      const settingsBadge = document.getElementById('settingsUpdateBadge');
+      if (settingsBadge) settingsBadge.classList.add('hidden');
       const updateBanner = document.getElementById('settingsUpdateBanner');
       if (updateBanner) updateBanner.classList.add('hidden');
+      const settingsBtn = document.getElementById('settingsBtn');
+      if (settingsBtn) settingsBtn.title = 'Settings';
     }
+  });
+}
+
+async function executeSelfUpdate() {
+  const targetVer = (appUpdateData && appUpdateData.latest_version) ? ` to ${appUpdateData.latest_version}` : '';
+  const confirmed = window.confirm(`Update ROMcat${targetVer}? The server will automatically download changes and restart.`);
+  if (!confirmed) return;
+
+  const btnApply = document.getElementById('btnApplyUpdate');
+  const btnDismiss = document.getElementById('dismissUpdateBannerBtn');
+  const origBtnContent = btnApply ? btnApply.innerHTML : 'Update Now';
+
+  if (btnApply) {
+    btnApply.disabled = true;
+    btnApply.innerHTML = `<svg class="spin-loop" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: -2px;"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>Updating...`;
+    btnApply.style.cursor = 'wait';
+  }
+  if (btnDismiss) {
+    btnDismiss.style.display = 'none';
+  }
+
+  const progressModal = document.getElementById('updateProgressModal');
+  const progressTitle = document.getElementById('updateProgressTitle');
+  const progressDesc = document.getElementById('updateProgressDesc');
+
+  if (progressModal) {
+    progressModal.style.display = 'flex';
+  }
+
+  try {
+    const payload = (appUpdateData && appUpdateData.latest_version) ? { target: appUpdateData.latest_version } : {};
+    const res = await fetch('/api/apply_update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Server returned error ${res.status}`);
+    }
+
+    if (progressTitle) progressTitle.textContent = 'Restarting Server...';
+    if (progressDesc) progressDesc.textContent = 'Application updated. Waiting for server to come back online...';
+
+    await new Promise((r) => setTimeout(r, 2000));
+
+    // Poll health check endpoint until online
+    let reconnected = false;
+    for (let i = 0; i < 40; i++) {
+      try {
+        const ping = await fetch('/api/status', { cache: 'no-store' });
+        if (ping.ok) {
+          reconnected = true;
+          break;
+        }
+      } catch (_) {
+        // Still rebooting
+      }
+      await new Promise((r) => setTimeout(r, 750));
+    }
+
+    if (reconnected) {
+      if (progressTitle) progressTitle.textContent = 'Reloading...';
+      if (progressDesc) progressDesc.textContent = 'Update complete! Refreshing page...';
+      try {
+        localStorage.removeItem('romcat_dismissed_update');
+      } catch (e) {}
+      setTimeout(() => {
+        // Strip query parameters (such as test_update=1) so the new version loads cleanly
+        window.location.href = window.location.origin + window.location.pathname;
+      }, 1000);
+    } else {
+      if (progressDesc) {
+        progressDesc.textContent = 'Server took too long to respond. Please refresh manually or check your terminal / logs.';
+      }
+      setTimeout(() => {
+        if (progressModal) progressModal.style.display = 'none';
+        if (btnApply) {
+          btnApply.disabled = false;
+          btnApply.innerHTML = origBtnContent;
+          btnApply.style.cursor = 'pointer';
+        }
+        if (btnDismiss) btnDismiss.style.display = '';
+      }, 5000);
+    }
+  } catch (err) {
+    if (progressModal) progressModal.style.display = 'none';
+    if (btnApply) {
+      btnApply.disabled = false;
+      btnApply.innerHTML = origBtnContent;
+      btnApply.style.cursor = 'pointer';
+    }
+    if (btnDismiss) btnDismiss.style.display = '';
+    alert(`Update failed: ${err.message}`);
+  }
+}
+
+const btnApplyUpdate = document.getElementById('btnApplyUpdate');
+if (btnApplyUpdate) {
+  btnApplyUpdate.addEventListener('click', (e) => {
+    e.stopPropagation();
+    executeSelfUpdate();
   });
 }
 
@@ -3838,6 +3955,25 @@ if (urlParams.get('test_hide')) {
 applyFilters();
 ensureValidActiveTab();
 checkForUpdates();
+if (urlParams.get('test_settings')) {
+  const dlg = document.getElementById('settingsDialog');
+  if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
+}
 </script>
+
+<div id="updateProgressModal" class="update-modal-backdrop" style="display: none;">
+  <div class="update-modal-content">
+    <div class="update-progress-body">
+      <svg class="update-refresh-loop spin-loop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+        <path d="M16 16h5v5"/>
+      </svg>
+      <h3 id="updateProgressTitle">Updating Application...</h3>
+      <p id="updateProgressDesc">Applying latest release and restarting server. Please wait...</p>
+    </div>
+  </div>
+</div>
 </body>
 </html>

@@ -82,6 +82,7 @@ button.icon-btn.spinning svg {
   to { transform: rotate(360deg); }
 }
 
+#settingsBtn,
 #githubRepoLink {
   position: relative;
 }
@@ -532,12 +533,28 @@ body.hide-update-badge .update-badge { display: none !important; }
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
+.settings-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
 .modal-header h3 {
   margin: 0;
   font-size: 1.15rem;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.settings-version-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
+  padding: 1px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+  user-select: none;
 }
 .close-modal-btn {
   background: transparent;
@@ -577,6 +594,7 @@ body.hide-update-badge .settings-update-banner {
   align-items: center;
   gap: 10px;
   flex: 1;
+  flex-wrap: wrap;
 }
 .update-banner-badge {
   display: inline-flex;
@@ -595,9 +613,22 @@ body.hide-update-badge .settings-update-banner {
 .update-banner-text {
   line-height: 1.4;
 }
+.update-banner-link {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: opacity 0.15s ease;
+}
+.update-banner-link:hover {
+  text-decoration: underline;
+  opacity: 0.9;
+}
+.update-banner-apply-btn,
 .update-banner-btn {
   background: var(--accent-color);
   color: var(--accent-contrast, #ffffff) !important;
+  border: 1px solid var(--accent-color);
   padding: 5px 14px !important;
   font-size: 0.8rem !important;
   font-weight: 600 !important;
@@ -606,10 +637,13 @@ body.hide-update-badge .settings-update-banner {
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
-  transition: opacity 0.15s ease;
+  cursor: pointer;
+  transition: opacity 0.15s ease, filter 0.15s ease;
 }
+.update-banner-apply-btn:hover,
 .update-banner-btn:hover {
   opacity: 0.9;
+  filter: brightness(1.05);
   color: var(--accent-contrast, #ffffff) !important;
 }
 .update-banner-actions {
@@ -636,6 +670,74 @@ body.hide-update-badge .settings-update-banner {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--border-color);
+}
+
+/* Progress Modal & Refresh Loop */
+.update-modal-backdrop {
+  z-index: 9999 !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(10, 11, 16, 0.78);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.update-modal-content {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  padding: 32px 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.update-progress-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.update-progress-body h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.update-progress-body p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.update-refresh-loop {
+  width: 44px;
+  height: 44px;
+  color: var(--accent-color);
+  flex-shrink: 0;
+}
+
+.spin-loop {
+  animation: spin-loop 1s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes spin-loop {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .modal-body {
