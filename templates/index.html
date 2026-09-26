@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=7.14">
+<link rel="stylesheet" href="/static/css/style.css?v=7.11">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -187,70 +187,70 @@
             <span>Body Background</span>
             <div class="color-inputs">
               <input type="color" id="colBgBody" value="{{ settings.theme.bg_body }}">
-              <input type="text" class="color-hex" id="hexBgBody" value="{{ settings.theme.bg_body }}">
+              <input type="text" class="color-hex" id="hexBgBody" value="{{ settings.theme.bg_body }}" spellcheck="false" maxlength="7" placeholder="#14161a" autocomplete="off">
             </div>
           </div>
           <div class="color-picker-row">
             <span>Header Bar</span>
             <div class="color-inputs">
               <input type="color" id="colBgHeader" value="{{ settings.theme.bg_header }}">
-              <input type="text" class="color-hex" id="hexBgHeader" value="{{ settings.theme.bg_header }}">
+              <input type="text" class="color-hex" id="hexBgHeader" value="{{ settings.theme.bg_header }}" spellcheck="false" maxlength="7" placeholder="#1c1f26" autocomplete="off">
             </div>
           </div>
           <div class="color-picker-row">
             <span>Tabs Bar</span>
             <div class="color-inputs">
               <input type="color" id="colBgTabs" value="{{ settings.theme.bg_tabs }}">
-              <input type="text" class="color-hex" id="hexBgTabs" value="{{ settings.theme.bg_tabs }}">
+              <input type="text" class="color-hex" id="hexBgTabs" value="{{ settings.theme.bg_tabs }}" spellcheck="false" maxlength="7" placeholder="#181b21" autocomplete="off">
             </div>
           </div>
           <div class="color-picker-row">
             <span>Card Background</span>
             <div class="color-inputs">
               <input type="color" id="colBgCard" value="{{ settings.theme.bg_card }}">
-              <input type="text" class="color-hex" id="hexBgCard" value="{{ settings.theme.bg_card }}">
+              <input type="text" class="color-hex" id="hexBgCard" value="{{ settings.theme.bg_card }}" spellcheck="false" maxlength="7" placeholder="#22262e" autocomplete="off">
             </div>
           </div>
           <div class="color-picker-row">
             <span>Primary Accent</span>
             <div class="color-inputs">
               <input type="color" id="colAccent" value="{{ settings.theme.accent_color }}">
-              <input type="text" class="color-hex" id="hexAccent" value="{{ settings.theme.accent_color }}">
+              <input type="text" class="color-hex" id="hexAccent" value="{{ settings.theme.accent_color }}" spellcheck="false" maxlength="7" placeholder="#3a7bd5" autocomplete="off">
             </div>
           </div>
           <div class="color-picker-row">
             <span>Selected Tab Text</span>
             <div class="color-inputs">
               <input type="color" id="colTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
-              <input type="text" class="color-hex" id="hexTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
+              <input type="text" class="color-hex" id="hexTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}" spellcheck="false" maxlength="7" placeholder="#ffffff" autocomplete="off">
             </div>
           </div>
           <div class="color-picker-row">
             <span>Favorite Star Color</span>
             <div class="color-inputs">
               <input type="color" id="colFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
-              <input type="text" class="color-hex" id="hexFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
+              <input type="text" class="color-hex" id="hexFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}" spellcheck="false" maxlength="7" placeholder="#ffd700" autocomplete="off">
             </div>
           </div>
           <div class="color-picker-row">
             <span>Favorite Card Border & Glow</span>
             <div class="color-inputs">
               <input type="color" id="colFavorite" value="{{ settings.theme.favorite_color }}">
-              <input type="text" class="color-hex" id="hexFavorite" value="{{ settings.theme.favorite_color }}">
+              <input type="text" class="color-hex" id="hexFavorite" value="{{ settings.theme.favorite_color }}" spellcheck="false" maxlength="7" placeholder="#ff00ff" autocomplete="off">
             </div>
           </div>
           <div class="color-picker-row">
             <span>Primary Text</span>
             <div class="color-inputs">
               <input type="color" id="colTextPrimary" value="{{ settings.theme.text_primary }}">
-              <input type="text" class="color-hex" id="hexTextPrimary" value="{{ settings.theme.text_primary }}">
+              <input type="text" class="color-hex" id="hexTextPrimary" value="{{ settings.theme.text_primary }}" spellcheck="false" maxlength="7" placeholder="#e8e8e8" autocomplete="off">
             </div>
           </div>
           <div class="color-picker-row">
             <span>Muted Text</span>
             <div class="color-inputs">
               <input type="color" id="colTextMuted" value="{{ settings.theme.text_muted }}">
-              <input type="text" class="color-hex" id="hexTextMuted" value="{{ settings.theme.text_muted }}">
+              <input type="text" class="color-hex" id="hexTextMuted" value="{{ settings.theme.text_muted }}" spellcheck="false" maxlength="7" placeholder="#9aa4b2" autocomplete="off">
             </div>
           </div>
         </div>
@@ -606,7 +606,7 @@
           <label class="toggle-row">
             <div class="toggle-info">
               <span class="toggle-title">Check for New Releases</span>
-              <span class="toggle-desc">Checks weekly and displays an update notification badge on the Settings button when a new release is available</span>
+              <span class="toggle-desc">Checks weekly for updates and displays a notification badge on the Settings button</span>
             </div>
             <div class="switch">
               <input type="checkbox" id="toggleCheckUpdates" {% if settings.visibility.show_update_notification != false %}checked{% endif %}>
@@ -1515,16 +1515,29 @@ function updateActivePresetState() {
   }
 }
 
+function normalizeHex(input) {
+  if (!input) return null;
+  let val = String(input).trim();
+  if (val.startsWith('#')) val = val.substring(1).trim();
+  if (/^[0-9A-Fa-f]{3}$/.test(val)) {
+    val = val.split('').map(c => c + c).join('');
+  }
+  if (/^[0-9A-Fa-f]{6}$/.test(val)) {
+    return '#' + val.toLowerCase();
+  }
+  return null;
+}
+
 function applyLiveTheme() {
   for (const [key, item] of Object.entries(colorInputs)) {
-    const val = item.hex.value.trim() || item.picker.value;
+    const val = normalizeHex(item.hex.value) || item.picker.getAttribute('data-color') || item.picker.value || '#14161a';
     document.documentElement.style.setProperty(item.cssVar, val);
   }
-  const accentVal = colorInputs.accent_color.hex.value.trim() || colorInputs.accent_color.picker.value;
+  const accentVal = normalizeHex(colorInputs.accent_color.hex.value) || colorInputs.accent_color.picker.getAttribute('data-color') || colorInputs.accent_color.picker.value || '#3a7bd5';
   const accentContrast = getContrastColor(accentVal);
   document.documentElement.style.setProperty('--accent-contrast', accentContrast);
 
-  const activeTextColor = colorInputs.tab_active_text.hex.value.trim() || colorInputs.tab_active_text.picker.value;
+  const activeTextColor = normalizeHex(colorInputs.tab_active_text.hex.value) || colorInputs.tab_active_text.picker.getAttribute('data-color') || colorInputs.tab_active_text.picker.value || '#ffffff';
   const isDarkText = accentContrast === '#000000';
   document.body.classList.toggle('dark-tab-text', isDarkText || activeTextColor === '#000000');
 
@@ -1577,15 +1590,32 @@ for (const [key, item] of Object.entries(colorInputs)) {
     }
     applyLiveTheme();
   });
-  item.hex.addEventListener('input', () => {
-    if (/^#[0-9A-Fa-f]{6}$/.test(item.hex.value.trim())) {
-      item.picker.value = item.hex.value.trim();
+
+  const handleHexChange = () => {
+    const validHex = normalizeHex(item.hex.value);
+    if (validHex) {
+      item.picker.value = validHex;
       if (key === 'accent_color') {
-        const autoText = getContrastColor(item.hex.value.trim());
+        const autoText = getContrastColor(validHex);
         colorInputs.tab_active_text.picker.value = autoText;
         colorInputs.tab_active_text.hex.value = autoText;
       }
       applyLiveTheme();
+    }
+  };
+
+  item.hex.addEventListener('input', handleHexChange);
+  item.hex.addEventListener('change', () => {
+    const validHex = normalizeHex(item.hex.value);
+    if (validHex) {
+      item.hex.value = validHex;
+    }
+    handleHexChange();
+  });
+  item.hex.addEventListener('blur', () => {
+    const validHex = normalizeHex(item.hex.value);
+    if (validHex) {
+      item.hex.value = validHex;
     }
   });
 }
@@ -2345,6 +2375,7 @@ settingsBtn.addEventListener('click', () => {
   loadDynamicIcons();
   loadConfigData();
   renderTabIconsCustomList();
+  if (typeof checkForUpdates === 'function') checkForUpdates(true);
 });
 closeSettingsBtn.addEventListener('click', closeSettingsWithCheck);
 if (closeSettingsModalBtn) {
@@ -2363,7 +2394,7 @@ settingsDialog.addEventListener('cancel', (e) => {
 async function saveAllSettings() {
   const theme = {};
   for (const [key, item] of Object.entries(colorInputs)) {
-    theme[key] = item.hex.value.trim() || item.picker.value;
+    theme[key] = normalizeHex(item.hex.value) || item.picker.getAttribute('data-color') || item.picker.value || '#14161a';
   }
 
   const visibility = {};
@@ -3741,7 +3772,7 @@ if (clearLogsViewBtn) {
 let currentAvailableUpdateVersion = null;
 let appUpdateData = null;
 
-async function checkForUpdates() {
+async function checkForUpdates(force = false) {
   const settingsBadge = document.getElementById('settingsUpdateBadge');
   const updateBanner = document.getElementById('settingsUpdateBanner');
   const updateVersion = document.getElementById('settingsUpdateVersion');
@@ -3771,7 +3802,7 @@ async function checkForUpdates() {
   }
 
   try {
-    const res = await fetch('/api/check_update');
+    const res = await fetch('/api/check_update' + (force ? '?force=true' : ''));
     const data = await res.json();
     if (data.ok && data.has_update) {
       currentAvailableUpdateVersion = data.latest_version;
@@ -3833,7 +3864,7 @@ const toggleCheckUpdates = document.getElementById('toggleCheckUpdates');
 if (toggleCheckUpdates) {
   toggleCheckUpdates.addEventListener('change', () => {
     if (toggleCheckUpdates.checked) {
-      checkForUpdates();
+      checkForUpdates(true);
     } else {
       const settingsBadge = document.getElementById('settingsUpdateBadge');
       if (settingsBadge) settingsBadge.classList.add('hidden');

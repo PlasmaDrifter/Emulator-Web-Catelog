@@ -26,7 +26,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -65,7 +65,7 @@ HIDDEN_PATH = BASE_DIR / "hidden.json"
 LIBRARY_CACHE_PATH = BASE_DIR / "library.json"
 SETTINGS_PATH = BASE_DIR / "settings.json"
 UPDATE_CACHE_PATH = BASE_DIR / "update_cache.json"
-UPDATE_CHECK_INTERVAL_SECONDS = 7 * 24 * 3600  # 1 week
+UPDATE_CHECK_INTERVAL_SECONDS = 3600  # 1 hour
 COVERS_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_SETTINGS = {
@@ -100,10 +100,13 @@ DEFAULT_SETTINGS = {
     }
 }
 
+template_dir = (BASE_DIR / "templates") if (BASE_DIR / "templates").is_dir() else (BUNDLE_DIR / "templates")
+static_dir = (BASE_DIR / "static") if (BASE_DIR / "static").is_dir() else (BUNDLE_DIR / "static")
+
 app = Flask(
     __name__,
-    template_folder=str(BUNDLE_DIR / "templates"),
-    static_folder=str(BUNDLE_DIR / "static")
+    template_folder=str(template_dir),
+    static_folder=str(static_dir)
 )
 app.json.sort_keys = False
 
@@ -1579,6 +1582,47 @@ def apply_self_update(target_tag: str = "") -> dict:
         return {"mode": "archive-sim", "message": f"Updated to {new_ver} (simulated update)", "tag": new_ver}
 
     clean_tag = target_tag if target_tag.startswith("v") else f"v{target_tag}"
+
+    if getattr(sys, "frozen", False):
+        binary_archive_url = f"https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases/download/{clean_tag}/ROMCat-{clean_tag}-linux-x86_64.tar.gz"
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            archive_file = os.path.join(tmp_dir, "release.tar.gz")
+            extracted_dir = os.path.join(tmp_dir, "extracted")
+            os.makedirs(extracted_dir, exist_ok=True)
+
+            resp = requests.get(binary_archive_url, headers={"User-Agent": f"ROMCat/{__version__}"}, timeout=60)
+            if resp.status_code != 200:
+                raise RuntimeError(f"Standalone binary release for {clean_tag} was not found on GitHub (HTTP {resp.status_code})")
+
+            with open(archive_file, "wb") as f_out:
+                f_out.write(resp.content)
+
+            with tarfile.open(archive_file, "r:gz") as tar:
+                if hasattr(tarfile, "data_filter"):
+                    tar.extractall(path=extracted_dir, filter="data")
+                else:
+                    tar.extractall(path=extracted_dir)
+
+            new_exe = os.path.join(extracted_dir, "ROMCat")
+            if not os.path.exists(new_exe):
+                raise RuntimeError("Downloaded archive did not contain ROMCat binary.")
+
+            target_exe = Path(sys.executable).resolve()
+            temp_backup = target_exe.with_suffix(".old")
+            try:
+                target_exe.rename(temp_backup)
+            except Exception:
+                target_exe.unlink(missing_ok=True)
+
+            shutil.copy2(new_exe, target_exe)
+            os.chmod(target_exe, 0o755)
+            try:
+                temp_backup.unlink(missing_ok=True)
+            except Exception:
+                pass
+
+            return {"mode": "standalone-binary", "message": f"Updated standalone binary to {target_tag}", "tag": target_tag}
+
     archive_url = f"https://github.com/PlasmaDrifter/Emulator-Web-Catelog/archive/refs/tags/{clean_tag}.tar.gz"
 
     with tempfile.TemporaryDirectory() as tmp_dir:
