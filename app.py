@@ -26,7 +26,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.7.1"
+__version__ = "0.7.2"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -331,7 +331,7 @@ def scan_library():
             cleaned_str = str(folder_str).strip().strip('"').strip("'")
             if not cleaned_str:
                 continue
-            folder = Path(cleaned_str).expanduser()
+            folder = Path(os.path.expandvars(cleaned_str)).expanduser()
             if not folder.is_dir():
                 continue
 

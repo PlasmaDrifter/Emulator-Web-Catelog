@@ -1106,15 +1106,30 @@ body.hide-update-badge .settings-update-banner {
   flex: 1;
   justify-content: flex-end;
 }
-.btn-primary {
+.btn-primary,
+button.btn-primary {
   background: var(--accent-color);
   border: 1px solid var(--accent-color);
-  color: var(--accent-contrast, #ffffff);
+  color: var(--accent-contrast, #ffffff) !important;
   font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: filter 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
-.btn-primary:hover {
-  filter: brightness(1.08);
-  color: var(--accent-contrast, #ffffff);
+.btn-primary:hover,
+button.btn-primary:hover,
+.btn-primary:focus-visible,
+button.btn-primary:focus-visible {
+  filter: brightness(1.15);
+  color: var(--accent-contrast, #ffffff) !important;
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45), 0 0 12px var(--accent-color);
+  transform: translateY(-1px);
+}
+.btn-primary:active,
+button.btn-primary:active {
+  filter: brightness(0.95);
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 .btn-danger {
   background: transparent;
@@ -2244,4 +2259,8 @@ body.hide-update-badge .settings-update-banner {
 
 #logsModal .validation-dialog-footer {
   flex-shrink: 0 !important;
+}
+
+#modalFetchCoversBtn {
+  font-weight: 600;
 }

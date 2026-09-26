@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=7.11">
+<link rel="stylesheet" href="/static/css/style.css?v=7.13">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -494,7 +494,7 @@
               <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer; user-select: none;">
                 <input type="checkbox" id="fetchCoversOverwrite"> Overwrite existing
               </label>
-              <button type="button" id="modalFetchCoversBtn" class="btn-secondary" style="white-space: nowrap;">Fetch Covers</button>
+              <button type="button" id="modalFetchCoversBtn" class="btn-primary" style="white-space: nowrap; font-weight: 600; padding: 6px 14px;">Fetch Covers</button>
             </div>
           </div>
           <div class="toggle-row" style="cursor: default;">
@@ -1721,6 +1721,8 @@ if (saveThemePresetBtn && customThemeNameInput) {
     for (const [key, item] of Object.entries(colorInputs)) {
       theme[key] = item.hex.value.trim() || item.picker.value;
     }
+    const accentVal = theme.accent_color || '#3a7bd5';
+    theme.accent_contrast = getContrastColor(accentVal);
 
     saveThemePresetBtn.disabled = true;
     try {
@@ -2396,6 +2398,8 @@ async function saveAllSettings() {
   for (const [key, item] of Object.entries(colorInputs)) {
     theme[key] = normalizeHex(item.hex.value) || item.picker.getAttribute('data-color') || item.picker.value || '#14161a';
   }
+  const accentVal = theme.accent_color || '#3a7bd5';
+  theme.accent_contrast = getContrastColor(accentVal);
 
   const visibility = {};
   for (const [key, item] of Object.entries(visibilityToggles)) {
@@ -2876,7 +2880,7 @@ function renderSystemCard(sysId, sysData) {
         <div class="settings-field">
           <label>
             Emulator Launch Command
-            <button type="button" class="btn-inline-help" title="Click for command syntax guide and examples">?</button>
+            <button type="button" class="btn-inline-help btn-cmd-help" title="Click for command syntax guide and examples">?</button>
             <span class="field-hint">(use {rom} for file path)</span>
           </label>
           <input type="text" class="settings-input sys-cmd-input" value="${escapeHtml(cmd)}" placeholder="emulator-command {rom}">
@@ -2890,7 +2894,7 @@ function renderSystemCard(sysId, sysData) {
   const nameDisplay = card.querySelector('.system-card-name');
   const idBadge = card.querySelector('.system-card-id-badge');
   const removeBtn = card.querySelector('.btn-remove-system');
-  const inlineHelpBtn = card.querySelector('.btn-inline-help');
+  const cmdHelpBtn = card.querySelector('.btn-cmd-help');
   const idHelpBtn = card.querySelector('.btn-id-help');
   const upBtn = card.querySelector('.btn-order-up');
   const downBtn = card.querySelector('.btn-order-down');
@@ -2961,8 +2965,9 @@ function renderSystemCard(sysId, sysData) {
     input.addEventListener('input', clearCardError);
   });
 
-  if (inlineHelpBtn && commandHelpBox) {
-    inlineHelpBtn.addEventListener('click', () => {
+  if (cmdHelpBtn && commandHelpBox) {
+    cmdHelpBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       commandHelpBox.classList.remove('hidden');
       commandHelpBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
