@@ -166,9 +166,20 @@ If you prefer starting the web server manually via the command line:
 
 Updating ROMcat preserves all your existing configuration, scanned games, downloaded covers (`static/covers/`), favorites, and theme settings.
 
-### Option A: Updating with Git (No GitHub Account Needed)
+### Option A: One-Click In-App Updater (Recommended)
 
-Because this repository is public, `git pull` does **not** require a GitHub account, token, or login.
+ROMcat includes an integrated, zero-terminal self-updater for both Git installations and direct archive installations:
+
+1. When a new release is detected, an update notification banner appears inside the Settings dialog (and a red badge appears on the Settings gear icon if enabled).
+2. Click **Update Now** on the notification banner.
+3. ROMcat downloads and extracts the release directly in place, updates internal files while strictly preserving your `config.yaml`, `settings.json`, downloaded covers (`static/covers/`), and custom theme presets, and automatically restarts the background service or desktop app.
+4. Your browser will automatically reconnect and reload the updated dashboard as soon as the service finishes restarting.
+
+*(You can also dismiss the banner until the next release or toggle update notifications under **Settings &rarr; UI &rarr; Check for New Releases**).*
+
+### Option B: Updating with Git (Terminal)
+
+Because this repository is public, `git pull` does **not** require a GitHub account, token, or login:
 
 ```bash
 cd ~/romcat
@@ -178,9 +189,9 @@ pip install -r requirements.txt
 systemctl --user restart romcat.service
 ```
 
-### Option B: Updating Manually Without Git (ZIP Archive)
+### Option C: Updating Manually Without Git (ZIP Archive)
 
-If you do not have Git installed, you can update directly via terminal or by clicking **Code &rarr; Download ZIP** on GitHub:
+If you installed from an archive without Git, you can also update manually via terminal or by clicking **Code &rarr; Download ZIP** on GitHub:
 
 ```bash
 cd ~
@@ -248,6 +259,8 @@ ROMcat includes a tabbed Settings interface directly in the web UI (accessible v
   - **Show Search Bar**: Toggle real-time search input in the header.
   - **Show ROM Count Badges**: Display numeric game counts on system tabs (e.g. `(42)`).
   - **Show "Favorites" Tab**: Toggle favorites tab on the navigation bar.
+  - **Show GitHub Link in Header**: Toggle the repository shortcut button in the header bar.
+  - **Check for New Releases**: Weekly background release check that alerts you with a notification badge and one-click in-app update banner when new versions are available.
 
 ### 4. Consoles & Emulators Tab
 - **Console Category Reordering**:
@@ -383,21 +396,35 @@ snes:
 
 ### Adding a New Console / System
 
-To add a new console (for example, Game Boy Advance):
+You can add new consoles either directly through the **web interface** (recommended) or manually inside `config.yaml`.
 
-1. Open `config.yaml`.
+#### Method 1: In the Web UI (Recommended)
+
+1. Click the **Settings** gear icon in the top header.
+2. Switch to the **Consoles & Emulators** tab.
+3. Click **+ Add Console** at the top right of the section.
+4. Fill in the console details:
+   - **Display Name**: e.g., `Game Boy Advance` (an internal identifier will be auto-generated).
+   - **ROM Folder Path**: e.g., `/home/user/ROMs/GBA/` or `$HOME/ROMs/GBA/`.
+   - **Allowed Extensions**: e.g., `.gba, .zip`.
+   - **Emulator Launch Command**: e.g., `flatpak run io.mgba.mGBA {rom}` or `$HOME/Applications/mgba {rom}`.
+5. Click **Save** at the bottom right. ROMcat validates the settings, saves `config.yaml`, and automatically rescans your library.
+
+#### Method 2: Manually in `config.yaml`
+
+1. Open `config.yaml` in your text editor.
 2. Add a new block under `systems:`:
 
 ```yaml
   gba:
     name: "Game Boy Advance"
-    folder: "/path/to/roms/GBA/"
+    folder: "$HOME/ROMs/GBA/"
     extensions: [".gba", ".zip"]
     command: "flatpak run io.mgba.mGBA {rom}"
 ```
 
 3. Save `config.yaml`.
-4. Click **Rescan library** in the top navigation bar or restart `app.py`. The new tab will appear automatically with game counts.
+4. Go to **Settings &rarr; UI** and click **Rescan** (or restart the app). The new console tab will appear automatically with game counts.
 
 ---
 
@@ -456,7 +483,9 @@ Emulator-Web-Catelog/
 
 ## License
 
-Created and maintained by [PlasmaDrifter](https://github.com/PlasmaDrifter). Distributed for personal and self-hosted use.
+This project is open-source software licensed under the [MIT License](LICENSE).
+
+Created and maintained by [PlasmaDrifter](https://github.com/PlasmaDrifter).
 
 ---
 

@@ -26,7 +26,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.7.2"
+__version__ = "0.7.3"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -936,9 +936,11 @@ def api_launch():
         # Windows execution (shell=False to prevent command injection)
         cmd = cmd_template.format(rom=f'"{matched_path}"')
         logging.info(f"Launching [{system}] '{os.path.basename(matched_path)}' on Windows with command: {cmd}")
+        raw_args = shlex.split(cmd, posix=False)
+        args = [os.path.expanduser(os.path.expandvars(a)) for a in raw_args]
         try:
             subprocess.Popen(
-                shlex.split(cmd, posix=False),
+                args,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
@@ -974,7 +976,8 @@ def api_launch():
                 except Exception:
                     pass
 
-        args = shlex.split(cmd)
+        raw_args = shlex.split(cmd)
+        args = [os.path.expanduser(os.path.expandvars(a)) for a in raw_args]
         if shutil.which("systemd-run") and os.path.exists(f"{runtime_dir}/bus"):
             args = ["systemd-run", "--user", "--scope", "--quiet"] + args
 
