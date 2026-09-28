@@ -26,7 +26,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.7.3"
+__version__ = "0.7.4"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -1558,12 +1558,29 @@ def apply_self_update(target_tag: str = "") -> dict:
             time.sleep(1.0)
             return {"mode": "git-dev", "message": f"Updated to {new_ver} (development simulation mode)", "tag": new_ver}
 
+        # Attempt standard fast-forward pull first
         cmd = ["git", "pull", "--ff-only"]
         res = subprocess.run(cmd, cwd=str(repo_dir), capture_output=True, text=True)
-        if res.returncode != 0:
-            err_msg = res.stderr.strip() or res.stdout.strip()
-            raise RuntimeError(f"Git pull failed: {err_msg}")
-        return {"mode": "git", "message": "Updated via git pull", "tag": target_tag or "latest"}
+        if res.returncode == 0:
+            return {"mode": "git", "message": "Updated via git pull", "tag": target_tag or "latest"}
+
+        # Fast-forward failed (e.g. upstream history was rewritten, squashed, or force-pushed).
+        # Since working tree was verified clean above, safely fetch and reset to the remote tracking branch.
+        logging.warning("git pull --ff-only failed; attempting git fetch and reset to remote branch")
+        fetch_res = subprocess.run(["git", "fetch", "--prune", "--tags", "origin"], cwd=str(repo_dir), capture_output=True, text=True)
+        if fetch_res.returncode != 0:
+            err_msg = fetch_res.stderr.strip() or fetch_res.stdout.strip()
+            raise RuntimeError(f"Git fetch failed: {err_msg}")
+
+        branch_proc = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(repo_dir), capture_output=True, text=True)
+        current_branch = branch_proc.stdout.strip() or "main"
+
+        reset_res = subprocess.run(["git", "reset", "--hard", f"origin/{current_branch}"], cwd=str(repo_dir), capture_output=True, text=True)
+        if reset_res.returncode != 0:
+            err_msg = reset_res.stderr.strip() or reset_res.stdout.strip()
+            raise RuntimeError(f"Git reset to origin/{current_branch} failed: {err_msg}")
+
+        return {"mode": "git-reset", "message": f"Updated and synchronized to origin/{current_branch}", "tag": target_tag or "latest"}
 
     # Standalone archive download
     if not target_tag:
