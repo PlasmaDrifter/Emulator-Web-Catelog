@@ -15,9 +15,6 @@
 
 ROMcat provides an interactive dashboard with automated cover art scraping, system filtering, instant search, favorites tracking, one-click game launching into your local desktop emulators (Flatpak, AppImage, or native binaries), and customizable themes.
 
-> [!NOTE]
-> **Questions, custom configs, or ideas?** Join us on Reddit at <nobr>[**r/PlasmaDrifterProjects**](https://reddit.com/r/PlasmaDrifterProjects)</nobr>!
-
 ---
 
 ## Demo
