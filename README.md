@@ -44,7 +44,7 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 ![Settings UI Tab](screenshots/settings_ui.png?raw=true&v=7)
 
 ### Settings: Consoles & Emulators Tab
-![Settings Consoles & Emulators Tab](screenshots/settings_consoles.png?raw=true&v=7)
+![Settings Consoles & Emulators Tab](screenshots/settings_consoles.png?raw=true&v=8)
 
 ### Settings: Interactive Command Guide
 ![Settings Command Guide](screenshots/settings_consoles_help.png?raw=true&v=7)
