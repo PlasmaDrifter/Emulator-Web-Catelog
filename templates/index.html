@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=7.13">
+<link rel="stylesheet" href="/static/css/style.css?v=7.23">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -22,7 +22,7 @@
   }
 </style>
 </head>
-<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_all_tab %}hide-all-tab {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}{% if settings.visibility.show_tab_icons %}show-tab-icons {% endif %}{% if settings.visibility.show_favorite_stars == false %}hide-favorite-stars {% endif %}{% if settings.visibility.show_github_link == false %}hide-github-link {% endif %}{% if settings.visibility.show_update_notification == false %}hide-update-badge {% endif %}">
+<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_all_tab %}hide-all-tab {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}{% if settings.visibility.show_tab_icons %}show-tab-icons {% endif %}{% if settings.visibility.show_favorite_stars == false %}hide-favorite-stars {% endif %}{% if settings.visibility.show_github_link == false %}hide-github-link {% endif %}{% if settings.visibility.show_update_notification == false %}hide-update-badge {% endif %}{% if settings.visibility.show_card_play_stats == false %}hide-card-play-stats {% endif %}{% if settings.visibility.show_stats_button == false %}hide-stats-button {% endif %}{% if settings.visibility.show_sort_control == false %}hide-sort-control {% endif %}">
 <header>
   <div class="header-brand">
     <img id="headerIcon" src="{{ settings.icon or '/static/favicon.png' }}" class="header-icon" alt="">
@@ -34,6 +34,16 @@
   </div>
   <div class="actions">
     <span id="status"></span>
+    <div class="sort-wrapper" title="Sort library games">
+      <label for="sortSelect" class="sort-label">Sort:</label>
+      <select id="sortSelect" class="sort-select" title="Sort library games">
+        <option value="title_asc">A - Z</option>
+        <option value="time_desc">Most Played (Time)</option>
+        <option value="sessions_desc">Most Played (Plays)</option>
+        <option value="recent_desc">Recently Played</option>
+      </select>
+    </div>
+    <a href="/stats" id="statsBtn" title="Play Statistics & Insights" class="icon-btn" aria-label="Play Statistics & Insights"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg></a>
     <button id="refreshBtn" title="Refresh library" class="icon-btn" aria-label="Refresh library"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
     <button id="settingsBtn" title="Settings" class="icon-btn" aria-label="Settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span id="settingsUpdateBadge" class="update-badge hidden" title="New release available">!</span></button>
     <a href="https://github.com/PlasmaDrifter/Emulator-Web-Catelog" target="_blank" rel="noopener noreferrer" id="githubRepoLink" class="icon-btn" title="GitHub Repository" aria-label="GitHub Repository"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg></a>
@@ -75,7 +85,12 @@
     {% else %}
     <div class="grid">
       {% for game in sys_data.games %}
-      <div class="card" data-system="{{ sys_id }}" data-path="{{ game.path }}" data-filename="{{ game.filename }}" data-favorite="{{ 'true' if game.favorite else 'false' }}" data-has-cover="{{ 'true' if game.cover else 'false' }}" data-hidden="{{ 'true' if game.hidden else 'false' }}">
+      {% set gkey = sys_id ~ ':' ~ game.filename %}
+      {% set gstats = stats.get('games', {}).get(gkey, {}) if stats else {} %}
+      {% set play_count = gstats.get('play_count', 0) %}
+      {% set play_time = gstats.get('play_time_seconds', 0) %}
+      {% set last_played = gstats.get('last_played', 0) %}
+      <div class="card" data-system="{{ sys_id }}" data-path="{{ game.path }}" data-filename="{{ game.filename }}" data-favorite="{{ 'true' if game.favorite else 'false' }}" data-has-cover="{{ 'true' if game.cover else 'false' }}" data-hidden="{{ 'true' if game.hidden else 'false' }}" data-title="{{ game.title }}" data-play-count="{{ play_count }}" data-play-time="{{ play_time }}" data-last-played="{{ last_played }}">
         <button class="star {{ 'active' if game.favorite else '' }}" title="Toggle favorite">&#9733;</button>
         <button class="hide-toggle {{ 'active' if game.hidden else '' }}" title="{{ 'Unhide game' if game.hidden else 'Hide game' }}">{{ 'UNHIDE' if game.hidden else 'HIDE' }}</button>
         <div class="cover">
@@ -89,6 +104,13 @@
             </div>
           {% endif %}
         </div>
+        <div class="card-play-stats" aria-hidden="true" style="opacity: 0; visibility: hidden; pointer-events: none;">
+          {% if play_count > 0 %}
+            <span class="card-stat-pill">{{ play_time|format_duration }} &bull; {{ play_count }} play{{ 's' if play_count != 1 else '' }}</span>
+          {% else %}
+            <span class="card-stat-pill unplayed">Unplayed</span>
+          {% endif %}
+        </div>
         <div class="title">{{ game.title }}</div>
       </div>
       {% endfor %}
@@ -97,6 +119,8 @@
   </section>
   {% endfor %}
 </main>
+
+
 
 <dialog id="settingsDialog" class="settings-dialog">
   <div class="modal-header">
@@ -613,6 +637,36 @@
               <span class="slider"></span>
             </div>
           </label>
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Show Play Stats on Card Hover</span>
+              <span class="toggle-desc">Display hours and play count when hovering over a game card</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleCardPlayStats" {% if settings.visibility.show_card_play_stats != false %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Show Play Statistics Button</span>
+              <span class="toggle-desc">Display the analytics icon button in the header bar</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleStatsButton" {% if settings.visibility.show_stats_button != false %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
+          <label class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Show Sort Selector</span>
+              <span class="toggle-desc">Display the game library sort dropdown in the header bar</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleSortControl" {% if settings.visibility.show_sort_control != false %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
         </div>
       </section>
     </div>
@@ -888,6 +942,9 @@ document.querySelectorAll('.card').forEach(card => {
       });
       const data = await res.json();
       statusEl.textContent = data.ok ? 'Launched.' : ('Error: ' + data.error);
+      if (data.ok) {
+        startActiveSessionTracking();
+      }
     } catch (e) {
       statusEl.textContent = 'Error: ' + e;
     }
@@ -1044,6 +1101,7 @@ document.querySelectorAll('.star').forEach(star => {
       if (data.ok) {
         card.dataset.favorite = data.favorite ? 'true' : 'false';
         star.classList.toggle('active', data.favorite);
+        if (typeof applyFilters === 'function') applyFilters();
       }
     } catch (err) {
       console.error(err);
@@ -1369,7 +1427,10 @@ const visibilityToggles = {
   show_tab_icons: { el: document.getElementById('toggleTabIcons'), cls: 'show-tab-icons', invert: true },
   show_favorite_stars: { el: document.getElementById('toggleFavoriteStars'), cls: 'hide-favorite-stars' },
   show_github_link: { el: document.getElementById('toggleGithubLink'), cls: 'hide-github-link' },
-  show_update_notification: { el: document.getElementById('toggleCheckUpdates'), cls: 'hide-update-badge' }
+  show_update_notification: { el: document.getElementById('toggleCheckUpdates'), cls: 'hide-update-badge' },
+  show_card_play_stats: { el: document.getElementById('toggleCardPlayStats'), cls: 'hide-card-play-stats' },
+  show_stats_button: { el: document.getElementById('toggleStatsButton'), cls: 'hide-stats-button' },
+  show_sort_control: { el: document.getElementById('toggleSortControl'), cls: 'hide-sort-control' }
 };
 
 const CONSOLE_ICON_MAP = [
@@ -3983,6 +4044,179 @@ if (btnApplyUpdate) {
   });
 }
 
+// --- Play Statistics & Library Sorting ---
+let activeSessionPoller = null;
+
+function formatStatDuration(seconds) {
+  if (!seconds || seconds <= 0) return '0m';
+  const totalMinutes = Math.ceil(seconds / 60);
+  if (totalMinutes < 60) return totalMinutes + 'm';
+  const hours = Math.floor(totalMinutes / 60);
+  const remMin = totalMinutes % 60;
+  return remMin > 0 ? `${hours}h ${remMin}m` : `${hours}h`;
+}
+
+function formatRelativeTimestamp(ts) {
+  if (!ts) return 'Never';
+  const now = Math.floor(Date.now() / 1000);
+  const diff = now - ts;
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(ts * 1000).toLocaleDateString();
+}
+
+function getSortTitle(title) {
+  let t = (title || '').toLowerCase().trim();
+  if (t.startsWith('the ')) {
+    t = t.substring(4).trim();
+  }
+  return t;
+}
+
+function applyCardSorting() {
+  const sortSelect = document.getElementById('sortSelect');
+  const sortMode = sortSelect ? sortSelect.value : 'title_asc';
+  try {
+    localStorage.setItem('romcat_sort_order', sortMode);
+  } catch (e) {}
+
+  document.querySelectorAll('.system .grid').forEach(grid => {
+    const cards = Array.from(grid.querySelectorAll('.card'));
+    cards.sort((a, b) => {
+      if (sortMode === 'time_desc') {
+        const tA = Number(a.dataset.playTime || 0);
+        const tB = Number(b.dataset.playTime || 0);
+        if (tB !== tA) return tB - tA;
+        const favA = a.dataset.favorite === 'true' ? 1 : 0;
+        const favB = b.dataset.favorite === 'true' ? 1 : 0;
+        if (favB !== favA) return favB - favA;
+      } else if (sortMode === 'sessions_desc') {
+        const sA = Number(a.dataset.playCount || 0);
+        const sB = Number(b.dataset.playCount || 0);
+        if (sB !== sA) return sB - sA;
+        const favA = a.dataset.favorite === 'true' ? 1 : 0;
+        const favB = b.dataset.favorite === 'true' ? 1 : 0;
+        if (favB !== favA) return favB - favA;
+      } else if (sortMode === 'recent_desc') {
+        const rA = Number(a.dataset.lastPlayed || 0);
+        const rB = Number(b.dataset.lastPlayed || 0);
+        if (rB !== rA) return rB - rA;
+        const favA = a.dataset.favorite === 'true' ? 1 : 0;
+        const favB = b.dataset.favorite === 'true' ? 1 : 0;
+        if (favB !== favA) return favB - favA;
+      } else {
+        // title_asc (default): favorites first, then alphabetical (matching server-side sort)
+        const favA = a.dataset.favorite === 'true' ? 1 : 0;
+        const favB = b.dataset.favorite === 'true' ? 1 : 0;
+        if (favB !== favA) return favB - favA;
+      }
+      const titleA = (a.dataset.title || a.querySelector('.title')?.textContent || '').trim();
+      const titleB = (b.dataset.title || b.querySelector('.title')?.textContent || '').trim();
+      const sA = getSortTitle(titleA);
+      const sB = getSortTitle(titleB);
+      return sA.localeCompare(sB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+    cards.forEach(card => grid.appendChild(card));
+  });
+}
+
+function syncCardsWithStats(gamesData) {
+  if (!gamesData) return;
+  document.querySelectorAll('.card').forEach(card => {
+    const key = `${card.dataset.system}:${card.dataset.filename}`;
+    const gstat = gamesData[key];
+    const playCount = gstat ? (gstat.play_count || 0) : 0;
+    const playTime = gstat ? (gstat.play_time_seconds || 0) : 0;
+    const lastPlayed = gstat ? (gstat.last_played || 0) : 0;
+
+    card.dataset.playCount = playCount;
+    card.dataset.playTime = playTime;
+    card.dataset.lastPlayed = lastPlayed;
+
+    const pill = card.querySelector('.card-stat-pill');
+    if (pill) {
+      if (playCount > 0) {
+        pill.classList.remove('unplayed');
+        pill.textContent = `${formatStatDuration(playTime)} \u2022 ${playCount} play${playCount !== 1 ? 's' : ''}`;
+      } else {
+        pill.classList.add('unplayed');
+        pill.textContent = 'Unplayed';
+      }
+    }
+  });
+}
+
+function startActiveSessionTracking() {
+  if (activeSessionPoller) clearInterval(activeSessionPoller);
+  activeSessionPoller = setInterval(async () => {
+    try {
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      if (!data.ok) return;
+
+      document.querySelectorAll('.card.playing-now').forEach(c => {
+        c.classList.remove('playing-now');
+        const pill = c.querySelector('.card-stat-pill');
+        if (pill) {
+          const plays = Number(c.dataset.playCount || 0);
+          const timeSec = Number(c.dataset.playTime || 0);
+          if (plays > 0) {
+            pill.classList.remove('unplayed');
+            pill.textContent = `${formatStatDuration(timeSec)} \u2022 ${plays} play${plays !== 1 ? 's' : ''}`;
+          } else {
+            pill.classList.add('unplayed');
+            pill.textContent = 'Unplayed';
+          }
+        }
+      });
+
+      if (data.active_sessions && data.active_sessions.length > 0) {
+        data.active_sessions.forEach(sess => {
+          const card = document.querySelector(`.card[data-system="${sess.system}"][data-filename="${sess.filename}"]`);
+          if (card) {
+            card.classList.add('playing-now');
+            const pill = card.querySelector('.card-stat-pill');
+            if (pill) {
+              pill.classList.remove('unplayed');
+              pill.textContent = 'Playing Now';
+            }
+          }
+        });
+      } else {
+        clearInterval(activeSessionPoller);
+        activeSessionPoller = null;
+        syncCardsWithStats(data.games);
+        applyCardSorting();
+      }
+    } catch (err) {
+      console.warn('Session polling error:', err);
+    }
+  }, 4000);
+}
+
+function initPlayStatsAndSorting() {
+  const sortSelect = document.getElementById('sortSelect');
+  if (sortSelect) {
+    try {
+      const savedSort = localStorage.getItem('romcat_sort_order');
+      if (savedSort) sortSelect.value = savedSort;
+    } catch (e) {}
+    sortSelect.addEventListener('change', applyCardSorting);
+    applyCardSorting();
+  }
+
+  fetch('/api/stats')
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok && data.active_sessions && data.active_sessions.length > 0) {
+        startActiveSessionTracking();
+      }
+    })
+    .catch(() => {});
+}
+
 matchAndPopulateCategoryIcons();
 applyLiveTheme();
 if (urlParams.get('test_hide')) {
@@ -3991,6 +4225,7 @@ if (urlParams.get('test_hide')) {
 applyFilters();
 ensureValidActiveTab();
 checkForUpdates();
+initPlayStatsAndSorting();
 if (urlParams.get('test_settings')) {
   const dlg = document.getElementById('settingsDialog');
   if (dlg && typeof dlg.showModal === 'function') dlg.showModal();

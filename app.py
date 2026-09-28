@@ -26,7 +26,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.7.4"
+__version__ = "0.7.5"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -64,6 +64,10 @@ FAVORITES_PATH = BASE_DIR / "favorites.json"
 HIDDEN_PATH = BASE_DIR / "hidden.json"
 LIBRARY_CACHE_PATH = BASE_DIR / "library.json"
 SETTINGS_PATH = BASE_DIR / "settings.json"
+STATS_PATH = BASE_DIR / "stats.json"
+STATS_LOCK = threading.RLock()
+ACTIVE_SESSIONS = {}
+ACTIVE_SESSIONS_LOCK = threading.RLock()
 UPDATE_CACHE_PATH = BASE_DIR / "update_cache.json"
 UPDATE_CHECK_INTERVAL_SECONDS = 3600  # 1 hour
 COVERS_DIR.mkdir(parents=True, exist_ok=True)
@@ -96,7 +100,10 @@ DEFAULT_SETTINGS = {
         "show_tab_icons": False,
         "show_favorite_stars": True,
         "show_github_link": True,
-        "show_update_notification": True
+        "show_update_notification": True,
+        "show_card_play_stats": True,
+        "show_stats_button": True,
+        "show_sort_control": True
     }
 }
 
@@ -203,6 +210,129 @@ def load_hidden() -> set:
 
 def save_hidden(hidden: set):
     HIDDEN_PATH.write_text(json.dumps(sorted(hidden), indent=2))
+
+
+def format_duration(seconds: int) -> str:
+    """Format seconds into minutes/hours, rounding up to the nearest minute (no seconds displayed)."""
+    if not seconds or seconds <= 0:
+        return "0m"
+    total_minutes = (int(seconds) + 59) // 60
+    if total_minutes < 60:
+        return f"{total_minutes}m"
+    hours = total_minutes // 60
+    rem_minutes = total_minutes % 60
+    if rem_minutes == 0:
+        return f"{hours}h"
+    return f"{hours}h {rem_minutes}m"
+
+
+def load_stats() -> dict:
+    """Load play statistics from stats.json, initializing default schema if absent."""
+    with STATS_LOCK:
+        if STATS_PATH.exists():
+            try:
+                return json.loads(STATS_PATH.read_text(encoding="utf-8"))
+            except Exception as e:
+                logging.error(f"Error reading stats.json: {e}")
+        return {
+            "version": 1,
+            "summary": {
+                "total_play_time_seconds": 0,
+                "total_sessions": 0,
+                "last_played": 0
+            },
+            "systems": {},
+            "games": {},
+            "recent_sessions": []
+        }
+
+
+def save_stats(stats_data: dict):
+    """Atomically save play statistics to disk."""
+    try:
+        temp_file = STATS_PATH.with_suffix(".tmp")
+        temp_file.write_text(json.dumps(stats_data, indent=2), encoding="utf-8")
+        temp_file.replace(STATS_PATH)
+    except Exception as e:
+        logging.error(f"Error saving stats.json: {e}")
+
+
+def record_play_session(system: str, filename: str, title: str, start_time: int, duration_seconds: int):
+    """Record a completed play session to stats.json."""
+    with STATS_LOCK:
+        stats = load_stats()
+        summary = stats.setdefault("summary", {
+            "total_play_time_seconds": 0,
+            "total_sessions": 0,
+            "last_played": 0
+        })
+        summary["total_play_time_seconds"] = summary.get("total_play_time_seconds", 0) + duration_seconds
+        summary["total_sessions"] = summary.get("total_sessions", 0) + 1
+        summary["last_played"] = int(start_time + duration_seconds)
+
+        systems = stats.setdefault("systems", {})
+        sys_stat = systems.setdefault(system, {
+            "play_count": 0,
+            "play_time_seconds": 0
+        })
+        sys_stat["play_count"] = sys_stat.get("play_count", 0) + 1
+        sys_stat["play_time_seconds"] = sys_stat.get("play_time_seconds", 0) + duration_seconds
+
+        games = stats.setdefault("games", {})
+        game_key = f"{system}:{filename}"
+        game_stat = games.setdefault(game_key, {
+            "title": title,
+            "system": system,
+            "filename": filename,
+            "play_count": 0,
+            "play_time_seconds": 0,
+            "first_played": start_time,
+            "last_played": 0
+        })
+        game_stat["title"] = title
+        game_stat["system"] = system
+        game_stat["filename"] = filename
+        game_stat["play_count"] = game_stat.get("play_count", 0) + 1
+        game_stat["play_time_seconds"] = game_stat.get("play_time_seconds", 0) + duration_seconds
+        game_stat["last_played"] = int(start_time + duration_seconds)
+        if not game_stat.get("first_played"):
+            game_stat["first_played"] = start_time
+
+        recent = stats.setdefault("recent_sessions", [])
+        recent.insert(0, {
+            "game_key": game_key,
+            "system": system,
+            "filename": filename,
+            "title": title,
+            "started_at": start_time,
+            "duration_seconds": duration_seconds
+        })
+        if len(recent) > 50:
+            stats["recent_sessions"] = recent[:50]
+
+        save_stats(stats)
+
+
+def _monitor_play_session(session_id: str, proc, system: str, filename: str, title: str, start_time: float):
+    """Wait for emulator process termination in background thread, enforcing 30-second minimum."""
+    try:
+        if proc:
+            proc.wait()
+    except Exception as e:
+        logging.warning(f"Error tracking emulator session process: {e}")
+
+    end_time = time.time()
+    elapsed_seconds = int(end_time - start_time)
+    with ACTIVE_SESSIONS_LOCK:
+        ACTIVE_SESSIONS.pop(session_id, None)
+
+    if elapsed_seconds < 30:
+        logging.info(f"Play session for [{system}] '{title}' lasted {elapsed_seconds}s (< 30s threshold). Not counted.")
+        return
+
+    logging.info(f"Play session ended for [{system}] '{title}': {elapsed_seconds}s. Recording statistics.")
+    record_play_session(system, filename, title, int(start_time), elapsed_seconds)
+
 
 
 def resilient_yaml_load(raw_text: str):
@@ -396,6 +526,25 @@ def scan_library():
     return library
 
 
+_game_lookup_cache = None
+
+
+def get_game_lookup() -> dict:
+    """Fast in-memory index mapping '{system}:{filename}' to game metadata dict."""
+    global _game_lookup_cache
+    if _game_lookup_cache is not None:
+        return _game_lookup_cache
+    library = load_cached_library()
+    lookup = {}
+    for sys_id, sys_data in library.items():
+        for g in sys_data.get("games", []):
+            fn = g.get("filename")
+            if fn:
+                lookup[f"{sys_id}:{fn}"] = g
+    _game_lookup_cache = lookup
+    return lookup
+
+
 def load_cached_library():
     """Load the pre-scanned library from disk if it exists."""
     global _library_cache
@@ -415,8 +564,9 @@ def load_cached_library():
 
 def save_library_cache(library_data):
     """Save the library metadata to disk to avoid future scans."""
-    global _library_cache
+    global _library_cache, _game_lookup_cache
     _library_cache = library_data
+    _game_lookup_cache = None
     try:
         LIBRARY_CACHE_PATH.write_text(json.dumps(library_data, indent=2))
     except Exception as e:
@@ -424,11 +574,30 @@ def save_library_cache(library_data):
     return _library_cache
 
 
+@app.template_filter("format_duration")
+def jinja_format_duration(seconds):
+    try:
+        return format_duration(int(seconds or 0))
+    except Exception:
+        return "0m"
+
+
 @app.route("/")
 def index():
     library = load_cached_library()
     settings = load_settings()
-    return render_template("index.html", library=library, settings=settings, version=__version__)
+    stats = load_stats()
+    return render_template("index.html", library=library, settings=settings, stats=stats, version=__version__)
+
+
+@app.route("/stats")
+def stats_page():
+    settings = load_settings()
+    stats = load_stats()
+    config = load_config()
+    return render_template("stats.html", settings=settings, stats=stats, config=config, version=__version__)
+
+
 
 
 @app.route("/api/settings", methods=["GET", "POST"])
@@ -836,8 +1005,9 @@ def favicon():
 
 @app.route("/api/rescan", methods=["GET", "POST"])
 def api_rescan():
-    global _library_cache
+    global _library_cache, _game_lookup_cache
     _library_cache = None
+    _game_lookup_cache = None
     library_data = scan_library()
     save_library_cache(library_data)
     resp = {"ok": True, "library": library_data}
@@ -919,13 +1089,21 @@ def api_launch():
         return jsonify({"ok": False, "error": "unknown system"}), 400
 
     # Verify against server-scanned library cache to ensure path originates strictly from verified local scan
-    library = load_cached_library()
-    sys_games = library.get(system, {}).get("games", [])
+    lookup = get_game_lookup()
     matched_path = None
-    for game in sys_games:
-        if game.get("path") == path_param or (filename_param and game.get("filename") == filename_param):
-            matched_path = game.get("path")
-            break
+    matched_title = ""
+    if filename_param and f"{system}:{filename_param}" in lookup:
+        g = lookup[f"{system}:{filename_param}"]
+        matched_path = g.get("path")
+        matched_title = g.get("title") or os.path.basename(matched_path)
+    else:
+        library = load_cached_library()
+        sys_games = library.get(system, {}).get("games", [])
+        for game in sys_games:
+            if game.get("path") == path_param or (filename_param and game.get("filename") == filename_param):
+                matched_path = game.get("path")
+                matched_title = game.get("title") or os.path.basename(matched_path)
+                break
 
     if not matched_path or not os.path.isfile(matched_path):
         logging.warning(f"Launch failed: Game path '{path_param}' not found in library cache for [{system}]")
@@ -939,7 +1117,7 @@ def api_launch():
         raw_args = shlex.split(cmd, posix=False)
         args = [os.path.expanduser(os.path.expandvars(a)) for a in raw_args]
         try:
-            subprocess.Popen(
+            proc = subprocess.Popen(
                 args,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -984,7 +1162,7 @@ def api_launch():
         exec_desc = ' '.join(args) if isinstance(args, list) else cmd
         logging.info(f"Launching [{system}] '{os.path.basename(matched_path)}' with command: {exec_desc}")
         try:
-            subprocess.Popen(
+            proc = subprocess.Popen(
                 args,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -998,7 +1176,182 @@ def api_launch():
             logging.error(f"Failed to launch emulator process for [{system}]: {e}")
             return jsonify({"ok": False, "error": "Failed to launch emulator process."}), 500
 
+    start_time = time.time()
+    filename_val = os.path.basename(matched_path)
+    game_title = matched_title or filename_val
+    session_id = f"{system}:{filename_val}:{int(start_time * 1000)}"
+    with ACTIVE_SESSIONS_LOCK:
+        ACTIVE_SESSIONS[session_id] = {
+            "session_id": session_id,
+            "system": system,
+            "filename": filename_val,
+            "title": game_title,
+            "started_at": start_time,
+            "proc": proc,
+        }
+
+    monitor_thread = threading.Thread(
+        target=_monitor_play_session,
+        args=(session_id, proc, system, filename_val, game_title, start_time),
+        daemon=True
+    )
+    monitor_thread.start()
+
     return jsonify({"ok": True})
+
+
+@app.route("/api/stats", methods=["GET"])
+def api_get_stats():
+    stats = load_stats()
+    config = load_config()
+    systems_cfg = config.get("systems", {})
+    lookup = get_game_lookup()
+
+    total_time = stats.get("summary", {}).get("total_play_time_seconds", 0)
+
+    systems_breakdown = []
+    all_sys_ids = list(systems_cfg.keys())
+    for s_id in stats.get("systems", {}).keys():
+        if s_id not in all_sys_ids:
+            all_sys_ids.append(s_id)
+
+    for sys_id in all_sys_ids:
+        sys_stat = stats.get("systems", {}).get(sys_id, {})
+        sec = sys_stat.get("play_time_seconds", 0)
+        plays = sys_stat.get("play_count", 0)
+        pct = round((sec / total_time * 100), 1) if total_time > 0 else 0
+        sys_name = systems_cfg.get(sys_id, {}).get("name", sys_id.upper())
+        systems_breakdown.append({
+            "system": sys_id,
+            "name": sys_name,
+            "play_count": plays,
+            "play_time_seconds": sec,
+            "formatted_time": format_duration(sec),
+            "percent": pct
+        })
+    systems_breakdown.sort(key=lambda s: s["play_time_seconds"], reverse=True)
+
+    top_games = []
+    for gkey, gstat in stats.get("games", {}).items():
+        if gstat.get("play_count", 0) > 0:
+            sys_id = gstat.get("system", "")
+            sec = gstat.get("play_time_seconds", 0)
+            g_meta = lookup.get(gkey) or {}
+            top_games.append({
+                "game_key": gkey,
+                "title": gstat.get("title", ""),
+                "system": sys_id,
+                "system_name": systems_cfg.get(sys_id, {}).get("name", sys_id.upper()),
+                "filename": gstat.get("filename", ""),
+                "path": g_meta.get("path", ""),
+                "play_count": gstat.get("play_count", 0),
+                "play_time_seconds": sec,
+                "formatted_time": format_duration(sec),
+                "last_played": gstat.get("last_played", 0),
+                "cover": g_meta.get("cover")
+            })
+    top_games.sort(key=lambda g: g["play_time_seconds"], reverse=True)
+
+    active_list = []
+    with ACTIVE_SESSIONS_LOCK:
+        now = time.time()
+        for s_id, s_info in ACTIVE_SESSIONS.items():
+            active_list.append({
+                "session_id": s_id,
+                "system": s_info.get("system"),
+                "filename": s_info.get("filename"),
+                "title": s_info.get("title"),
+                "elapsed_seconds": int(now - s_info.get("started_at", now))
+            })
+
+    recent_formatted = []
+    for r in stats.get("recent_sessions", [])[:25]:
+        gkey = r.get("game_key")
+        g_meta = lookup.get(gkey) or {}
+        recent_formatted.append({
+            "game_key": gkey,
+            "system": r.get("system"),
+            "system_name": systems_cfg.get(r.get("system", ""), {}).get("name", r.get("system", "").upper()),
+            "filename": r.get("filename"),
+            "path": g_meta.get("path", ""),
+            "title": r.get("title"),
+            "started_at": r.get("started_at"),
+            "duration_seconds": r.get("duration_seconds", 0),
+            "formatted_duration": format_duration(r.get("duration_seconds", 0)),
+            "cover": g_meta.get("cover")
+        })
+
+    distinct_games = len([g for g in stats.get("games", {}).values() if g.get("play_count", 0) > 0])
+    top_console_name = systems_breakdown[0]["name"] if systems_breakdown and systems_breakdown[0]["play_time_seconds"] > 0 else "None"
+
+    return jsonify({
+        "ok": True,
+        "summary": {
+            "total_play_time_seconds": total_time,
+            "formatted_total_time": format_duration(total_time),
+            "total_sessions": stats.get("summary", {}).get("total_sessions", 0),
+            "total_distinct_games": distinct_games,
+            "top_console": top_console_name,
+            "last_played": stats.get("summary", {}).get("last_played", 0)
+        },
+        "systems": systems_breakdown,
+        "top_games": top_games,
+        "recent_sessions": recent_formatted,
+        "active_sessions": active_list,
+        "games": stats.get("games", {})
+    })
+
+
+@app.route("/api/stats/reset", methods=["POST"])
+def api_reset_stats():
+    data = request.get_json(silent=True) or {}
+    game_key = data.get("game_key")
+    with STATS_LOCK:
+        if game_key:
+            stats = load_stats()
+            if game_key in stats.get("games", {}):
+                del stats["games"][game_key]
+                stats["recent_sessions"] = [r for r in stats.get("recent_sessions", []) if r.get("game_key") != game_key]
+                new_systems = {}
+                total_sec = 0
+                total_sess = 0
+                max_last = 0
+                for g in stats.get("games", {}).values():
+                    sys_id = g.get("system")
+                    p_cnt = g.get("play_count", 0)
+                    p_sec = g.get("play_time_seconds", 0)
+                    total_sec += p_sec
+                    total_sess += p_cnt
+                    if g.get("last_played", 0) > max_last:
+                        max_last = g.get("last_played", 0)
+                    if sys_id:
+                        s_stat = new_systems.setdefault(sys_id, {"play_count": 0, "play_time_seconds": 0})
+                        s_stat["play_count"] += p_cnt
+                        s_stat["play_time_seconds"] += p_sec
+                stats["systems"] = new_systems
+                stats["summary"] = {
+                    "total_play_time_seconds": total_sec,
+                    "total_sessions": total_sess,
+                    "last_played": max_last
+                }
+                save_stats(stats)
+                return jsonify({"ok": True, "message": f"Reset stats for {game_key}"})
+            return jsonify({"ok": False, "error": "Game not found in stats"}), 404
+        else:
+            stats = {
+                "version": 1,
+                "summary": {
+                    "total_play_time_seconds": 0,
+                    "total_sessions": 0,
+                    "last_played": 0
+                },
+                "systems": {},
+                "games": {},
+                "recent_sessions": []
+            }
+            save_stats(stats)
+            return jsonify({"ok": True, "message": "All play stats have been reset."})
+
 
 
 def generate_title_candidates(title: str) -> list:
@@ -1773,6 +2126,9 @@ def serve_covers(filename):
     return jsonify({"error": "Cover not found"}), 404
 
 
+_icon_file_cache = {}
+
+
 @app.route('/static/icons/<path:filename>')
 def serve_icons(filename):
     clean_parts = [secure_filename(p) for p in Path(filename).parts if p and p not in ('.', '..')]
@@ -1793,15 +2149,21 @@ def serve_icons(filename):
     if bundled_target and os.path.isfile(bundled_target):
         return send_from_directory(bundled_icons, clean_rel)
 
-    # 3. Fallback: filename might be flat / legacy e.g. "nintendo-nes.svg"
+    # 3. Check memory cache for previously resolved fallback
     base_name = clean_parts[-1]
+    if base_name in _icon_file_cache:
+        cached_base, cached_rel = _icon_file_cache[base_name]
+        return send_from_directory(cached_base, cached_rel)
+
+    # 4. Fallback: filename might be flat / legacy e.g. "nintendo-nes.svg"
     for base in [icons_dir, bundled_icons]:
         if base.exists():
             for p in base.rglob(base_name):
                 if p.is_file():
                     try:
-                        rel = p.relative_to(base)
-                        return send_from_directory(base, str(rel))
+                        rel = str(p.relative_to(base))
+                        _icon_file_cache[base_name] = (base, rel)
+                        return send_from_directory(base, rel)
                     except ValueError:
                         pass
 

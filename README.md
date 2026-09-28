@@ -28,6 +28,9 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 ### Main Dashboard
 ![ROM Catalog Dashboard](screenshots/catalog.png?raw=true&v=5)
 
+### Play Statistics & Insights
+![ROMcat Play Statistics](screenshots/statistics.png?raw=true&v=1)
+
 ### Theme Presets (Loop)
 ![ROMcat Themes Animated Preview](screenshots/themes_preview.gif?raw=true&v=3)
 
@@ -52,6 +55,9 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 
 - **Direct Native Emulator Launching**: Games launch in your real desktop emulators (Flatpak, native binaries, AppImages, or RetroArch cores) on your system. No slow or inaccurate in-browser emulation.
 - **Two Flexible Modes**: Use the standalone desktop app with dedicated window management or run as an always-on background web service.
+- **Play Statistics & Insights Dashboard**: Dedicated statistics page (`/stats`) tracking total play time, session counts, distinct games played, and top consoles. Includes interactive console breakdown charts, play leaderboards, recent activity feeds, per-game reset controls, and responsive category filtering.
+- **Dynamic Sorting & Filtering**: Sort your game catalog by Name (A-Z with favorites prioritized), Most Played (by cumulative play time), Most Played (by total play sessions), or Recently Played.
+- **Background Session Tracking**: Automatically monitors active emulator processes and systemd scopes in the background to log play sessions (with minimum time threshold) without manual logging.
 - **System Tabs & Live Counters**: Instant switching between systems (e.g. NES, SNES, N64, GameCube, Wii U, Switch, Favorites, All, Hidden).
 - **Fast Search & Filtering**: Real-time title search across thousands of ROMs with automatic title normalization (stripping tags like `[!]`, `(USA)`, `(Rev 1)`, `.nkit`).
 - **Automated Cover Art Scraping & Interactive Picker**: One-click cover fetching from SteamGridDB with per-console targeting, overwrite controls, multi-pass fallback title matching, and authentic portrait box-art filtering (600x900). Includes an interactive modal on game cards to search, browse, and select between alternative box arts with live previews.
@@ -463,6 +469,7 @@ Emulator-Web-Catelog/
 ├── .gitignore               # Ignore cache, logs, virtual environments, covers, and local user data
 ├── screenshots/
 │   ├── catalog.jpg          # Application dashboard screenshot (Default theme with glowing borders)
+│   ├── statistics.png       # Play statistics and insights dashboard screenshot
 │   ├── settings.png         # Settings and customization modal screenshot
 │   └── theme.jpg            # Application dashboard screenshot (Catppuccin theme)
 ├── static/
@@ -473,7 +480,8 @@ Emulator-Web-Catelog/
 │   └── css/
 │       └── style.css        # CSS styles, theme variables, grid layout, and glow animations
 └── templates/
-    └── index.html           # Main dashboard template with search, tabs, settings, and launching modal
+    ├── index.html           # Main dashboard template with search, tabs, settings, and launching modal
+    └── stats.html           # Play statistics and insights dashboard template
 ```
 
 ---
@@ -486,8 +494,8 @@ Created and maintained by [PlasmaDrifter](https://github.com/PlasmaDrifter).
 
 ---
 
-## 💬 Community & Discussions
+## Community & Discussions
 
 Got questions, setup ideas, or feedback?
 
-* 🌐 Join our subreddit at [**r/PlasmaDrifterProjects**](https://reddit.com/r/PlasmaDrifterProjects) to discuss updates, get support, and share configurations.
+* Join our subreddit at [**r/PlasmaDrifterProjects**](https://reddit.com/r/PlasmaDrifterProjects) to discuss updates, get support, and share configurations.

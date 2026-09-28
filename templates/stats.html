@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ settings.title }} - Play Statistics &amp; Insights</title>
+<link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
+<link rel="stylesheet" href="/static/css/style.css?v=7.23">
+<style id="themeStyle">
+  :root {
+    --bg-body: {{ settings.theme.bg_body }};
+    --bg-header: {{ settings.theme.bg_header }};
+    --bg-tabs: {{ settings.theme.bg_tabs }};
+    --bg-card: {{ settings.theme.bg_card }};
+    --border-color: {{ settings.theme.border_color }};
+    --text-primary: {{ settings.theme.text_primary }};
+    --text-muted: {{ settings.theme.text_muted }};
+    --accent-color: {{ settings.theme.accent_color }};
+    --tab-active-bg: {{ settings.theme.tab_active_bg }};
+    --tab-active-text: {{ settings.theme.tab_active_text }};
+    --card-title-size: {{ settings.theme.card_title_size }};
+    --card-title-color: {{ settings.theme.card_title_color }};
+    --card-title-weight: {{ settings.theme.card_title_weight }};
+  }
+</style>
+</head>
+<body class="stats-page-body">
+
+<header class="stats-page-header">
+  <div class="stats-header-left">
+    <a href="/" class="stats-back-btn" id="statsBackBtn" title="Return to Game Library">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>Back to Library</span>
+    </a>
+  </div>
+  <div class="stats-header-center">
+    <h1 class="stats-page-title">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 20V10"></path>
+        <path d="M12 20V4"></path>
+        <path d="M6 20v-6"></path>
+      </svg>
+      Play Statistics &amp; Insights
+    </h1>
+    <span class="stats-page-subtitle">Real-time gaming metrics, console breakdown, and session history</span>
+  </div>
+  <div class="stats-header-right">
+    <button type="button" id="btnResetStats" class="btn-danger stats-reset-header-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18"></path>
+        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+      </svg>
+      Reset All Stats
+    </button>
+  </div>
+</header>
+
+<main class="stats-page-container">
+  <div id="statsActiveBanner" class="stats-active-banner hidden">
+    <span class="active-pulse-dot"></span>
+    <span id="statsActiveText">Currently Playing: <strong>...</strong></span>
+  </div>
+
+  <!-- Key Metrics Row -->
+  <section class="stats-kpi-grid">
+    <div class="stats-kpi-card">
+      <span class="stats-kpi-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        Total Time Played
+      </span>
+      <span class="stats-kpi-value" id="kpiTotalTime">0m</span>
+    </div>
+    <div class="stats-kpi-card">
+      <span class="stats-kpi-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 2 18 2 18 6 6 6 6 2"></polygon><rect x="3" y="6" width="18" height="16" rx="2"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+        Distinct Games Played
+      </span>
+      <span class="stats-kpi-value" id="kpiGamesCount">0</span>
+    </div>
+    <div class="stats-kpi-card">
+      <span class="stats-kpi-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        Total Sessions
+      </span>
+      <span class="stats-kpi-value" id="kpiSessionsCount">0</span>
+    </div>
+    <div class="stats-kpi-card">
+      <span class="stats-kpi-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+        Top Console
+      </span>
+      <span class="stats-kpi-value" id="kpiTopConsole">None</span>
+    </div>
+  </section>
+
+  <!-- Main 2-Column Dashboard Grid -->
+  <div class="stats-main-grid">
+    <!-- Left Column: Time by Console -->
+    <aside class="stats-panel stats-console-panel">
+      <div class="stats-panel-header">
+        <h2 class="stats-panel-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          Time by Console
+        </h2>
+        <span class="stats-panel-badge" id="totalConsolesBadge">0 systems</span>
+      </div>
+      <div id="statsConsoleBreakdown" class="stats-console-breakdown-list">
+        <p class="stats-empty-text">Loading console play statistics...</p>
+      </div>
+    </aside>
+
+    <!-- Right Column: Played Games Leaderboard -->
+    <section class="stats-panel stats-games-panel">
+      <div class="stats-panel-header">
+        <h2 class="stats-panel-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1s-1-.45-1-1v-2.34c-1.8-.62-3-2.31-3-4.32V4h14v6.34c0 2.01-1.2 3.7-3 4.32V17c0 .55-.45 1-1 1s-1-.45-1-1v-2.34"></path></svg>
+          Played Games Leaderboard
+        </h2>
+        <div class="stats-search-wrapper">
+          <svg class="stats-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="statsSearchInput" class="stats-search-input" placeholder="Search played games...">
+        </div>
+      </div>
+
+      <!-- Category Filter Pills with Console Icons -->
+      <div class="stats-category-pills-bar" id="statsCategoryPills"></div>
+
+      <!-- Games Leaderboard Grid/List -->
+      <div id="statsTopGamesList" class="stats-games-list">
+        <p class="stats-empty-text">Loading played games...</p>
+      </div>
+
+      <!-- Pagination / Expand Container -->
+      <div id="statsMoreContainer" class="stats-more-container hidden">
+        <button type="button" id="btnStatsShowMore" class="btn-secondary stats-more-btn">Show More</button>
+        <span id="statsLimitNote" class="stats-limit-note hidden">Showing top 50 games</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- Bottom Section: Recent Activity History Feed -->
+  <section class="stats-panel stats-recent-panel">
+    <div class="stats-panel-header">
+      <h2 class="stats-panel-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        Recent Play Activity
+      </h2>
+      <span class="stats-panel-badge" id="recentActivityCount">0 sessions</span>
+    </div>
+    <div id="statsRecentSessions" class="stats-recent-grid">
+      <p class="stats-empty-text">No recent play history recorded.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+const tabIconsOverrides = {{ settings.tab_icons | tojson if settings.tab_icons else '{}' }};
+
+const CONSOLE_ICON_MAP = [
+  // Nintendo
+  { pattern: /switch/i, src: '/static/icons/nintendo-switch.svg' },
+  { pattern: /wii\s*u/i, src: '/static/icons/nintendo-wiiu.svg' },
+  { pattern: /wii/i, src: '/static/icons/nintendo-wii.svg' },
+  { pattern: /gamecube|ngc|\bgc\b/i, src: '/static/icons/nintendo-gamecube.svg' },
+  { pattern: /n64|nintendo\s*64/i, src: '/static/icons/nintendo-n64.svg?v=2' },
+  { pattern: /snes|super\s*nintendo|sfc|super\s*famicom/i, src: '/static/icons/nintendo-snes.svg' },
+  { pattern: /nes|famicom/i, src: '/static/icons/nintendo-nes.svg' },
+  { pattern: /gba|game\s*boy\s*advance/i, src: '/static/icons/nintendo-gba.svg' },
+  { pattern: /gbc|game\s*boy\s*color/i, src: '/static/icons/nintendo-gameboy.svg' },
+  { pattern: /game\s*boy|\bgb\b/i, src: '/static/icons/nintendo-gameboy.svg' },
+  { pattern: /3ds/i, src: '/static/icons/nintendo-3ds.svg' },
+  { pattern: /nds|nintendo\s*ds|\bds\b/i, src: '/static/icons/nintendo-ds.svg' },
+  // PlayStation
+  { pattern: /ps5|playstation\s*5/i, src: '/static/icons/playstation-ps5.svg' },
+  { pattern: /ps4|playstation\s*4/i, src: '/static/icons/playstation-ps4.svg' },
+  { pattern: /ps3|playstation\s*3/i, src: '/static/icons/playstation-ps3.svg' },
+  { pattern: /ps2|playstation\s*2/i, src: '/static/icons/playstation-ps2.svg' },
+  { pattern: /ps1|psx|playstation\s*1|playstation/i, src: '/static/icons/playstation-ps1.svg' },
+  { pattern: /psp|playstation\s*portable/i, src: '/static/icons/playstation-psp.svg' },
+  { pattern: /psvita|vita/i, src: '/static/icons/playstation-psvita.svg' },
+  // Xbox
+  { pattern: /xbox\s*360|x360/i, src: '/static/icons/xbox-360.svg' },
+  { pattern: /xbox\s*one|xbone/i, src: '/static/icons/xbox-one.svg' },
+  { pattern: /series\s*[xs]|xbox\s*series/i, src: '/static/icons/xbox-series.svg' },
+  { pattern: /xbox/i, src: '/static/icons/xbox-original.svg' },
+  // Sega
+  { pattern: /dreamcast|\bdc\b/i, src: '/static/icons/sega-dreamcast.svg' },
+  { pattern: /saturn/i, src: '/static/icons/sega-saturn.svg' },
+  { pattern: /genesis|mega\s*drive|\bmd\b/i, src: '/static/icons/sega-genesis.svg' },
+  { pattern: /master\s*system|\bsms\b/i, src: '/static/icons/sega-master-system.svg' },
+  { pattern: /sega\s*cd|mega\s*cd/i, src: '/static/icons/sega-cd.svg' },
+  { pattern: /32x|sega\s*32x/i, src: '/static/icons/sega-32x.svg' },
+  { pattern: /game\s*gear|\bgg\b/i, src: '/static/icons/sega-gamegear.svg' },
+  { pattern: /sega/i, src: '/static/icons/sega-genesis.svg' },
+  // Atari
+  { pattern: /2600|atari\s*2600/i, src: '/static/icons/atari-2600.svg' },
+  { pattern: /5200|atari\s*5200/i, src: '/static/icons/atari-5200.svg' },
+  { pattern: /7800|atari\s*7800/i, src: '/static/icons/atari-7800.svg' },
+  { pattern: /lynx|atari\s*lynx/i, src: '/static/icons/atari-lynx.svg' },
+  { pattern: /jaguar|atari\s*jaguar/i, src: '/static/icons/atari-jaguar.svg' },
+  { pattern: /atari/i, src: '/static/icons/atari-2600.svg' },
+  // Commodore
+  { pattern: /c64|commodore\s*64/i, src: '/static/icons/commodore-64.svg' },
+  { pattern: /amiga/i, src: '/static/icons/commodore-amiga.svg' },
+  { pattern: /vic20|vic-20/i, src: '/static/icons/commodore-vic20.svg' },
+  { pattern: /commodore/i, src: '/static/icons/commodore-64.svg' },
+  // Arcade / Retro
+  { pattern: /neogeo|neo-geo|mvs|aes/i, src: '/static/icons/neogeo.svg' },
+  { pattern: /arcade|mame|fbneo|fba/i, src: '/static/icons/retro-arcade.svg' }
+];
+
+function getConsoleIconSrc(sysId, sysName) {
+  if (typeof tabIconsOverrides === 'object' && tabIconsOverrides && tabIconsOverrides[sysId]) {
+    return encodeURI(tabIconsOverrides[sysId]);
+  }
+  const text = (sysId + ' ' + (sysName || '')).trim();
+  for (const item of CONSOLE_ICON_MAP) {
+    if (item.pattern.test(text)) {
+      return item.src;
+    }
+  }
+  return '/static/icons/retro/retro-gamepad.svg';
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatStatDuration(seconds) {
+  if (!seconds || seconds <= 0) return '0m';
+  const totalMinutes = Math.ceil(seconds / 60);
+  if (totalMinutes < 60) return totalMinutes + 'm';
+  const hours = Math.floor(totalMinutes / 60);
+  const remMin = totalMinutes % 60;
+  return remMin > 0 ? `${hours}h ${remMin}m` : `${hours}h`;
+}
+
+function formatRelativeTimestamp(ts) {
+  if (!ts) return 'Never';
+  const now = Math.floor(Date.now() / 1000);
+  const diff = now - ts;
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(ts * 1000).toLocaleDateString();
+}
+
+let latestStatsData = null;
+let currentStatsCategory = 'all';
+const categoryLimits = { all: 10 };
+let statsSearchQuery = '';
+let activeSessionPoller = null;
+
+function getCategoryLimit(cat) {
+  return categoryLimits[cat] || 10;
+}
+
+function setCategoryLimit(cat, limit) {
+  categoryLimits[cat] = limit;
+}
+
+function renderPlayedGamesList() {
+  const topContainer = document.getElementById('statsTopGamesList');
+  const moreContainer = document.getElementById('statsMoreContainer');
+  const btnMore = document.getElementById('btnStatsShowMore');
+  const limitNote = document.getElementById('statsLimitNote');
+  if (!topContainer || !latestStatsData) return;
+
+  const allGames = latestStatsData.top_games || [];
+  let filtered = currentStatsCategory === 'all'
+    ? allGames
+    : allGames.filter(g => g.system === currentStatsCategory);
+
+  if (statsSearchQuery) {
+    const q = statsSearchQuery.toLowerCase();
+    filtered = filtered.filter(g => (g.title || '').toLowerCase().includes(q) || (g.system_name || '').toLowerCase().includes(q));
+  }
+
+  if (filtered.length === 0) {
+    const msg = statsSearchQuery
+      ? `No played games found matching "${escapeHtml(statsSearchQuery)}".`
+      : currentStatsCategory === 'all'
+        ? 'No games have been played for 30 seconds or more yet.'
+        : 'No games have been played for 30 seconds or more yet in this category.';
+    topContainer.innerHTML = `<p class="stats-empty-text">${msg}</p>`;
+    if (moreContainer) moreContainer.classList.add('hidden');
+    return;
+  }
+
+  const currentLimit = getCategoryLimit(currentStatsCategory);
+  const visibleGames = filtered.slice(0, currentLimit);
+
+  topContainer.innerHTML = visibleGames.map((g, idx) => {
+    const iconSrc = getConsoleIconSrc(g.system, g.system_name);
+    return `
+      <div class="stats-game-card" data-system="${escapeHtml(g.system)}" data-filename="${escapeHtml(g.filename)}" data-path="${escapeHtml(g.path || '')}" data-title="${escapeHtml(g.title)}" data-game-key="${escapeHtml(g.game_key)}">
+        <span class="stats-game-rank">#${idx + 1}</span>
+        <div class="stats-game-cover-wrap">
+          ${g.cover ? `<img src="${escapeHtml(g.cover)}" alt="" loading="lazy">` : '<div class="stats-cover-placeholder"></div>'}
+        </div>
+        <div class="stats-game-meta">
+          <div class="stats-game-title" title="${escapeHtml(g.title)}">${escapeHtml(g.title)}</div>
+          <div class="stats-game-tags">
+            <span class="stats-sys-badge" onclick="event.stopPropagation(); selectConsoleCategory('${escapeHtml(g.system)}')">
+              <img src="${iconSrc}" class="stats-badge-icon" alt="">
+              ${escapeHtml(g.system_name || g.system)}
+            </span>
+            <span class="stats-metric-tag">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              ${g.formatted_time}
+            </span>
+            <span class="stats-metric-tag">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              ${g.play_count} play${g.play_count !== 1 ? 's' : ''}
+            </span>
+            ${g.last_played ? `<span class="stats-metric-tag muted">Last: ${formatRelativeTimestamp(g.last_played)}</span>` : ''}
+          </div>
+        </div>
+        <div class="stats-game-actions">
+          <button type="button" class="stats-card-reset-btn" title="Reset stats for ${escapeHtml(g.title)}" aria-label="Reset stats for ${escapeHtml(g.title)}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+          </button>
+          <button type="button" class="stats-play-action-btn" title="Play ${escapeHtml(g.title)}" aria-label="Play ${escapeHtml(g.title)}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (moreContainer && btnMore) {
+    if (filtered.length > 10) {
+      moreContainer.classList.remove('hidden');
+      if (limitNote) {
+        limitNote.textContent = `Showing ${visibleGames.length} of ${filtered.length} games`;
+        limitNote.classList.remove('hidden');
+      }
+
+      if (visibleGames.length < filtered.length) {
+        const nextBatch = Math.min(50, filtered.length - visibleGames.length);
+        btnMore.textContent = `Show More (+${nextBatch} more)`;
+      } else {
+        btnMore.textContent = 'Show Less';
+      }
+    } else {
+      moreContainer.classList.add('hidden');
+      if (limitNote) limitNote.classList.add('hidden');
+    }
+  }
+}
+
+function selectConsoleCategory(sysId) {
+  currentStatsCategory = sysId;
+  const pillsContainer = document.getElementById('statsCategoryPills');
+  if (pillsContainer) {
+    pillsContainer.querySelectorAll('.stats-pill-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.category === currentStatsCategory);
+    });
+  }
+  document.querySelectorAll('.stats-console-item').forEach(item => {
+    item.classList.toggle('active-filter', item.getAttribute('onclick')?.includes(`'${currentStatsCategory}'`));
+  });
+  renderPlayedGamesList();
+}
+
+let lastRenderedSignature = '';
+
+function renderStatsPage(data, force = false) {
+  latestStatsData = data;
+  const summary = data.summary || {};
+
+  const elTotalTime = document.getElementById('kpiTotalTime');
+  const elGamesCount = document.getElementById('kpiGamesCount');
+  const elSessionsCount = document.getElementById('kpiSessionsCount');
+  const elTopConsole = document.getElementById('kpiTopConsole');
+
+  if (elTotalTime) elTotalTime.textContent = summary.formatted_total_time || '0m';
+  if (elGamesCount) elGamesCount.textContent = summary.total_distinct_games || 0;
+  if (elSessionsCount) elSessionsCount.textContent = summary.total_sessions || 0;
+  if (elTopConsole) elTopConsole.textContent = summary.top_console || 'None';
+
+  // Active session banner: update on every tick for real-time elapsed timer
+  const activeBanner = document.getElementById('statsActiveBanner');
+  const activeText = document.getElementById('statsActiveText');
+  if (activeBanner && activeText) {
+    if (data.active_sessions && data.active_sessions.length > 0) {
+      const act = data.active_sessions[0];
+      activeText.innerHTML = `Currently Playing: <strong>${escapeHtml(act.title)}</strong> (${escapeHtml(act.system.toUpperCase())}) &mdash; running for ${formatStatDuration(act.elapsed_seconds)}`;
+      activeBanner.classList.remove('hidden');
+    } else {
+      activeBanner.classList.add('hidden');
+    }
+  }
+
+  // Prevent full DOM destruction/re-creation if underlying data hasn't changed
+  const currentSignature = `${summary.total_play_time_seconds}:${summary.total_sessions}:${summary.last_played}:${(data.active_sessions || []).length}:${(data.top_games || []).length}:${(data.recent_sessions || []).length}`;
+  if (!force && currentSignature === lastRenderedSignature) {
+    return;
+  }
+  lastRenderedSignature = currentSignature;
+
+  // Console Breakdown with Console Icons
+  const consoleContainer = document.getElementById('statsConsoleBreakdown');
+  const totalConsolesBadge = document.getElementById('totalConsolesBadge');
+  if (consoleContainer) {
+    const allConsoles = data.systems || [];
+    if (totalConsolesBadge) totalConsolesBadge.textContent = `${allConsoles.length} systems`;
+
+    if (allConsoles.length === 0) {
+      consoleContainer.innerHTML = '<p class="stats-empty-text">No consoles configured.</p>';
+    } else {
+      consoleContainer.innerHTML = allConsoles.map(s => {
+        const iconSrc = getConsoleIconSrc(s.system, s.name);
+        const isActiveFilter = currentStatsCategory === s.system;
+        return `
+          <div class="stats-console-item ${isActiveFilter ? 'active-filter' : ''}" onclick="selectConsoleCategory('${escapeHtml(s.system)}')">
+            <div class="stats-console-item-left">
+              <div class="stats-console-icon-wrap">
+                <img src="${iconSrc}" alt="" class="stats-console-icon" loading="lazy">
+              </div>
+              <div class="stats-console-titles">
+                <span class="stats-console-name">${escapeHtml(s.name)}</span>
+                <span class="stats-console-meta">${s.formatted_time} &bull; ${s.play_count} play${s.play_count !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+            <div class="stats-console-item-right">
+              <span class="stats-console-pct">${s.percent}%</span>
+              <div class="stats-progress-track">
+                <div class="stats-progress-bar" style="width: ${s.percent > 0 ? Math.min(100, Math.max(3, s.percent)) : 0}%;"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // Category Pills with Authentic Console Icons
+  const pillsContainer = document.getElementById('statsCategoryPills');
+  if (pillsContainer) {
+    const allPlayedGames = data.top_games || [];
+    const consoleCounts = {};
+    const consoleNames = {};
+    allPlayedGames.forEach(g => {
+      consoleCounts[g.system] = (consoleCounts[g.system] || 0) + 1;
+      if (g.system_name) consoleNames[g.system] = g.system_name;
+    });
+
+    const pillsData = [{
+      id: 'all',
+      name: 'All',
+      count: allPlayedGames.length,
+      icon: '/static/icons/retro-gamepad.svg'
+    }];
+
+    const seenSystems = new Set();
+    (data.systems || []).forEach(s => {
+      pillsData.push({
+        id: s.system,
+        name: s.name,
+        count: consoleCounts[s.system] || 0,
+        icon: getConsoleIconSrc(s.system, s.name)
+      });
+      seenSystems.add(s.system);
+    });
+
+    Object.keys(consoleCounts).forEach(sysId => {
+      if (!seenSystems.has(sysId)) {
+        const sysName = consoleNames[sysId] || sysId.toUpperCase();
+        pillsData.push({
+          id: sysId,
+          name: sysName,
+          count: consoleCounts[sysId] || 0,
+          icon: getConsoleIconSrc(sysId, sysName)
+        });
+        seenSystems.add(sysId);
+      }
+    });
+
+    const validCategory = pillsData.some(p => p.id === currentStatsCategory);
+    if (!validCategory) {
+      currentStatsCategory = 'all';
+    }
+
+    pillsContainer.innerHTML = pillsData.map(p => `
+      <button type="button" class="stats-pill-btn ${p.id === currentStatsCategory ? 'active' : ''}" data-category="${escapeHtml(p.id)}">
+        <img src="${p.icon}" class="pill-console-icon" alt="" loading="lazy">
+        <span class="stats-pill-label">${escapeHtml(p.name)}</span>
+        <span class="stats-pill-count">(${p.count})</span>
+      </button>
+    `).join('');
+
+    pillsContainer.querySelectorAll('.stats-pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectConsoleCategory(btn.dataset.category);
+      });
+    });
+  }
+
+  renderPlayedGamesList();
+
+  // Recent Sessions Grid
+  const recentContainer = document.getElementById('statsRecentSessions');
+  const recentBadge = document.getElementById('recentActivityCount');
+  if (recentContainer) {
+    const recent = data.recent_sessions || [];
+    if (recentBadge) recentBadge.textContent = `${recent.length} session${recent.length !== 1 ? 's' : ''}`;
+
+    if (recent.length === 0) {
+      recentContainer.innerHTML = '<p class="stats-empty-text">No recent play history recorded.</p>';
+    } else {
+      recentContainer.innerHTML = recent.map(r => {
+        const iconSrc = getConsoleIconSrc(r.system, r.system_name);
+        return `
+          <div class="stats-recent-card" data-system="${escapeHtml(r.system)}" data-filename="${escapeHtml(r.filename)}" data-path="${escapeHtml(r.path || '')}" data-title="${escapeHtml(r.title)}">
+            <div class="stats-recent-cover">
+              ${r.cover ? `<img src="${escapeHtml(r.cover)}" alt="" loading="lazy">` : '<div class="stats-cover-placeholder small"></div>'}
+            </div>
+            <div class="stats-recent-info">
+              <div class="stats-recent-title" title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</div>
+              <div class="stats-recent-meta">
+                <span class="stats-sys-badge mini" onclick="event.stopPropagation(); selectConsoleCategory('${escapeHtml(r.system)}')">
+                  <img src="${iconSrc}" class="stats-badge-icon mini" alt="">
+                  ${escapeHtml(r.system_name || r.system)}
+                </span>
+                <span class="stats-recent-time">${formatRelativeTimestamp(r.started_at)}</span>
+                <span class="stats-recent-dur">&bull; ${r.formatted_duration}</span>
+              </div>
+            </div>
+            <button type="button" class="stats-play-action-btn mini" title="Play ${escapeHtml(r.title)}" aria-label="Play ${escapeHtml(r.title)}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+}
+
+async function loadStatsData(force = false) {
+  try {
+    const res = await fetch('/api/stats');
+    const data = await res.json();
+    if (data.ok) {
+      renderStatsPage(data, force);
+    }
+  } catch (err) {
+    console.error('Failed to load stats:', err);
+  }
+}
+
+let launchToastTimeout = null;
+function showLaunchToast(message, isError = false) {
+  let toast = document.getElementById('statsLaunchToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'statsLaunchToast';
+    toast.className = 'stats-launch-toast';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = isError
+    ? `<span style="color: #f85149; font-size: 1.1rem;">&#9888;</span> <span>${escapeHtml(message)}</span>`
+    : `<span class="active-pulse-dot" style="margin-right: 2px;"></span> <span>${escapeHtml(message)}</span>`;
+  toast.classList.remove('hidden');
+  if (launchToastTimeout) clearTimeout(launchToastTimeout);
+  launchToastTimeout = setTimeout(() => {
+    toast.classList.add('hidden');
+  }, 3500);
+}
+
+async function launchGame(system, filename, path, card, title) {
+  if (!system) return;
+  if (card) card.classList.add('launching');
+  showLaunchToast(`Launching ${title || filename}...`);
+
+  try {
+    const res = await fetch('/api/launch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system, filename, path })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showLaunchToast(`Launched ${title || filename}! Emulator running.`);
+      loadStatsData();
+    } else {
+      showLaunchToast(`Failed to launch: ${data.error || 'Unknown error'}`, true);
+    }
+  } catch (err) {
+    showLaunchToast(`Launch error: ${err}`, true);
+  } finally {
+    setTimeout(() => {
+      if (card) card.classList.remove('launching');
+    }, 2000);
+  }
+}
+
+async function resetSingleGameStats(gameKey, title) {
+  if (!gameKey) return;
+  const displayName = title || gameKey;
+  if (!confirm(`Reset all play statistics for "${displayName}"?`)) {
+    return;
+  }
+  try {
+    const res = await fetch('/api/stats/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_key: gameKey })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showLaunchToast(`Reset statistics for ${displayName}`);
+      lastRenderedSignature = '';
+      loadStatsData(true);
+    } else {
+      showLaunchToast(`Failed to reset stats: ${data.error || 'Unknown error'}`, true);
+    }
+  } catch (err) {
+    showLaunchToast(`Error resetting stats: ${err}`, true);
+  }
+}
+
+function initStatsPage() {
+  loadStatsData(true);
+
+  // Delegated click handling: Play button or Reset stats button
+  document.addEventListener('click', (e) => {
+    const playBtn = e.target.closest('.stats-play-action-btn');
+    if (playBtn) {
+      const card = playBtn.closest('.stats-game-card, .stats-recent-card');
+      if (!card) return;
+      const system = card.dataset.system;
+      const filename = card.dataset.filename;
+      const path = card.dataset.path;
+      const title = card.dataset.title;
+      launchGame(system, filename, path, card, title);
+      return;
+    }
+
+    const resetBtn = e.target.closest('.stats-card-reset-btn');
+    if (resetBtn) {
+      const card = resetBtn.closest('.stats-game-card');
+      if (!card) return;
+      const gameKey = card.dataset.gameKey;
+      const title = card.dataset.title;
+      resetSingleGameStats(gameKey, title);
+      return;
+    }
+  });
+
+  // Search filter
+  const searchInput = document.getElementById('statsSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      statsSearchQuery = e.target.value.trim();
+      setCategoryLimit(currentStatsCategory, 10);
+      renderPlayedGamesList();
+    });
+  }
+
+  // Show more button: increments by 50 each time until all are shown, then collapses back to 10
+  const btnStatsShowMore = document.getElementById('btnStatsShowMore');
+  if (btnStatsShowMore) {
+    btnStatsShowMore.addEventListener('click', () => {
+      const currentLimit = getCategoryLimit(currentStatsCategory);
+      if (btnStatsShowMore.textContent.trim().startsWith('Show Less')) {
+        setCategoryLimit(currentStatsCategory, 10);
+      } else {
+        setCategoryLimit(currentStatsCategory, currentLimit + 50);
+      }
+      renderPlayedGamesList();
+    });
+  }
+
+  // Reset stats button
+  const btnResetStats = document.getElementById('btnResetStats');
+  if (btnResetStats) {
+    btnResetStats.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to reset all play statistics? This cannot be undone.')) {
+        return;
+      }
+      try {
+        const res = await fetch('/api/stats/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (data.ok) {
+          lastRenderedSignature = '';
+          loadStatsData(true);
+        } else {
+          alert('Failed to reset statistics: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Error resetting statistics: ' + err);
+      }
+    });
+  }
+
+  // Live polling for active sessions
+  activeSessionPoller = setInterval(async () => {
+    try {
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      if (data.ok) {
+        renderStatsPage(data);
+      }
+    } catch (e) {}
+  }, 4000);
+}
+
+document.addEventListener('DOMContentLoaded', initStatsPage);
+</script>
+</body>
+</html>
