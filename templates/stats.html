@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ settings.title }} - Play Statistics &amp; Insights</title>
+<title>{{ settings.title }} - Play Time Statistics</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=7.23">
+<link rel="stylesheet" href="/static/css/style.css?v=7.30">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -22,6 +22,7 @@
     --card-title-color: {{ settings.theme.card_title_color }};
     --card-title-weight: {{ settings.theme.card_title_weight }};
   }
+
 </style>
 </head>
 <body class="stats-page-body">
@@ -43,7 +44,7 @@
         <path d="M12 20V4"></path>
         <path d="M6 20v-6"></path>
       </svg>
-      Play Statistics &amp; Insights
+      Play Time Statistics
     </h1>
     <span class="stats-page-subtitle">Real-time gaming metrics, console breakdown, and session history</span>
   </div>
@@ -157,6 +158,118 @@
   </section>
 </main>
 
+<!-- Detailed Game Statistics Modal -->
+<div id="statsGameModal" class="stats-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="statsModalTitle">
+  <div class="stats-modal-dialog">
+    <div class="stats-modal-header">
+      <div class="stats-modal-identity">
+        <div class="stats-modal-cover-wrap">
+          <img id="statsModalCover" src="" alt="" class="stats-modal-cover">
+        </div>
+        <div class="stats-modal-titles">
+          <div class="stats-modal-badge-row">
+            <span id="statsModalSysBadge" class="stats-sys-badge">
+              <img id="statsModalSysIcon" class="stats-badge-icon" src="" alt="">
+              <span id="statsModalSysName"></span>
+            </span>
+            <span id="statsModalPlatformShare" class="stats-modal-tag"></span>
+          </div>
+          <h2 id="statsModalTitle" class="stats-modal-title"></h2>
+          <div id="statsModalPath" class="stats-modal-filepath" title=""></div>
+        </div>
+      </div>
+      <button type="button" class="close-modal-btn" id="closeStatsModalBtn" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="stats-modal-body">
+      <!-- KPI Stat Cards (Balanced 3x2 Grid) -->
+      <div class="stats-modal-kpi-grid">
+        <div class="stats-modal-kpi-card">
+          <div class="stats-modal-kpi-label">Total Playtime</div>
+          <div class="stats-modal-kpi-val" id="statsModalTotalTime">--</div>
+        </div>
+        <div class="stats-modal-kpi-card">
+          <div class="stats-modal-kpi-label">Total Sessions</div>
+          <div class="stats-modal-kpi-val" id="statsModalPlayCount">--</div>
+        </div>
+        <div class="stats-modal-kpi-card">
+          <div class="stats-modal-kpi-label">Average Session</div>
+          <div class="stats-modal-kpi-val" id="statsModalAvgSession">--</div>
+        </div>
+        <div class="stats-modal-kpi-card">
+          <div class="stats-modal-kpi-label">Longest Session</div>
+          <div class="stats-modal-kpi-val highlight" id="statsModalLongestSession">--</div>
+        </div>
+        <div class="stats-modal-kpi-card">
+          <div class="stats-modal-kpi-label">First Played</div>
+          <div class="stats-modal-kpi-val sm" id="statsModalFirstPlayed">--</div>
+        </div>
+        <div class="stats-modal-kpi-card">
+          <div class="stats-modal-kpi-label">Last Played</div>
+          <div class="stats-modal-kpi-val sm" id="statsModalLastPlayed">--</div>
+        </div>
+      </div>
+
+      <!-- Playtime Activity Graph Section -->
+      <div class="stats-modal-chart-section">
+        <div class="stats-modal-section-header">
+          <div class="stats-modal-section-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>
+            <span id="statsModalChartHeading">Playtime Activity</span>
+          </div>
+          <div class="stats-modal-timeframe-selector" id="statsModalTimeframeSelector" role="tablist">
+            <button type="button" class="stats-timeframe-btn" data-timeframe="7d">7 Days</button>
+            <button type="button" class="stats-timeframe-btn active" data-timeframe="14d">14 Days</button>
+            <button type="button" class="stats-timeframe-btn" data-timeframe="30d">30 Days</button>
+            <button type="button" class="stats-timeframe-btn" data-timeframe="1y">1 Year</button>
+          </div>
+        </div>
+        <div class="stats-modal-chart-container" id="statsModalChartContainer">
+          <!-- Rendered Detailed SVG Chart Wrap -->
+          <div id="statsModalChartSvgWrap" class="stats-modal-chart-svg-wrap"></div>
+          <div id="statsChartTooltip" class="stats-chart-tooltip hidden" aria-hidden="true">
+            <div class="stats-tooltip-date" id="statsTooltipDate"></div>
+            <div class="stats-tooltip-time" id="statsTooltipTime"></div>
+          </div>
+        </div>
+        <div class="stats-modal-chart-summary" id="statsModalChartSummary">
+          <!-- Summary pills -->
+        </div>
+      </div>
+
+      <!-- Active Sessions / Daily Breakdown -->
+      <div class="stats-modal-log-section">
+        <div class="stats-modal-section-header">
+          <div class="stats-modal-section-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span>Active Play Sessions</span>
+          </div>
+          <div class="stats-modal-section-sub" id="statsModalLogCount">0 sessions</div>
+        </div>
+        <div class="stats-modal-log-list" id="statsModalLogList">
+          <!-- Rendered Daily Sessions List -->
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-modal-footer">
+      <div class="stats-modal-footer-left">
+        <button type="button" class="btn-secondary danger" id="statsModalResetBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+          Reset Stats
+        </button>
+      </div>
+      <div class="stats-modal-footer-right">
+        <button type="button" class="btn-secondary" id="statsModalCloseBtn">Close</button>
+        <button type="button" class="btn-primary" id="statsModalPlayBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          Play Now
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const tabIconsOverrides = {{ settings.tab_icons | tojson if settings.tab_icons else '{}' }};
 
@@ -256,6 +369,12 @@ function formatRelativeTimestamp(ts) {
   return new Date(ts * 1000).toLocaleDateString();
 }
 
+function formatFullDateTime(ts) {
+  if (!ts) return 'Never';
+  const d = new Date(ts * 1000);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
 let latestStatsData = null;
 let currentStatsCategory = 'all';
 const categoryLimits = { all: 10 };
@@ -304,7 +423,7 @@ function renderPlayedGamesList() {
   topContainer.innerHTML = visibleGames.map((g, idx) => {
     const iconSrc = getConsoleIconSrc(g.system, g.system_name);
     return `
-      <div class="stats-game-card" data-system="${escapeHtml(g.system)}" data-filename="${escapeHtml(g.filename)}" data-path="${escapeHtml(g.path || '')}" data-title="${escapeHtml(g.title)}" data-game-key="${escapeHtml(g.game_key)}">
+      <div class="stats-game-card" data-system="${escapeHtml(g.system)}" data-filename="${escapeHtml(g.filename)}" data-path="${escapeHtml(g.path || '')}" data-title="${escapeHtml(g.title)}" data-game-key="${escapeHtml(g.game_key)}" tabindex="0" role="button" aria-label="View play statistics for ${escapeHtml(g.title)}">
         <span class="stats-game-rank">#${idx + 1}</span>
         <div class="stats-game-cover-wrap">
           ${g.cover ? `<img src="${escapeHtml(g.cover)}" alt="" loading="lazy">` : '<div class="stats-cover-placeholder"></div>'}
@@ -326,6 +445,9 @@ function renderPlayedGamesList() {
             </span>
             ${g.last_played ? `<span class="stats-metric-tag muted">Last: ${formatRelativeTimestamp(g.last_played)}</span>` : ''}
           </div>
+        </div>
+        <div class="stats-game-sparkline-wrap">
+          ${renderSparklineSvg(g.history_30d || g.history_14d, g.history_dates, idx)}
         </div>
         <div class="stats-game-actions">
           <button type="button" class="stats-card-reset-btn" title="Reset stats for ${escapeHtml(g.title)}" aria-label="Reset stats for ${escapeHtml(g.title)}">
@@ -361,6 +483,118 @@ function renderPlayedGamesList() {
       if (limitNote) limitNote.classList.add('hidden');
     }
   }
+}
+
+function getConsoleDisplayName(sysId) {
+  if (!sysId) return '';
+  if (latestStatsData && latestStatsData.systems) {
+    const found = latestStatsData.systems.find(s => s.system === sysId);
+    if (found && found.name) return found.name;
+  }
+  return sysId.toUpperCase();
+}
+
+function renderSparklineSvg(history, dates, idx) {
+  if (!history || !Array.isArray(history) || history.length === 0) {
+    return `<div class="stats-sparkline-empty"></div>`;
+  }
+
+  const n = history.length;
+  const total30dSec = history.reduce((a, b) => a + b, 0);
+  const maxVal = Math.max(...history, 600);
+
+  const w = 360;
+  const h = 38;
+  const padBottom = 33;
+  const padTop = 5;
+  const plotH = padBottom - padTop;
+
+  if (total30dSec === 0) {
+    return `
+      <div class="stats-sparkline-box" title="No playtime recorded in past 30 days">
+        <svg class="stats-game-sparkline-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;max-width:${w}px;height:${h}px;display:block;">
+          <line x1="2" y1="${padBottom}" x2="${w - 2}" y2="${padBottom}" stroke="var(--border-color)" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.25"/>
+        </svg>
+      </div>
+    `;
+  }
+
+  const points = history.map((sec, i) => {
+    const x = 3 + (i / (n - 1)) * (w - 6);
+    const y = padBottom - (sec / maxVal) * plotH;
+    return {
+      x,
+      y,
+      sec,
+      date: (dates && dates[i]) || `Day ${i + 1}`,
+      formatted: formatStatDuration(sec)
+    };
+  });
+
+  // Smooth cubic Bezier spline
+  let curveD = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = i > 0 ? points[i - 1] : points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = i !== points.length - 2 ? points[i + 2] : p2;
+
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+    curveD += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+
+  const areaD = `${curveD} L ${points[points.length - 1].x.toFixed(1)} ${padBottom} L ${points[0].x.toFixed(1)} ${padBottom} Z`;
+
+  // Find peak point for glowing dot
+  let peakPoint = points[0];
+  for (const pt of points) {
+    if (pt.sec > peakPoint.sec) peakPoint = pt;
+  }
+
+  const gradId = `sparkGrad_${idx || 0}`;
+
+  // Interactive dots on active days with native SVG title tooltips
+  const dotsSvg = points.filter(p => p.sec > 0).map(p => `
+    <circle class="sparkline-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.2" fill="var(--accent-color)">
+      <title>${escapeHtml(p.date)}: ${p.formatted}</title>
+    </circle>
+  `).join('');
+
+  return `
+    <div class="stats-sparkline-box" title="30-Day Activity: ${formatStatDuration(total30dSec)} in past 30 days">
+      <svg class="stats-game-sparkline-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;max-width:${w}px;height:${h}px;display:block;">
+        <defs>
+          <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--accent-color)" stop-opacity="0.32" />
+            <stop offset="100%" stop-color="var(--accent-color)" stop-opacity="0.0" />
+          </linearGradient>
+        </defs>
+
+        <!-- Subtle baseline -->
+        <line x1="2" y1="${padBottom}" x2="${w - 2}" y2="${padBottom}" stroke="var(--border-color)" stroke-width="1" opacity="0.25"/>
+
+        <!-- Smooth area fill -->
+        <path d="${areaD}" fill="url(#${gradId})" />
+
+        <!-- Smooth curve line -->
+        <path d="${curveD}" fill="none" stroke="var(--accent-color)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+
+        <!-- Activity dots with tooltips -->
+        ${dotsSvg}
+
+        <!-- Glowing peak indicator dot -->
+        ${peakPoint.sec > 0 ? `
+          <circle cx="${peakPoint.x.toFixed(1)}" cy="${peakPoint.y.toFixed(1)}" r="2.8" fill="#ffffff" stroke="var(--accent-color)" stroke-width="1.4" style="filter: drop-shadow(0 0 3px var(--accent-color));">
+            <title>Peak: ${escapeHtml(peakPoint.date)} (${peakPoint.formatted})</title>
+          </circle>
+        ` : ''}
+      </svg>
+    </div>
+  `;
 }
 
 function selectConsoleCategory(sysId) {
@@ -491,9 +725,15 @@ function renderStatsPage(data, force = false) {
       }
     });
 
-    const validCategory = pillsData.some(p => p.id === currentStatsCategory);
-    if (!validCategory) {
-      currentStatsCategory = 'all';
+    const initialUrlCat = new URLSearchParams(window.location.search).get('category') || window.location.hash.replace('#', '');
+    if (initialUrlCat && pillsData.some(p => p.id.toLowerCase() === initialUrlCat.toLowerCase())) {
+      const match = pillsData.find(p => p.id.toLowerCase() === initialUrlCat.toLowerCase());
+      currentStatsCategory = match.id;
+    } else {
+      const validCategory = pillsData.some(p => p.id === currentStatsCategory);
+      if (!validCategory) {
+        currentStatsCategory = 'all';
+      }
     }
 
     pillsContainer.innerHTML = pillsData.map(p => `
@@ -526,7 +766,7 @@ function renderStatsPage(data, force = false) {
       recentContainer.innerHTML = recent.map(r => {
         const iconSrc = getConsoleIconSrc(r.system, r.system_name);
         return `
-          <div class="stats-recent-card" data-system="${escapeHtml(r.system)}" data-filename="${escapeHtml(r.filename)}" data-path="${escapeHtml(r.path || '')}" data-title="${escapeHtml(r.title)}">
+          <div class="stats-recent-card" data-system="${escapeHtml(r.system)}" data-filename="${escapeHtml(r.filename)}" data-path="${escapeHtml(r.path || '')}" data-title="${escapeHtml(r.title)}" data-game-key="${escapeHtml(r.game_key || (r.system + '::' + r.filename))}" tabindex="0" role="button" aria-label="View play statistics for ${escapeHtml(r.title)}">
             <div class="stats-recent-cover">
               ${r.cover ? `<img src="${escapeHtml(r.cover)}" alt="" loading="lazy">` : '<div class="stats-cover-placeholder small"></div>'}
             </div>
@@ -551,12 +791,31 @@ function renderStatsPage(data, force = false) {
   }
 }
 
+let modalDeepLinkChecked = false;
+function checkInitialModalDeepLink() {
+  if (modalDeepLinkChecked) return;
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetModal = urlParams.get('modal');
+  if (targetModal && latestStatsData && latestStatsData.top_games && latestStatsData.top_games.length > 0) {
+    modalDeepLinkChecked = true;
+    const game = (targetModal === '1' || targetModal === 'true') ? latestStatsData.top_games[0] : latestStatsData.top_games.find(g => (g.title || '').toLowerCase().includes(targetModal.toLowerCase()));
+    if (game) {
+      showGameDetailModal(game.game_key);
+      const tf = urlParams.get('timeframe');
+      if (tf && ['7d', '14d', '30d', 'all'].includes(tf)) {
+        updateModalChartAndTimeframe(tf);
+      }
+    }
+  }
+}
+
 async function loadStatsData(force = false) {
   try {
     const res = await fetch('/api/stats');
     const data = await res.json();
     if (data.ok) {
       renderStatsPage(data, force);
+      checkInitialModalDeepLink();
     }
   } catch (err) {
     console.error('Failed to load stats:', err);
@@ -634,10 +893,574 @@ async function resetSingleGameStats(gameKey, title) {
   }
 }
 
+let currentModalGame = null;
+let currentModalTimeframe = '14d';
+let currentModalChartPoints = [];
+
+function getGameTimeframeData(g, timeframe) {
+  const daily = g.daily || {};
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dates = [];
+  const labels = [];
+  const fullDates = [];
+  const history = [];
+
+  if (timeframe === '7d' || timeframe === '14d' || timeframe === '30d' || timeframe === '1y') {
+    const days = timeframe === '7d' ? 7 : (timeframe === '14d' ? 14 : (timeframe === '30d' ? 30 : 365));
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const monthShort = d.toLocaleDateString(undefined, { month: 'short' });
+      dates.push(dateStr);
+      if (days > 90) {
+        labels.push(`${monthShort} '${String(yyyy).slice(-2)}`);
+      } else {
+        labels.push(`${monthShort} ${d.getDate()}`);
+      }
+      fullDates.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }));
+      history.push(Number(daily[dateStr] || 0));
+    }
+  } else {
+    // All time
+    const keys = Object.keys(daily).sort();
+    let startDate;
+    if (keys.length > 0) {
+      startDate = new Date(keys[0] + 'T00:00:00');
+    } else if (g.first_played) {
+      startDate = new Date(g.first_played * 1000);
+    } else {
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() - 13);
+    }
+    startDate.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.max(1, Math.round((today - startDate) / (86400 * 1000))) + 1;
+    for (let i = 0; i < diffDays; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const monthShort = d.toLocaleDateString(undefined, { month: 'short' });
+      dates.push(dateStr);
+      if (diffDays > 90) {
+        labels.push(`${monthShort} '${String(yyyy).slice(-2)}`);
+      } else {
+        labels.push(`${monthShort} ${d.getDate()}`);
+      }
+      fullDates.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }));
+      history.push(Number(daily[dateStr] || 0));
+    }
+  }
+
+  // Active breakdown for this timeframe (sorted newest first)
+  const breakdown = [];
+  for (let i = dates.length - 1; i >= 0; i--) {
+    const sec = history[i];
+    if (sec > 0) {
+      breakdown.push({
+        date_str: dates[i],
+        label: labels[i],
+        seconds: sec,
+        formatted: formatStatDuration(sec)
+      });
+    }
+  }
+
+  const totalSec = history.reduce((a, b) => a + b, 0);
+  const activeDays = history.filter(s => s > 0).length;
+  const maxDaySec = Math.max(...history, 0);
+
+  return {
+    timeframe,
+    dates,
+    labels,
+    fullDates,
+    history,
+    breakdown,
+    totalSec,
+    activeDays,
+    totalDays: history.length,
+    maxDaySec
+  };
+}
+
+function showChartPointTooltip(pt) {
+  if (!pt) return;
+  const container = document.getElementById('statsModalChartContainer');
+  const tooltip = document.getElementById('statsChartTooltip');
+  const dateEl = document.getElementById('statsTooltipDate');
+  const timeEl = document.getElementById('statsTooltipTime');
+  const guideline = document.getElementById('statsHoverGuideline');
+  const highlight = document.getElementById('statsHoverHighlight');
+
+  if (guideline) {
+    guideline.setAttribute('x1', pt.x.toFixed(1));
+    guideline.setAttribute('x2', pt.x.toFixed(1));
+    guideline.classList.remove('hidden');
+  }
+  if (highlight) {
+    highlight.setAttribute('cx', pt.x.toFixed(1));
+    highlight.setAttribute('cy', pt.y.toFixed(1));
+    highlight.classList.remove('hidden');
+  }
+
+  if (tooltip && dateEl && timeEl && container) {
+    dateEl.textContent = pt.fullDate || pt.date;
+    timeEl.textContent = pt.sec > 0 ? `${pt.formatted} playtime` : 'No playtime';
+
+    const leftPct = (pt.x / 600) * 100;
+    const topPct = (pt.y / 150) * 100;
+
+    tooltip.style.left = `${leftPct}%`;
+    tooltip.style.top = `${topPct}%`;
+
+    // Adaptive flip: if near top of chart, position below point; otherwise above point
+    if (topPct < 26) {
+      if (leftPct < 15) {
+        tooltip.style.transform = 'translate(0%, 14px)';
+      } else if (leftPct > 85) {
+        tooltip.style.transform = 'translate(-100%, 14px)';
+      } else {
+        tooltip.style.transform = 'translate(-50%, 14px)';
+      }
+    } else {
+      if (leftPct < 15) {
+        tooltip.style.transform = 'translate(0%, -100%)';
+      } else if (leftPct > 85) {
+        tooltip.style.transform = 'translate(-100%, -100%)';
+      } else {
+        tooltip.style.transform = 'translate(-50%, -100%)';
+      }
+    }
+
+    tooltip.classList.remove('hidden');
+  }
+}
+
+function hideChartPointTooltip() {
+  const tooltip = document.getElementById('statsChartTooltip');
+  if (tooltip) tooltip.classList.add('hidden');
+  const guideline = document.getElementById('statsHoverGuideline');
+  if (guideline) guideline.classList.add('hidden');
+  const highlight = document.getElementById('statsHoverHighlight');
+  if (highlight) highlight.classList.add('hidden');
+}
+
+function handleChartMouseMove(e) {
+  if (!currentModalChartPoints || currentModalChartPoints.length === 0) return;
+  const svg = document.querySelector('#statsModalChartSvgWrap svg');
+  if (!svg) return;
+
+  const rect = svg.getBoundingClientRect();
+  if (rect.width <= 0) return;
+
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+  if (clientY < rect.top - 20 || clientY > rect.bottom + 20) {
+    hideChartPointTooltip();
+    return;
+  }
+
+  const mouseX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+  const svgX = (mouseX / rect.width) * 600;
+
+  let bestPt = null;
+  const n = currentModalChartPoints.length;
+
+  // Prioritize active play dots within horizontal proximity
+  const activePoints = currentModalChartPoints.filter(p => p.sec > 0);
+  let minActiveDist = Infinity;
+  let closestActive = null;
+  for (const p of activePoints) {
+    const dist = Math.abs(p.x - svgX);
+    if (dist < minActiveDist) {
+      minActiveDist = dist;
+      closestActive = p;
+    }
+  }
+  const snapThreshold = n > 60 ? 20 : 24;
+  if (closestActive && minActiveDist <= snapThreshold) {
+    bestPt = closestActive;
+  }
+
+  if (!bestPt) {
+    let minDist = Infinity;
+    for (const p of currentModalChartPoints) {
+      const dist = Math.abs(p.x - svgX);
+      if (dist < minDist) {
+        minDist = dist;
+        bestPt = p;
+      }
+    }
+  }
+
+  if (bestPt) {
+    showChartPointTooltip(bestPt);
+  }
+}
+
+function renderDetailedModalSvgChart(tfData) {
+  const history = tfData.history;
+  const labels = tfData.labels;
+  const n = history.length;
+  const totalSec = tfData.totalSec;
+  const maxVal = Math.max(...history, 600);
+
+  const w = 600;
+  const h = 150;
+  const padBottom = 118;
+  const padTop = 14;
+  const plotH = padBottom - padTop;
+
+  if (totalSec === 0) {
+    currentModalChartPoints = [];
+    return `
+      <svg class="stats-modal-detailed-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        <line x1="10" y1="${padBottom}" x2="${w - 10}" y2="${padBottom}" stroke="var(--border-color)" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.3"/>
+        <text x="${w / 2}" y="${padTop + plotH / 2 + 4}" fill="var(--text-muted)" font-size="12" text-anchor="middle">No playtime recorded in selected timeframe</text>
+      </svg>
+    `;
+  }
+
+  const points = history.map((sec, i) => {
+    const x = 12 + (i / Math.max(1, n - 1)) * (w - 24);
+    const y = padBottom - (sec / maxVal) * plotH;
+    return {
+      i,
+      x,
+      y,
+      sec,
+      date: (labels && labels[i]) || `Day ${i + 1}`,
+      fullDate: (tfData.fullDates && tfData.fullDates[i]) || (labels && labels[i]) || `Day ${i + 1}`,
+      formatted: formatStatDuration(sec)
+    };
+  });
+
+  currentModalChartPoints = points;
+
+  // Smooth spline curve
+  let curveD = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+  if (points.length === 1) {
+    curveD += ` L ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+  } else {
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = i > 0 ? points[i - 1] : points[i];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = i !== points.length - 2 ? points[i + 2] : p2;
+
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      curveD += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+    }
+  }
+
+  const areaD = `${curveD} L ${points[points.length - 1].x.toFixed(1)} ${padBottom} L ${points[0].x.toFixed(1)} ${padBottom} Z`;
+
+  // Find peak point
+  let peakPoint = points[0];
+  for (const pt of points) {
+    if (pt.sec > peakPoint.sec) peakPoint = pt;
+  }
+
+  const gradId = `modalSparkGrad_${Math.floor(Math.random() * 100000)}`;
+
+  // Active day circles
+  const dotsSvg = points.filter(p => p.sec > 0).map(p => `
+    <circle class="sparkline-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="var(--accent-color)" />
+  `).join('');
+
+  // Milestone X-axis date labels: pick 4-5 well-spaced milestones
+  let milestoneIndices = [];
+  if (n <= 5) {
+    milestoneIndices = [0, n - 1];
+  } else if (n <= 10) {
+    milestoneIndices = [0, Math.floor(n / 2), n - 1];
+  } else if (n <= 20) {
+    milestoneIndices = [0, Math.floor(n / 3), Math.floor((2 * n) / 3), n - 1];
+  } else {
+    milestoneIndices = [0, Math.floor(n / 4), Math.floor(n / 2), Math.floor((3 * n) / 4), n - 1];
+  }
+  if (milestoneIndices.length > 2 && (milestoneIndices[milestoneIndices.length - 1] - milestoneIndices[milestoneIndices.length - 2] < 3)) {
+    milestoneIndices.splice(milestoneIndices.length - 2, 1);
+  }
+  milestoneIndices = Array.from(new Set(milestoneIndices)).filter(idx => idx >= 0 && idx < n);
+
+  const axisLabelsSvg = milestoneIndices.map(idx => {
+    const pt = points[idx];
+    if (!pt) return '';
+    let anchor = 'middle';
+    if (idx === 0) anchor = 'start';
+    else if (idx === n - 1) anchor = 'end';
+    return `
+      <text x="${pt.x.toFixed(1)}" y="${padBottom + 20}" fill="var(--text-muted)" font-size="10.5" font-family="sans-serif" text-anchor="${anchor}" opacity="0.85">
+        ${escapeHtml(pt.date)}
+      </text>
+    `;
+  }).join('');
+
+  // Generous hit areas for active dots (32px diameter)
+  const hitAreasSvg = points.filter(p => p.sec > 0).map(p => `
+    <circle class="stats-chart-hit-circle" data-point-idx="${p.i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="16" fill="transparent" style="cursor: pointer;" />
+  `).join('');
+
+  return `
+    <svg class="stats-modal-detailed-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent-color)" stop-opacity="0.38" />
+          <stop offset="100%" stop-color="var(--accent-color)" stop-opacity="0.0" />
+        </linearGradient>
+      </defs>
+
+      <!-- Reference guide lines -->
+      <line x1="10" y1="${padTop}" x2="${w - 10}" y2="${padTop}" stroke="var(--border-color)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.25"/>
+      <line x1="10" y1="${padTop + plotH * 0.5}" x2="${w - 10}" y2="${padTop + plotH * 0.5}" stroke="var(--border-color)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.2"/>
+      <line x1="10" y1="${padBottom}" x2="${w - 10}" y2="${padBottom}" stroke="var(--border-color)" stroke-width="1.2" opacity="0.35"/>
+
+      <!-- Area fill -->
+      <path d="${areaD}" fill="url(#${gradId})" />
+
+      <!-- Curve stroke -->
+      <path d="${curveD}" fill="none" stroke="var(--accent-color)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+
+      <!-- Active day points -->
+      ${dotsSvg}
+
+      <!-- Peak Glowing Dot -->
+      ${peakPoint.sec > 0 ? `
+        <circle cx="${peakPoint.x.toFixed(1)}" cy="${peakPoint.y.toFixed(1)}" r="3.8" fill="#ffffff" stroke="var(--accent-color)" stroke-width="1.6" style="filter: drop-shadow(0 0 4px var(--accent-color)); pointer-events: none;" />
+      ` : ''}
+
+      <!-- Dynamic hover indicators -->
+      <line id="statsHoverGuideline" class="stats-hover-guideline hidden" x1="0" y1="${padTop}" x2="0" y2="${padBottom}" stroke="var(--accent-color)" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.6" pointer-events="none" />
+      <circle id="statsHoverHighlight" class="stats-hover-highlight hidden" cx="0" cy="0" r="5" fill="#ffffff" stroke="var(--accent-color)" stroke-width="2.5" pointer-events="none" style="filter: drop-shadow(0 0 6px var(--accent-color));" />
+
+      <!-- Generous dot hit areas -->
+      ${hitAreasSvg}
+
+      <!-- Full-chart mouse tracking overlay -->
+      <rect class="stats-chart-overlay" x="0" y="0" width="${w}" height="${h}" fill="transparent" style="cursor: crosshair;" />
+
+      <!-- Date Milestone Labels -->
+      ${axisLabelsSvg}
+    </svg>
+  `;
+}
+
+function updateModalChartAndTimeframe(timeframe) {
+  if (!currentModalGame) return;
+  currentModalTimeframe = timeframe || '14d';
+  hideChartPointTooltip();
+
+  // Update button active state
+  document.querySelectorAll('#statsModalTimeframeSelector .stats-timeframe-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.timeframe === currentModalTimeframe);
+  });
+
+  const tfData = getGameTimeframeData(currentModalGame, currentModalTimeframe);
+
+  // Update heading text
+  const headingEl = document.getElementById('statsModalChartHeading');
+  if (headingEl) {
+    if (currentModalTimeframe === '7d') headingEl.textContent = '7-Day Playtime Activity';
+    else if (currentModalTimeframe === '14d') headingEl.textContent = '14-Day Playtime Activity';
+    else if (currentModalTimeframe === '30d') headingEl.textContent = '30-Day Playtime Activity';
+    else if (currentModalTimeframe === '1y') headingEl.textContent = '1-Year Playtime Activity';
+    else headingEl.textContent = 'All-Time Playtime Activity';
+  }
+
+  // Update chart SVG
+  const chartWrap = document.getElementById('statsModalChartSvgWrap');
+  if (chartWrap) {
+    chartWrap.innerHTML = renderDetailedModalSvgChart(tfData);
+  }
+
+  // Update summary pills
+  const chartSummary = document.getElementById('statsModalChartSummary');
+  if (chartSummary) {
+    let tfLabel = '14d Total:';
+    if (currentModalTimeframe === '7d') tfLabel = '7d Total:';
+    else if (currentModalTimeframe === '30d') tfLabel = '30d Total:';
+    else if (currentModalTimeframe === '1y') tfLabel = '1y Total:';
+    else if (currentModalTimeframe === 'all') tfLabel = 'All-Time:';
+
+    const activeDaysText = (currentModalTimeframe === 'all' || currentModalTimeframe === '1y')
+      ? `${tfData.activeDays} active days`
+      : `${tfData.activeDays} / ${tfData.totalDays}`;
+
+    chartSummary.innerHTML = `
+      <div class="stats-modal-summary-pill">
+        <span class="label">${tfLabel}</span>
+        <span class="val">${formatStatDuration(tfData.totalSec)}</span>
+      </div>
+      <div class="stats-modal-summary-pill">
+        <span class="label">Active Days:</span>
+        <span class="val">${activeDaysText}</span>
+      </div>
+      <div class="stats-modal-summary-pill">
+        <span class="label">Peak Day:</span>
+        <span class="val">${tfData.maxDaySec > 0 ? formatStatDuration(tfData.maxDaySec) : '--'}</span>
+      </div>
+    `;
+  }
+
+  // Update Active Sessions list below matching this timeframe
+  const logList = document.getElementById('statsModalLogList');
+  const logCount = document.getElementById('statsModalLogCount');
+  if (logList) {
+    const breakdown = tfData.breakdown || [];
+    if (logCount) {
+      logCount.textContent = `${breakdown.length} active day${breakdown.length !== 1 ? 's' : ''}`;
+    }
+
+    if (breakdown.length > 0) {
+      const maxDailySec = Math.max(...breakdown.map(b => b.seconds), 60);
+      logList.innerHTML = breakdown.map(item => `
+        <div class="stats-modal-log-row">
+          <div class="stats-modal-log-date">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span>${escapeHtml(item.date_str)} (${escapeHtml(item.label)})</span>
+          </div>
+          <div class="stats-modal-log-bar-wrap">
+            <div class="stats-modal-log-bar" style="width: ${Math.min(100, Math.max(5, Math.round((item.seconds / maxDailySec) * 100)))}%;"></div>
+          </div>
+          <div class="stats-modal-log-dur">${escapeHtml(item.formatted)}</div>
+        </div>
+      `).join('');
+    } else {
+      logList.innerHTML = `<div class="stats-empty-text">No play sessions recorded in this timeframe.</div>`;
+    }
+  }
+}
+
+function showGameDetailModal(gameKey) {
+  if (!latestStatsData || !Array.isArray(latestStatsData.top_games)) return;
+  const g = latestStatsData.top_games.find(item => item.game_key === gameKey || (item.system + '::' + item.filename) === gameKey);
+  if (!g) return;
+
+  currentModalGame = g;
+
+  const modal = document.getElementById('statsGameModal');
+  if (!modal) return;
+
+  // Header & Identity
+  const coverEl = document.getElementById('statsModalCover');
+  if (coverEl) {
+    coverEl.src = g.cover || '';
+    coverEl.style.display = g.cover ? 'block' : 'none';
+  }
+
+  const sysIcon = document.getElementById('statsModalSysIcon');
+  if (sysIcon) sysIcon.src = getConsoleIconSrc(g.system, g.system_name);
+
+  const sysName = document.getElementById('statsModalSysName');
+  if (sysName) sysName.textContent = g.system_name || g.system;
+
+  const sysBadge = document.getElementById('statsModalSysBadge');
+  if (sysBadge) {
+    sysBadge.onclick = (e) => {
+      e.stopPropagation();
+      closeGameDetailModal();
+      selectConsoleCategory(g.system);
+    };
+  }
+
+  const shareEl = document.getElementById('statsModalPlatformShare');
+  if (shareEl) {
+    shareEl.textContent = g.pct_system ? `${g.pct_system}% of ${g.system_name || g.system} playtime` : '';
+    shareEl.style.display = g.pct_system ? 'inline-block' : 'none';
+  }
+
+  const titleEl = document.getElementById('statsModalTitle');
+  if (titleEl) titleEl.textContent = g.title || g.filename;
+
+  const pathEl = document.getElementById('statsModalPath');
+  if (pathEl) {
+    pathEl.textContent = g.path || g.filename || '';
+    pathEl.title = g.path || g.filename || '';
+  }
+
+  // KPI Metrics (compact single-line values)
+  const totalTimeEl = document.getElementById('statsModalTotalTime');
+  if (totalTimeEl) totalTimeEl.textContent = g.formatted_time || '0m';
+
+  const playCountEl = document.getElementById('statsModalPlayCount');
+  if (playCountEl) playCountEl.textContent = `${g.play_count} play${g.play_count !== 1 ? 's' : ''}`;
+
+  const longestEl = document.getElementById('statsModalLongestSession');
+  if (longestEl) longestEl.textContent = g.formatted_longest_session || formatStatDuration(g.longest_session_seconds) || '--';
+
+  const avgEl = document.getElementById('statsModalAvgSession');
+  if (avgEl) avgEl.textContent = g.formatted_avg_session || formatStatDuration(g.avg_session_seconds) || '--';
+
+  const firstPlayedEl = document.getElementById('statsModalFirstPlayed');
+  if (firstPlayedEl) firstPlayedEl.textContent = formatFullDateTime(g.first_played);
+
+  const lastPlayedEl = document.getElementById('statsModalLastPlayed');
+  if (lastPlayedEl) {
+    lastPlayedEl.textContent = formatFullDateTime(g.last_played);
+    lastPlayedEl.title = formatRelativeTimestamp(g.last_played);
+  }
+
+  // Set default timeframe to 14 days and render chart + breakdown
+  currentModalTimeframe = '14d';
+  updateModalChartAndTimeframe('14d');
+
+  // Footer Buttons
+  const playBtn = document.getElementById('statsModalPlayBtn');
+  if (playBtn) {
+    playBtn.onclick = () => {
+      launchGame(g.system, g.filename, g.path, null, g.title);
+      closeGameDetailModal();
+    };
+  }
+
+  const resetBtn = document.getElementById('statsModalResetBtn');
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      resetSingleGameStats(g.game_key, g.title);
+      closeGameDetailModal();
+    };
+  }
+
+  modal.classList.remove('hidden');
+  document.body.classList.add('stats-modal-open');
+}
+
+function closeGameDetailModal() {
+  hideChartPointTooltip();
+  const modal = document.getElementById('statsGameModal');
+  if (modal) modal.classList.add('hidden');
+  document.body.classList.remove('stats-modal-open');
+  currentModalGame = null;
+}
+
 function initStatsPage() {
   loadStatsData(true);
 
-  // Delegated click handling: Play button or Reset stats button
+  const chartContainer = document.getElementById('statsModalChartContainer');
+  if (chartContainer) {
+    chartContainer.addEventListener('mousemove', handleChartMouseMove);
+    chartContainer.addEventListener('mouseleave', hideChartPointTooltip);
+    chartContainer.addEventListener('touchmove', handleChartMouseMove, { passive: true });
+    chartContainer.addEventListener('touchend', hideChartPointTooltip);
+    chartContainer.addEventListener('touchcancel', hideChartPointTooltip);
+  }
+
+  // Delegated click handling: Play button, Reset stats button, or Game Card Modal
   document.addEventListener('click', (e) => {
     const playBtn = e.target.closest('.stats-play-action-btn');
     if (playBtn) {
@@ -651,6 +1474,13 @@ function initStatsPage() {
       return;
     }
 
+    const tfBtn = e.target.closest('.stats-timeframe-btn');
+    if (tfBtn) {
+      const tf = tfBtn.dataset.timeframe;
+      if (tf) updateModalChartAndTimeframe(tf);
+      return;
+    }
+
     const resetBtn = e.target.closest('.stats-card-reset-btn');
     if (resetBtn) {
       const card = resetBtn.closest('.stats-game-card');
@@ -659,6 +1489,46 @@ function initStatsPage() {
       const title = card.dataset.title;
       resetSingleGameStats(gameKey, title);
       return;
+    }
+
+    // Card click triggers detailed statistics modal
+    const card = e.target.closest('.stats-game-card, .stats-recent-card');
+    if (card) {
+      if (e.target.closest('.stats-sys-badge')) return;
+      const gameKey = card.dataset.gameKey;
+      if (gameKey) {
+        showGameDetailModal(gameKey);
+      }
+      return;
+    }
+  });
+
+  // Modal close handlers
+  const closeBtn = document.getElementById('closeStatsModalBtn');
+  if (closeBtn) closeBtn.addEventListener('click', closeGameDetailModal);
+
+  const modalCloseBtn = document.getElementById('statsModalCloseBtn');
+  if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeGameDetailModal);
+
+  const modalBackdrop = document.getElementById('statsGameModal');
+  if (modalBackdrop) {
+    modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop) closeGameDetailModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeGameDetailModal();
+      return;
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+      const activeCard = document.activeElement ? document.activeElement.closest('.stats-game-card, .stats-recent-card') : null;
+      if (activeCard && !document.activeElement.closest('button, input, a')) {
+        e.preventDefault();
+        const gameKey = activeCard.dataset.gameKey;
+        if (gameKey) showGameDetailModal(gameKey);
+      }
     }
   });
 
@@ -711,6 +1581,7 @@ function initStatsPage() {
       }
     });
   }
+
 
   // Live polling for active sessions
   activeSessionPoller = setInterval(async () => {

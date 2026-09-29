@@ -20,13 +20,14 @@ import requests
 import shutil
 import logging
 from collections import deque
+from datetime import datetime, timedelta
 from pathlib import Path
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.7.5"
+__version__ = "0.7.6"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -243,7 +244,8 @@ def load_stats() -> dict:
             },
             "systems": {},
             "games": {},
-            "recent_sessions": []
+            "recent_sessions": [],
+            "daily_activity": {}
         }
 
 
@@ -278,6 +280,19 @@ def record_play_session(system: str, filename: str, title: str, start_time: int,
         sys_stat["play_count"] = sys_stat.get("play_count", 0) + 1
         sys_stat["play_time_seconds"] = sys_stat.get("play_time_seconds", 0) + duration_seconds
 
+        # Daily activity tracking
+        date_key = time.strftime("%Y-%m-%d", time.localtime(start_time))
+        daily = stats.setdefault("daily_activity", {})
+        day_stat = daily.setdefault(date_key, {
+            "play_time_seconds": 0,
+            "play_count": 0,
+            "systems": {}
+        })
+        day_stat["play_time_seconds"] = day_stat.get("play_time_seconds", 0) + duration_seconds
+        day_stat["play_count"] = day_stat.get("play_count", 0) + 1
+        day_systems = day_stat.setdefault("systems", {})
+        day_systems[system] = day_systems.get(system, 0) + duration_seconds
+
         games = stats.setdefault("games", {})
         game_key = f"{system}:{filename}"
         game_stat = games.setdefault(game_key, {
@@ -294,9 +309,14 @@ def record_play_session(system: str, filename: str, title: str, start_time: int,
         game_stat["filename"] = filename
         game_stat["play_count"] = game_stat.get("play_count", 0) + 1
         game_stat["play_time_seconds"] = game_stat.get("play_time_seconds", 0) + duration_seconds
+        game_stat["longest_session_seconds"] = max(game_stat.get("longest_session_seconds", 0), duration_seconds)
         game_stat["last_played"] = int(start_time + duration_seconds)
         if not game_stat.get("first_played"):
             game_stat["first_played"] = start_time
+
+        # Game-level daily activity tracking for 14-day sparklines
+        g_daily = game_stat.setdefault("daily", {})
+        g_daily[date_key] = g_daily.get(date_key, 0) + duration_seconds
 
         recent = stats.setdefault("recent_sessions", [])
         recent.insert(0, {
@@ -1231,12 +1251,76 @@ def api_get_stats():
         })
     systems_breakdown.sort(key=lambda s: s["play_time_seconds"], reverse=True)
 
+    now_dt = datetime.now()
+    dates_30d = []
+    dates_labels_30d = []
+    for i in range(29, -1, -1):
+        d = now_dt - timedelta(days=i)
+        dates_30d.append(d.strftime("%Y-%m-%d"))
+        dates_labels_30d.append(f"{d.strftime('%b')} {d.day}")
+
+    # Pre-index recent sessions by game_key and (system, filename) for O(1) lookups
+    recent_by_key = {}
+    recent_by_file = {}
+    for r in stats.get("recent_sessions", []):
+        r_session_item = {
+            "started_at": r.get("started_at", 0),
+            "duration_seconds": r.get("duration_seconds", 0),
+            "formatted_duration": format_duration(r.get("duration_seconds", 0))
+        }
+        r_gk = r.get("game_key")
+        if r_gk and len(recent_by_key.setdefault(r_gk, [])) < 10:
+            recent_by_key[r_gk].append(r_session_item)
+        r_sys = r.get("system")
+        r_fn = r.get("filename")
+        if r_sys and r_fn and len(recent_by_file.setdefault((r_sys, r_fn), [])) < 10:
+            recent_by_file[(r_sys, r_fn)].append(r_session_item)
+
     top_games = []
     for gkey, gstat in stats.get("games", {}).items():
-        if gstat.get("play_count", 0) > 0:
+        play_count = gstat.get("play_count", 0)
+        if play_count > 0:
             sys_id = gstat.get("system", "")
             sec = gstat.get("play_time_seconds", 0)
             g_meta = lookup.get(gkey) or {}
+            g_daily = gstat.get("daily", {})
+            history_30d = [int(g_daily.get(d, 0)) for d in dates_30d]
+
+            # Longest session
+            longest_sec = gstat.get("longest_session_seconds", 0)
+            if not longest_sec:
+                daily_vals = [int(v) for v in g_daily.values() if v > 0]
+                longest_sec = max(daily_vals) if daily_vals else (sec // max(1, play_count))
+
+            # Average session
+            avg_sec = sec // max(1, play_count)
+
+            # First and Last played
+            first_played = gstat.get("first_played") or gstat.get("last_played", 0)
+            last_played = gstat.get("last_played", 0)
+
+            # Active days in last 30 days
+            active_days_count = sum(1 for v in history_30d if v > 0)
+
+            # System percent share
+            sys_total_time = stats.get("systems", {}).get(sys_id, {}).get("play_time_seconds", 0)
+            pct_system = round((sec / sys_total_time * 100), 1) if sys_total_time > 0 else 0
+
+            # Daily breakdown list for modal log (sorted newest first)
+            daily_breakdown = []
+            for d_str, d_lbl in zip(reversed(dates_30d), reversed(dates_labels_30d)):
+                d_sec = int(g_daily.get(d_str, 0))
+                if d_sec > 0:
+                    daily_breakdown.append({
+                        "date_str": d_str,
+                        "label": d_lbl,
+                        "seconds": d_sec,
+                        "formatted": format_duration(d_sec)
+                    })
+
+            # Matching recent sessions from pre-indexed lookup
+            game_recent_sessions = recent_by_key.get(gkey) or recent_by_file.get((sys_id, gstat.get("filename", "")), [])
+
             top_games.append({
                 "game_key": gkey,
                 "title": gstat.get("title", ""),
@@ -1244,11 +1328,24 @@ def api_get_stats():
                 "system_name": systems_cfg.get(sys_id, {}).get("name", sys_id.upper()),
                 "filename": gstat.get("filename", ""),
                 "path": g_meta.get("path", ""),
-                "play_count": gstat.get("play_count", 0),
+                "play_count": play_count,
                 "play_time_seconds": sec,
                 "formatted_time": format_duration(sec),
-                "last_played": gstat.get("last_played", 0),
-                "cover": g_meta.get("cover")
+                "longest_session_seconds": longest_sec,
+                "formatted_longest_session": format_duration(longest_sec),
+                "avg_session_seconds": avg_sec,
+                "formatted_avg_session": format_duration(avg_sec),
+                "first_played": first_played,
+                "last_played": last_played,
+                "pct_system": pct_system,
+                "active_days_count": active_days_count,
+                "daily_breakdown": daily_breakdown,
+                "daily": g_daily,
+                "recent_sessions": game_recent_sessions,
+                "cover": g_meta.get("cover"),
+                "history_30d": history_30d,
+                "history_14d": history_30d,
+                "history_dates": dates_labels_30d
             })
     top_games.sort(key=lambda g: g["play_time_seconds"], reverse=True)
 
@@ -1284,6 +1381,28 @@ def api_get_stats():
     distinct_games = len([g for g in stats.get("games", {}).values() if g.get("play_count", 0) > 0])
     top_console_name = systems_breakdown[0]["name"] if systems_breakdown and systems_breakdown[0]["play_time_seconds"] > 0 else "None"
 
+    # 30-Day Daily Activity Breakdown
+    daily_raw = stats.get("daily_activity", {})
+    daily_history = []
+    now_dt = datetime.now()
+    for i in range(29, -1, -1):
+        dt = now_dt - timedelta(days=i)
+        d_key = dt.strftime("%Y-%m-%d")
+        d_stat = daily_raw.get(d_key, {})
+        d_sec = d_stat.get("play_time_seconds", 0)
+        d_plays = d_stat.get("play_count", 0)
+        d_systems = d_stat.get("systems", {})
+        daily_history.append({
+            "date_key": d_key,
+            "label": f"{dt.strftime('%b')} {dt.day}",
+            "short_label": str(dt.day),
+            "weekday": dt.strftime("%a"),
+            "play_time_seconds": d_sec,
+            "formatted_time": format_duration(d_sec),
+            "play_count": d_plays,
+            "systems": d_systems
+        })
+
     return jsonify({
         "ok": True,
         "summary": {
@@ -1298,6 +1417,7 @@ def api_get_stats():
         "top_games": top_games,
         "recent_sessions": recent_formatted,
         "active_sessions": active_list,
+        "daily_activity": daily_history,
         "games": stats.get("games", {})
     })
 
@@ -1347,7 +1467,8 @@ def api_reset_stats():
                 },
                 "systems": {},
                 "games": {},
-                "recent_sessions": []
+                "recent_sessions": [],
+                "daily_activity": {}
             }
             save_stats(stats)
             return jsonify({"ok": True, "message": "All play stats have been reset."})

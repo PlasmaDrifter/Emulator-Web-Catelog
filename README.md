@@ -28,8 +28,8 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 ### Main Dashboard
 ![ROM Catalog Dashboard](screenshots/catalog.png?raw=true&v=5)
 
-### Play Statistics & Insights
-![ROMcat Play Statistics](screenshots/statistics.png?raw=true&v=1)
+### Play Time Statistics
+![ROMcat Play Statistics](screenshots/statistics.png?raw=true&v=2)
 
 ### Theme Presets (Loop)
 ![ROMcat Themes Animated Preview](screenshots/themes_preview.gif?raw=true&v=3)
@@ -55,7 +55,7 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 
 - **Direct Native Emulator Launching**: Games launch in your real desktop emulators (Flatpak, native binaries, AppImages, or RetroArch cores) on your system. No slow or inaccurate in-browser emulation.
 - **Two Flexible Modes**: Use the standalone desktop app with dedicated window management or run as an always-on background web service.
-- **Play Statistics & Insights Dashboard**: Dedicated statistics page (`/stats`) tracking total play time, session counts, distinct games played, and top consoles. Includes interactive console breakdown charts, play leaderboards, recent activity feeds, per-game reset controls, and responsive category filtering.
+- **Play Time Statistics Dashboard**: Dedicated statistics page (`/stats`) tracking total play time, session counts, distinct games played, and top consoles. Includes interactive console breakdown charts, play leaderboards, recent activity feeds, per-game reset controls, interactive detailed game statistics modal with 7-Day, 14-Day, 30-Day, and 1-Year timeframe controls, effortless magnetic hover tracking, and responsive category filtering.
 - **Dynamic Sorting & Filtering**: Sort your game catalog by Name (A-Z with favorites prioritized), Most Played (by cumulative play time), Most Played (by total play sessions), or Recently Played.
 - **Background Session Tracking**: Automatically monitors active emulator processes and systemd scopes in the background to log play sessions (with minimum time threshold) without manual logging.
 - **System Tabs & Live Counters**: Instant switching between systems (e.g. NES, SNES, N64, GameCube, Wii U, Switch, Favorites, All, Hidden).
