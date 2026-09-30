@@ -27,7 +27,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.7.6"
+__version__ = "0.7.7"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -1162,17 +1162,39 @@ def api_launch():
             env["WAYLAND_DISPLAY"] = "wayland-0"
 
         if "XAUTHORITY" not in env:
-            home_xauth = os.path.expanduser("~/.Xauthority")
-            if os.path.exists(home_xauth):
-                env["XAUTHORITY"] = home_xauth
-            elif os.path.isdir(runtime_dir):
+            xauth_candidates = []
+            if os.path.isdir(runtime_dir):
                 try:
                     for entry in os.listdir(runtime_dir):
                         if entry.startswith("xauth_"):
-                            env["XAUTHORITY"] = os.path.join(runtime_dir, entry)
-                            break
+                            candidate = os.path.join(runtime_dir, entry)
+                            if os.path.isfile(candidate) and os.path.getsize(candidate) > 0:
+                                xauth_candidates.append((os.path.getmtime(candidate), candidate))
                 except Exception:
                     pass
+
+            if xauth_candidates:
+                xauth_candidates.sort(reverse=True)
+                env["XAUTHORITY"] = xauth_candidates[0][1]
+            else:
+                try:
+                    res = subprocess.run(
+                        ["systemctl", "--user", "show-environment"],
+                        capture_output=True, text=True, timeout=1
+                    )
+                    for line in res.stdout.splitlines():
+                        if line.startswith("XAUTHORITY="):
+                            val = line.split("=", 1)[1].strip()
+                            if val and os.path.exists(val):
+                                env["XAUTHORITY"] = val
+                                break
+                except Exception:
+                    pass
+
+            if "XAUTHORITY" not in env:
+                home_xauth = os.path.expanduser("~/.Xauthority")
+                if os.path.exists(home_xauth):
+                    env["XAUTHORITY"] = home_xauth
 
         raw_args = shlex.split(cmd)
         args = [os.path.expanduser(os.path.expandvars(a)) for a in raw_args]
