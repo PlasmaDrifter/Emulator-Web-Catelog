@@ -17,6 +17,7 @@ import shlex
 import subprocess
 import yaml
 import requests
+import urllib.parse
 import shutil
 import logging
 from collections import deque
@@ -27,7 +28,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.7.7"
+__version__ = "0.7.8"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -138,26 +139,32 @@ def get_contrast_color(hex_color: str) -> str:
         return "#ffffff"
 
 
+_settings_cache = None
+_settings_mtime = 0.0
+
+
+def _build_default_settings() -> dict:
+    settings = {
+        "title": DEFAULT_SETTINGS["title"],
+        "icon": DEFAULT_SETTINGS["icon"],
+        "theme": dict(DEFAULT_SETTINGS["theme"]),
+        "custom_themes": dict(DEFAULT_SETTINGS["custom_themes"]),
+        "visibility": dict(DEFAULT_SETTINGS["visibility"]),
+    }
+    settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
+    return settings
+
+
 def load_settings() -> dict:
+    global _settings_cache, _settings_mtime
     if not SETTINGS_PATH.exists():
-        settings = {
-            "title": DEFAULT_SETTINGS["title"],
-            "icon": DEFAULT_SETTINGS["icon"],
-            "theme": dict(DEFAULT_SETTINGS["theme"]),
-            "custom_themes": dict(DEFAULT_SETTINGS["custom_themes"]),
-            "visibility": dict(DEFAULT_SETTINGS["visibility"]),
-        }
-        settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
-        return settings
+        return _build_default_settings()
     try:
+        current_mtime = SETTINGS_PATH.stat().st_mtime
+        if _settings_cache is not None and current_mtime == _settings_mtime:
+            return _settings_cache
         data = json.loads(SETTINGS_PATH.read_text())
-        settings = {
-            "title": DEFAULT_SETTINGS["title"],
-            "icon": DEFAULT_SETTINGS["icon"],
-            "theme": dict(DEFAULT_SETTINGS["theme"]),
-            "custom_themes": dict(DEFAULT_SETTINGS["custom_themes"]),
-            "visibility": dict(DEFAULT_SETTINGS["visibility"]),
-        }
+        settings = _build_default_settings()
         if isinstance(data, dict):
             if "title" in data and data["title"]:
                 settings["title"] = str(data["title"])
@@ -170,21 +177,21 @@ def load_settings() -> dict:
             if "visibility" in data and isinstance(data["visibility"], dict):
                 settings["visibility"].update(data["visibility"])
         settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
+        _settings_cache = settings
+        _settings_mtime = current_mtime
         return settings
     except Exception:
-        settings = {
-            "title": DEFAULT_SETTINGS["title"],
-            "icon": DEFAULT_SETTINGS["icon"],
-            "theme": dict(DEFAULT_SETTINGS["theme"]),
-            "custom_themes": dict(DEFAULT_SETTINGS["custom_themes"]),
-            "visibility": dict(DEFAULT_SETTINGS["visibility"]),
-        }
-        settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
-        return settings
+        return _build_default_settings()
 
 
 def save_settings(settings: dict):
+    global _settings_cache, _settings_mtime
     SETTINGS_PATH.write_text(json.dumps(settings, indent=2))
+    _settings_cache = settings
+    try:
+        _settings_mtime = SETTINGS_PATH.stat().st_mtime
+    except Exception:
+        pass
 
 
 def load_favorites() -> set:
@@ -378,7 +385,12 @@ def resilient_yaml_load(raw_text: str):
                 return {}
 
 
-def load_config():
+_config_cache = None
+_config_mtime = 0.0
+
+
+def load_config() -> dict:
+    global _config_cache, _config_mtime
     if not CONFIG_PATH.exists():
         if CONFIG_EXAMPLE_PATH.exists():
             import shutil
@@ -386,14 +398,19 @@ def load_config():
         else:
             return {"systems": {}, "steamgriddb": {"api_key": ""}}
     try:
+        current_mtime = CONFIG_PATH.stat().st_mtime
+        if _config_cache is not None and current_mtime == _config_mtime:
+            return _config_cache
         raw_text = CONFIG_PATH.read_text(encoding="utf-8")
         parsed = resilient_yaml_load(raw_text)
         if isinstance(parsed, dict) and "systems" in parsed:
+            _config_cache = parsed
+            _config_mtime = current_mtime
             return parsed
         return {"systems": {}, "steamgriddb": {"api_key": ""}}
     except Exception as e:
-        print(f"Error loading config.yaml: {e}", file=sys.stderr)
-        return {"systems": {}, "steamgriddb": {"api_key": ""}}
+        logging.error(f"Error loading config.yaml: {e}")
+        return _config_cache if _config_cache is not None else {"systems": {}, "steamgriddb": {"api_key": ""}}
 
 
 def remove_brackets_and_parentheses(text: str) -> str:
@@ -453,7 +470,7 @@ def compress_and_save_image(img_bytes, out_path) -> bool:
         img.save(out_path, "JPEG", quality=80, optimize=True)
         return True
     except Exception as e:
-        print(f"Compression error: {e}")
+        logging.error(f"Compression error: {e}")
         return False
 
 
@@ -576,7 +593,7 @@ def load_cached_library():
             _library_cache = json.loads(LIBRARY_CACHE_PATH.read_text())
             return _library_cache
         except Exception as e:
-            print(f"Error reading library cache file: {e}")
+            logging.error(f"Error reading library cache file: {e}")
 
     # Automated fall-back on first-ever run if JSON doesn't exist
     return save_library_cache(scan_library())
@@ -590,7 +607,7 @@ def save_library_cache(library_data):
     try:
         LIBRARY_CACHE_PATH.write_text(json.dumps(library_data, indent=2))
     except Exception as e:
-        print(f"Error writing library cache file: {e}")
+        logging.error(f"Error writing library cache file: {e}")
     return _library_cache
 
 
@@ -941,7 +958,7 @@ def api_open_icons_folder():
             os.startfile(str(icons_dir))
         return jsonify({"ok": True, "path": str(icons_dir)})
     except Exception as e:
-        print(f"Error opening icons folder: {e}", file=sys.stderr)
+        logging.error(f"Error opening icons folder: {e}")
         return jsonify({"ok": False, "error": "Unable to open folder in system file manager.", "path": str(icons_dir)}), 500
 
 
@@ -1276,10 +1293,28 @@ def api_get_stats():
     now_dt = datetime.now()
     dates_30d = []
     dates_labels_30d = []
+    daily_history = []
+    daily_raw = stats.get("daily_activity", {})
+
     for i in range(29, -1, -1):
-        d = now_dt - timedelta(days=i)
-        dates_30d.append(d.strftime("%Y-%m-%d"))
-        dates_labels_30d.append(f"{d.strftime('%b')} {d.day}")
+        dt = now_dt - timedelta(days=i)
+        d_key = dt.strftime("%Y-%m-%d")
+        d_lbl = f"{dt.strftime('%b')} {dt.day}"
+        dates_30d.append(d_key)
+        dates_labels_30d.append(d_lbl)
+
+        d_stat = daily_raw.get(d_key, {})
+        d_sec = d_stat.get("play_time_seconds", 0)
+        daily_history.append({
+            "date_key": d_key,
+            "label": d_lbl,
+            "short_label": str(dt.day),
+            "weekday": dt.strftime("%a"),
+            "play_time_seconds": d_sec,
+            "formatted_time": format_duration(d_sec),
+            "play_count": d_stat.get("play_count", 0),
+            "systems": d_stat.get("systems", {})
+        })
 
     # Pre-index recent sessions by game_key and (system, filename) for O(1) lookups
     recent_by_key = {}
@@ -1328,18 +1363,6 @@ def api_get_stats():
             sys_total_time = stats.get("systems", {}).get(sys_id, {}).get("play_time_seconds", 0)
             pct_system = round((sec / sys_total_time * 100), 1) if sys_total_time > 0 else 0
 
-            # Daily breakdown list for modal log (sorted newest first)
-            daily_breakdown = []
-            for d_str, d_lbl in zip(reversed(dates_30d), reversed(dates_labels_30d)):
-                d_sec = int(g_daily.get(d_str, 0))
-                if d_sec > 0:
-                    daily_breakdown.append({
-                        "date_str": d_str,
-                        "label": d_lbl,
-                        "seconds": d_sec,
-                        "formatted": format_duration(d_sec)
-                    })
-
             # Matching recent sessions from pre-indexed lookup
             game_recent_sessions = recent_by_key.get(gkey) or recent_by_file.get((sys_id, gstat.get("filename", "")), [])
 
@@ -1361,7 +1384,6 @@ def api_get_stats():
                 "last_played": last_played,
                 "pct_system": pct_system,
                 "active_days_count": active_days_count,
-                "daily_breakdown": daily_breakdown,
                 "daily": g_daily,
                 "recent_sessions": game_recent_sessions,
                 "cover": g_meta.get("cover"),
@@ -1402,28 +1424,6 @@ def api_get_stats():
 
     distinct_games = len([g for g in stats.get("games", {}).values() if g.get("play_count", 0) > 0])
     top_console_name = systems_breakdown[0]["name"] if systems_breakdown and systems_breakdown[0]["play_time_seconds"] > 0 else "None"
-
-    # 30-Day Daily Activity Breakdown
-    daily_raw = stats.get("daily_activity", {})
-    daily_history = []
-    now_dt = datetime.now()
-    for i in range(29, -1, -1):
-        dt = now_dt - timedelta(days=i)
-        d_key = dt.strftime("%Y-%m-%d")
-        d_stat = daily_raw.get(d_key, {})
-        d_sec = d_stat.get("play_time_seconds", 0)
-        d_plays = d_stat.get("play_count", 0)
-        d_systems = d_stat.get("systems", {})
-        daily_history.append({
-            "date_key": d_key,
-            "label": f"{dt.strftime('%b')} {dt.day}",
-            "short_label": str(dt.day),
-            "weekday": dt.strftime("%a"),
-            "play_time_seconds": d_sec,
-            "formatted_time": format_duration(d_sec),
-            "play_count": d_plays,
-            "systems": d_systems
-        })
 
     return jsonify({
         "ok": True,
@@ -1840,7 +1840,7 @@ def api_get_config():
 
 @app.route("/api/config", methods=["POST"])
 def api_save_config():
-    global _library_cache
+    global _library_cache, _config_cache, _config_mtime
     try:
         data = request.get_json(force=True)
         raw_yaml = data.get("raw_yaml", "")
@@ -1877,6 +1877,11 @@ def api_save_config():
             return jsonify({"ok": False, "error": "Validation failed", "errors": errors}), 400
 
         CONFIG_PATH.write_text(raw_yaml, encoding="utf-8")
+        _config_cache = parsed
+        try:
+            _config_mtime = CONFIG_PATH.stat().st_mtime
+        except Exception:
+            pass
         _library_cache = None
         library = scan_library()
         save_library_cache(library)

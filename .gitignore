@@ -6,7 +6,6 @@ __pycache__/
 .venv/
 venv/
 *.log
-app copy.py
 static/covers/*
 !static/covers/.gitkeep
 

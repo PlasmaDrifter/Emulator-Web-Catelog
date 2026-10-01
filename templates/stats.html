@@ -992,71 +992,81 @@ function getGameTimeframeData(g, timeframe) {
   };
 }
 
+let chartDomCache = null;
+function getChartDom() {
+  if (!chartDomCache) {
+    chartDomCache = {
+      container: document.getElementById('statsModalChartContainer'),
+      tooltip: document.getElementById('statsChartTooltip'),
+      dateEl: document.getElementById('statsTooltipDate'),
+      timeEl: document.getElementById('statsTooltipTime'),
+      guideline: document.getElementById('statsHoverGuideline'),
+      highlight: document.getElementById('statsHoverHighlight'),
+      wrap: document.getElementById('statsModalChartSvgWrap')
+    };
+  }
+  return chartDomCache;
+}
+
 function showChartPointTooltip(pt) {
   if (!pt) return;
-  const container = document.getElementById('statsModalChartContainer');
-  const tooltip = document.getElementById('statsChartTooltip');
-  const dateEl = document.getElementById('statsTooltipDate');
-  const timeEl = document.getElementById('statsTooltipTime');
-  const guideline = document.getElementById('statsHoverGuideline');
-  const highlight = document.getElementById('statsHoverHighlight');
+  const dom = getChartDom();
 
-  if (guideline) {
-    guideline.setAttribute('x1', pt.x.toFixed(1));
-    guideline.setAttribute('x2', pt.x.toFixed(1));
-    guideline.classList.remove('hidden');
+  if (dom.guideline) {
+    dom.guideline.setAttribute('x1', pt.x.toFixed(1));
+    dom.guideline.setAttribute('x2', pt.x.toFixed(1));
+    dom.guideline.classList.remove('hidden');
   }
-  if (highlight) {
-    highlight.setAttribute('cx', pt.x.toFixed(1));
-    highlight.setAttribute('cy', pt.y.toFixed(1));
-    highlight.classList.remove('hidden');
+  if (dom.highlight) {
+    dom.highlight.setAttribute('cx', pt.x.toFixed(1));
+    dom.highlight.setAttribute('cy', pt.y.toFixed(1));
+    dom.highlight.classList.remove('hidden');
   }
 
-  if (tooltip && dateEl && timeEl && container) {
-    dateEl.textContent = pt.fullDate || pt.date;
-    timeEl.textContent = pt.sec > 0 ? `${pt.formatted} playtime` : 'No playtime';
+  if (dom.tooltip && dom.dateEl && dom.timeEl && dom.container) {
+    dom.dateEl.textContent = pt.fullDate || pt.date;
+    dom.timeEl.textContent = pt.sec > 0 ? `${pt.formatted} playtime` : 'No playtime';
 
     const leftPct = (pt.x / 600) * 100;
     const topPct = (pt.y / 150) * 100;
 
-    tooltip.style.left = `${leftPct}%`;
-    tooltip.style.top = `${topPct}%`;
+    dom.tooltip.style.left = `${leftPct}%`;
+    dom.tooltip.style.top = `${topPct}%`;
 
     // Adaptive flip: if near top of chart, position below point; otherwise above point
     if (topPct < 26) {
       if (leftPct < 15) {
-        tooltip.style.transform = 'translate(0%, 14px)';
+        dom.tooltip.style.transform = 'translate(0%, 14px)';
       } else if (leftPct > 85) {
-        tooltip.style.transform = 'translate(-100%, 14px)';
+        dom.tooltip.style.transform = 'translate(-100%, 14px)';
       } else {
-        tooltip.style.transform = 'translate(-50%, 14px)';
+        dom.tooltip.style.transform = 'translate(-50%, 14px)';
       }
     } else {
       if (leftPct < 15) {
-        tooltip.style.transform = 'translate(0%, -100%)';
+        dom.tooltip.style.transform = 'translate(0%, -100%)';
       } else if (leftPct > 85) {
-        tooltip.style.transform = 'translate(-100%, -100%)';
+        dom.tooltip.style.transform = 'translate(-100%, -100%)';
       } else {
-        tooltip.style.transform = 'translate(-50%, -100%)';
+        dom.tooltip.style.transform = 'translate(-50%, -100%)';
       }
     }
 
-    tooltip.classList.remove('hidden');
+    dom.tooltip.classList.remove('hidden');
   }
 }
 
 function hideChartPointTooltip() {
-  const tooltip = document.getElementById('statsChartTooltip');
-  if (tooltip) tooltip.classList.add('hidden');
-  const guideline = document.getElementById('statsHoverGuideline');
-  if (guideline) guideline.classList.add('hidden');
-  const highlight = document.getElementById('statsHoverHighlight');
-  if (highlight) highlight.classList.add('hidden');
+  const dom = getChartDom();
+  if (dom.tooltip) dom.tooltip.classList.add('hidden');
+  if (dom.guideline) dom.guideline.classList.add('hidden');
+  if (dom.highlight) dom.highlight.classList.add('hidden');
 }
 
 function handleChartMouseMove(e) {
   if (!currentModalChartPoints || currentModalChartPoints.length === 0) return;
-  const svg = document.querySelector('#statsModalChartSvgWrap svg');
+  const dom = getChartDom();
+  const svg = dom.wrap ? dom.wrap.querySelector('svg') : null;
   if (!svg) return;
 
   const rect = svg.getBoundingClientRect();
@@ -1446,6 +1456,7 @@ function closeGameDetailModal() {
   if (modal) modal.classList.add('hidden');
   document.body.classList.remove('stats-modal-open');
   currentModalGame = null;
+  currentModalChartPoints = null;
 }
 
 function initStatsPage() {

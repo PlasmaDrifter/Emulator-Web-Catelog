@@ -925,15 +925,100 @@
   </div>
 </dialog>
 
+<div id="updateProgressModal" class="update-modal-backdrop" style="display: none;">
+  <div class="update-modal-content">
+    <div class="update-progress-body">
+      <svg class="update-refresh-loop spin-loop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+        <path d="M16 16h5v5"/>
+      </svg>
+      <h3 id="updateProgressTitle">Updating Application...</h3>
+      <p id="updateProgressDesc">Applying latest release and restarting server. Please wait...</p>
+    </div>
+  </div>
+</div>
+
 <script>
-document.querySelectorAll('.card').forEach(card => {
-  card.addEventListener('click', async (e) => {
-    if (e.target.closest('.star') || e.target.closest('.placeholder') || e.target.closest('.hide-toggle')) return;
+// Delegated click handling on game cards and their controls
+document.addEventListener('click', async (e) => {
+  // 1. Star click
+  const star = e.target.closest('.star');
+  if (star) {
+    e.stopPropagation();
+    const card = star.closest('.card');
+    if (!card) return;
+    const system = card.dataset.system;
+    const filename = card.dataset.filename;
+    try {
+      const res = await fetch('/api/favorite', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({system, filename})
+      });
+      const data = await res.json();
+      if (data.ok) {
+        card.dataset.favorite = data.favorite ? 'true' : 'false';
+        star.classList.toggle('active', data.favorite);
+        if (typeof applyFilters === 'function') applyFilters();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    return;
+  }
+
+  // 2. Hide toggle click
+  const hideBtn = e.target.closest('.hide-toggle');
+  if (hideBtn) {
+    e.stopPropagation();
+    const card = hideBtn.closest('.card');
+    if (!card) return;
+    const system = card.dataset.system;
+    const filename = card.dataset.filename;
+    try {
+      const res = await fetch('/api/hide', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({system, filename})
+      });
+      const data = await res.json();
+      if (data.ok) {
+        card.dataset.hidden = data.hidden ? 'true' : 'false';
+        hideBtn.classList.toggle('active', data.hidden);
+        hideBtn.textContent = data.hidden ? 'UNHIDE' : 'HIDE';
+        hideBtn.title = data.hidden ? 'Unhide game' : 'Hide game';
+        applyFilters();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    return;
+  }
+
+  // 3. Fix button click
+  const fixBtn = e.target.closest('.fix-btn');
+  if (fixBtn) {
+    e.stopPropagation();
+    const card = fixBtn.closest('.card');
+    if (card) openCoverPicker(card);
+    return;
+  }
+
+  // 4. Ignore clicks inside fix input or placeholder from launching
+  if (e.target.closest('.fix-input') || e.target.closest('.placeholder')) {
+    return;
+  }
+
+  // 5. Card launch click
+  const card = e.target.closest('.card');
+  if (card) {
     const system = card.dataset.system;
     const path = card.dataset.path;
     card.classList.add('launching');
     const statusEl = document.getElementById('status');
-    statusEl.textContent = 'Launching...';
+    if (statusEl) statusEl.textContent = 'Launching...';
     try {
       const res = await fetch('/api/launch', {
         method: 'POST',
@@ -941,15 +1026,30 @@ document.querySelectorAll('.card').forEach(card => {
         body: JSON.stringify({system, path})
       });
       const data = await res.json();
-      statusEl.textContent = data.ok ? 'Launched.' : ('Error: ' + data.error);
+      if (statusEl) statusEl.textContent = data.ok ? 'Launched.' : ('Error: ' + data.error);
       if (data.ok) {
         startActiveSessionTracking();
       }
-    } catch (e) {
-      statusEl.textContent = 'Error: ' + e;
+    } catch (err) {
+      if (statusEl) statusEl.textContent = 'Error: ' + err;
     }
-    setTimeout(() => { card.classList.remove('launching'); statusEl.textContent = ''; }, 2000);
-  });
+    setTimeout(() => {
+      card.classList.remove('launching');
+      if (statusEl) statusEl.textContent = '';
+    }, 2000);
+  }
+});
+
+// Delegated keydown for fix-input enter key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const input = e.target.closest('.fix-input');
+    if (input) {
+      e.preventDefault();
+      const card = input.closest('.card');
+      if (card) openCoverPicker(card);
+    }
+  }
 });
 
 let currentPickerCard = null;
@@ -1067,73 +1167,6 @@ function openCoverPicker(card) {
     searchAndRenderCovers(initialQuery);
   }
 }
-
-document.querySelectorAll('.fix-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    openCoverPicker(btn.closest('.card'));
-  });
-});
-
-document.querySelectorAll('.fix-input').forEach(input => {
-  input.addEventListener('click', e => e.stopPropagation());
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      openCoverPicker(input.closest('.card'));
-    }
-  });
-});
-
-document.querySelectorAll('.star').forEach(star => {
-  star.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    const card = star.closest('.card');
-    const system = card.dataset.system;
-    const filename = card.dataset.filename;
-    try {
-      const res = await fetch('/api/favorite', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({system, filename})
-      });
-      const data = await res.json();
-      if (data.ok) {
-        card.dataset.favorite = data.favorite ? 'true' : 'false';
-        star.classList.toggle('active', data.favorite);
-        if (typeof applyFilters === 'function') applyFilters();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  });
-});
-
-document.querySelectorAll('.hide-toggle').forEach(btn => {
-  btn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    const card = btn.closest('.card');
-    const system = card.dataset.system;
-    const filename = card.dataset.filename;
-    try {
-      const res = await fetch('/api/hide', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({system, filename})
-      });
-      const data = await res.json();
-      if (data.ok) {
-        card.dataset.hidden = data.hidden ? 'true' : 'false';
-        btn.classList.toggle('active', data.hidden);
-        btn.textContent = data.hidden ? 'UNHIDE' : 'HIDE';
-        btn.title = data.hidden ? 'Unhide game' : 'Hide game';
-        applyFilters();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  });
-});
 
 let activeTarget = 'all';
 
@@ -4231,20 +4264,5 @@ if (urlParams.get('test_settings')) {
   if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
 }
 </script>
-
-<div id="updateProgressModal" class="update-modal-backdrop" style="display: none;">
-  <div class="update-modal-content">
-    <div class="update-progress-body">
-      <svg class="update-refresh-loop spin-loop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-        <path d="M3 3v5h5"/>
-        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
-        <path d="M16 16h5v5"/>
-      </svg>
-      <h3 id="updateProgressTitle">Updating Application...</h3>
-      <p id="updateProgressDesc">Applying latest release and restarting server. Please wait...</p>
-    </div>
-  </div>
-</div>
 </body>
 </html>
