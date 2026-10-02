@@ -496,14 +496,16 @@ def scan_library():
 
         for folder_str in folders:
             cleaned_str = str(folder_str).strip().strip('"').strip("'")
-            if not cleaned_str:
+            if not cleaned_str or "\0" in cleaned_str:
                 continue
-            folder = Path(os.path.expandvars(cleaned_str)).expanduser()
-            if not folder.is_dir():
+            expanded = os.path.expanduser(os.path.expandvars(cleaned_str))
+            folder_real = os.path.realpath(os.path.abspath(expanded))
+            if not os.path.isdir(folder_real):
                 continue
+            folder = Path(folder_real)
 
             # Case-insensitive filesystem walk
-            for root, dirs, files in os.walk(folder):
+            for root, dirs, files in os.walk(folder_real):
                 for file in files:
                     ext = Path(file).suffix.lower()
                     if ext not in exts_set:
@@ -518,7 +520,7 @@ def scan_library():
                     seen_paths.add(resolved_path)
 
                     try:
-                        relative = entry.relative_to(folder)
+                        relative = Path(entry).resolve().relative_to(folder_real)
                         parts = relative.parts
                         is_wiiu = sys_id.lower() == "wiiu"
                         stem_lower = entry.stem.lower()
@@ -1864,6 +1866,12 @@ def api_save_config():
             folder = sys_cfg.get("folder")
             if not folder:
                 errors.append(f"Console '{name}': ROM folder path is required.")
+            else:
+                f_list = [folder] if isinstance(folder, str) else (folder if isinstance(folder, list) else [])
+                for f_item in f_list:
+                    if not isinstance(f_item, str) or not f_item.strip() or "\0" in f_item:
+                        errors.append(f"Console '{name}': Invalid folder path.")
+                        break
             command = sys_cfg.get("command", "")
             if not command:
                 errors.append(f"Console '{name}': Emulator launch command is required.")
@@ -1877,11 +1885,8 @@ def api_save_config():
             return jsonify({"ok": False, "error": "Validation failed", "errors": errors}), 400
 
         CONFIG_PATH.write_text(raw_yaml, encoding="utf-8")
-        _config_cache = parsed
-        try:
-            _config_mtime = CONFIG_PATH.stat().st_mtime
-        except Exception:
-            pass
+        _config_cache = None
+        _config_mtime = 0.0
         _library_cache = None
         library = scan_library()
         save_library_cache(library)
