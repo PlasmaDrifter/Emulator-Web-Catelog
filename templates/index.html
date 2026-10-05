@@ -11,7 +11,8 @@
     --bg-header: {{ settings.theme.bg_header }};
     --bg-tabs: {{ settings.theme.bg_tabs }};
     --bg-card: {{ settings.theme.bg_card }};
-    --border-color: {{ settings.theme.border_color }};
+    --border-color: {{ settings.theme.border_color or '#2a2e37' }};
+    --border-input: {{ settings.theme.border_input or '#3a3f4b' }};
     --text-primary: {{ settings.theme.text_primary }};
     --text-muted: {{ settings.theme.text_muted }};
     --accent-color: {{ settings.theme.accent_color }};
@@ -19,6 +20,11 @@
     --tab-active-text: {{ settings.theme.tab_active_text or '#ffffff' }};
     --favorite-color: {{ settings.theme.favorite_color }};
     --favorite-star-color: {{ settings.theme.favorite_star_color or '#ffd700' }};
+    --btn-hover-bg: {{ settings.theme.btn_hover_bg or '#343a46' }};
+    --playing-color: {{ settings.theme.playing_color or '#10b981' }};
+    --badge-update-color: {{ settings.theme.badge_update_color or '#ef4444' }};
+    --hide-btn-color: {{ settings.theme.hide_btn_color or '#ff3333' }};
+    --unhide-btn-color: {{ settings.theme.unhide_btn_color or '#4ade80' }};
   }
 </style>
 </head>
@@ -206,75 +212,149 @@
           <div id="saveThemeMsg" class="save-theme-msg"></div>
         </div>
 
-        <div class="color-picker-grid">
-          <div class="color-picker-row">
-            <span>Body Background</span>
-            <div class="color-inputs">
-              <input type="color" id="colBgBody" value="{{ settings.theme.bg_body }}">
-              <input type="text" class="color-hex" id="hexBgBody" value="{{ settings.theme.bg_body }}" spellcheck="false" maxlength="7" placeholder="#14161a" autocomplete="off">
+        <!-- Category 1: Core Surfaces & Borders -->
+        <div class="color-picker-category">
+          <div class="color-picker-category-title">Core Surfaces &amp; Borders</div>
+          <div class="color-picker-grid">
+            <div class="color-picker-row">
+              <span>Body Background</span>
+              <div class="color-inputs">
+                <input type="color" id="colBgBody" value="{{ settings.theme.bg_body }}">
+                <input type="text" class="color-hex" id="hexBgBody" value="{{ settings.theme.bg_body }}" spellcheck="false" maxlength="7" placeholder="#14161a" autocomplete="off">
+              </div>
+            </div>
+            <div class="color-picker-row">
+              <span>Header Bar</span>
+              <div class="color-inputs">
+                <input type="color" id="colBgHeader" value="{{ settings.theme.bg_header }}">
+                <input type="text" class="color-hex" id="hexBgHeader" value="{{ settings.theme.bg_header }}" spellcheck="false" maxlength="7" placeholder="#1c1f26" autocomplete="off">
+              </div>
+            </div>
+            <div class="color-picker-row">
+              <span>Tabs Bar</span>
+              <div class="color-inputs">
+                <input type="color" id="colBgTabs" value="{{ settings.theme.bg_tabs }}">
+                <input type="text" class="color-hex" id="hexBgTabs" value="{{ settings.theme.bg_tabs }}" spellcheck="false" maxlength="7" placeholder="#181b21" autocomplete="off">
+              </div>
+            </div>
+            <div class="color-picker-row">
+              <span>Card Background</span>
+              <div class="color-inputs">
+                <input type="color" id="colBgCard" value="{{ settings.theme.bg_card }}">
+                <input type="text" class="color-hex" id="hexBgCard" value="{{ settings.theme.bg_card }}" spellcheck="false" maxlength="7" placeholder="#22262e" autocomplete="off">
+              </div>
+            </div>
+            <div class="color-picker-row">
+              <span>Section &amp; Card Borders</span>
+              <div class="color-inputs">
+                <input type="color" id="colBorderColor" value="{{ settings.theme.border_color or '#2a2e37' }}">
+                <input type="text" class="color-hex" id="hexBorderColor" value="{{ settings.theme.border_color or '#2a2e37' }}" spellcheck="false" maxlength="7" placeholder="#2a2e37" autocomplete="off">
+              </div>
+            </div>
+            <div class="color-picker-row">
+              <span>Control &amp; Input Borders</span>
+              <div class="color-inputs">
+                <input type="color" id="colBorderInput" value="{{ settings.theme.border_input or '#3a3f4b' }}">
+                <input type="text" class="color-hex" id="hexBorderInput" value="{{ settings.theme.border_input or '#3a3f4b' }}" spellcheck="false" maxlength="7" placeholder="#3a3f4b" autocomplete="off">
+              </div>
+            </div>
+            <div class="color-picker-row">
+              <span>Button Hover Surface</span>
+              <div class="color-inputs">
+                <input type="color" id="colBtnHoverBg" value="{{ settings.theme.btn_hover_bg or '#343a46' }}">
+                <input type="text" class="color-hex" id="hexBtnHoverBg" value="{{ settings.theme.btn_hover_bg or '#343a46' }}" spellcheck="false" maxlength="7" placeholder="#343a46" autocomplete="off">
+              </div>
             </div>
           </div>
-          <div class="color-picker-row">
-            <span>Header Bar</span>
-            <div class="color-inputs">
-              <input type="color" id="colBgHeader" value="{{ settings.theme.bg_header }}">
-              <input type="text" class="color-hex" id="hexBgHeader" value="{{ settings.theme.bg_header }}" spellcheck="false" maxlength="7" placeholder="#1c1f26" autocomplete="off">
+        </div>
+
+        <!-- Category 2: Typography -->
+        <div class="color-picker-category">
+          <div class="color-picker-category-title">Typography</div>
+          <div class="color-picker-grid">
+            <div class="color-picker-row">
+              <span>Primary Text</span>
+              <div class="color-inputs">
+                <input type="color" id="colTextPrimary" value="{{ settings.theme.text_primary }}">
+                <input type="text" class="color-hex" id="hexTextPrimary" value="{{ settings.theme.text_primary }}" spellcheck="false" maxlength="7" placeholder="#e8e8e8" autocomplete="off">
+              </div>
+            </div>
+            <div class="color-picker-row">
+              <span>Muted Text</span>
+              <div class="color-inputs">
+                <input type="color" id="colTextMuted" value="{{ settings.theme.text_muted }}">
+                <input type="text" class="color-hex" id="hexTextMuted" value="{{ settings.theme.text_muted }}" spellcheck="false" maxlength="7" placeholder="#9aa4b2" autocomplete="off">
+              </div>
             </div>
           </div>
-          <div class="color-picker-row">
-            <span>Tabs Bar</span>
-            <div class="color-inputs">
-              <input type="color" id="colBgTabs" value="{{ settings.theme.bg_tabs }}">
-              <input type="text" class="color-hex" id="hexBgTabs" value="{{ settings.theme.bg_tabs }}" spellcheck="false" maxlength="7" placeholder="#181b21" autocomplete="off">
+        </div>
+
+        <!-- Category 3: Navigation & Accents -->
+        <div class="color-picker-category">
+          <div class="color-picker-category-title">Navigation &amp; Accents</div>
+          <div class="color-picker-grid">
+            <div class="color-picker-row">
+              <span>Primary Accent</span>
+              <div class="color-inputs">
+                <input type="color" id="colAccent" value="{{ settings.theme.accent_color }}">
+                <input type="text" class="color-hex" id="hexAccent" value="{{ settings.theme.accent_color }}" spellcheck="false" maxlength="7" placeholder="#3a7bd5" autocomplete="off">
+              </div>
+            </div>
+            <div class="color-picker-row">
+              <span>Selected Tab Text</span>
+              <div class="color-inputs">
+                <input type="color" id="colTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
+                <input type="text" class="color-hex" id="hexTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}" spellcheck="false" maxlength="7" placeholder="#ffffff" autocomplete="off">
+              </div>
             </div>
           </div>
-          <div class="color-picker-row">
-            <span>Card Background</span>
-            <div class="color-inputs">
-              <input type="color" id="colBgCard" value="{{ settings.theme.bg_card }}">
-              <input type="text" class="color-hex" id="hexBgCard" value="{{ settings.theme.bg_card }}" spellcheck="false" maxlength="7" placeholder="#22262e" autocomplete="off">
+        </div>
+
+        <!-- Category 4: Favorites & Status Indicators -->
+        <div class="color-picker-category">
+          <div class="color-picker-category-title">Favorites &amp; Status Indicators</div>
+          <div class="color-picker-grid">
+            <div class="color-picker-row">
+              <span>Favorite Star Color</span>
+              <div class="color-inputs">
+                <input type="color" id="colFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
+                <input type="text" class="color-hex" id="hexFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}" spellcheck="false" maxlength="7" placeholder="#ffd700" autocomplete="off">
+              </div>
             </div>
-          </div>
-          <div class="color-picker-row">
-            <span>Primary Accent</span>
-            <div class="color-inputs">
-              <input type="color" id="colAccent" value="{{ settings.theme.accent_color }}">
-              <input type="text" class="color-hex" id="hexAccent" value="{{ settings.theme.accent_color }}" spellcheck="false" maxlength="7" placeholder="#3a7bd5" autocomplete="off">
+            <div class="color-picker-row">
+              <span>Favorite Card Border &amp; Glow</span>
+              <div class="color-inputs">
+                <input type="color" id="colFavorite" value="{{ settings.theme.favorite_color }}">
+                <input type="text" class="color-hex" id="hexFavorite" value="{{ settings.theme.favorite_color }}" spellcheck="false" maxlength="7" placeholder="#ff00ff" autocomplete="off">
+              </div>
             </div>
-          </div>
-          <div class="color-picker-row">
-            <span>Selected Tab Text</span>
-            <div class="color-inputs">
-              <input type="color" id="colTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
-              <input type="text" class="color-hex" id="hexTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}" spellcheck="false" maxlength="7" placeholder="#ffffff" autocomplete="off">
+            <div class="color-picker-row">
+              <span>Playing Now Status Glow</span>
+              <div class="color-inputs">
+                <input type="color" id="colPlayingColor" value="{{ settings.theme.playing_color or '#10b981' }}">
+                <input type="text" class="color-hex" id="hexPlayingColor" value="{{ settings.theme.playing_color or '#10b981' }}" spellcheck="false" maxlength="7" placeholder="#10b981" autocomplete="off">
+              </div>
             </div>
-          </div>
-          <div class="color-picker-row">
-            <span>Favorite Star Color</span>
-            <div class="color-inputs">
-              <input type="color" id="colFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
-              <input type="text" class="color-hex" id="hexFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}" spellcheck="false" maxlength="7" placeholder="#ffd700" autocomplete="off">
+            <div class="color-picker-row">
+              <span>Update Notification Badge</span>
+              <div class="color-inputs">
+                <input type="color" id="colBadgeUpdateColor" value="{{ settings.theme.badge_update_color or '#ef4444' }}">
+                <input type="text" class="color-hex" id="hexBadgeUpdateColor" value="{{ settings.theme.badge_update_color or '#ef4444' }}" spellcheck="false" maxlength="7" placeholder="#ef4444" autocomplete="off">
+              </div>
             </div>
-          </div>
-          <div class="color-picker-row">
-            <span>Favorite Card Border & Glow</span>
-            <div class="color-inputs">
-              <input type="color" id="colFavorite" value="{{ settings.theme.favorite_color }}">
-              <input type="text" class="color-hex" id="hexFavorite" value="{{ settings.theme.favorite_color }}" spellcheck="false" maxlength="7" placeholder="#ff00ff" autocomplete="off">
+            <div class="color-picker-row">
+              <span>Hide Button Text &amp; Border</span>
+              <div class="color-inputs">
+                <input type="color" id="colHideBtnColor" value="{{ settings.theme.hide_btn_color or '#ff3333' }}">
+                <input type="text" class="color-hex" id="hexHideBtnColor" value="{{ settings.theme.hide_btn_color or '#ff3333' }}" spellcheck="false" maxlength="7" placeholder="#ff3333" autocomplete="off">
+              </div>
             </div>
-          </div>
-          <div class="color-picker-row">
-            <span>Primary Text</span>
-            <div class="color-inputs">
-              <input type="color" id="colTextPrimary" value="{{ settings.theme.text_primary }}">
-              <input type="text" class="color-hex" id="hexTextPrimary" value="{{ settings.theme.text_primary }}" spellcheck="false" maxlength="7" placeholder="#e8e8e8" autocomplete="off">
-            </div>
-          </div>
-          <div class="color-picker-row">
-            <span>Muted Text</span>
-            <div class="color-inputs">
-              <input type="color" id="colTextMuted" value="{{ settings.theme.text_muted }}">
-              <input type="text" class="color-hex" id="hexTextMuted" value="{{ settings.theme.text_muted }}" spellcheck="false" maxlength="7" placeholder="#9aa4b2" autocomplete="off">
+            <div class="color-picker-row">
+              <span>Unhide Button Text &amp; Border</span>
+              <div class="color-inputs">
+                <input type="color" id="colUnhideBtnColor" value="{{ settings.theme.unhide_btn_color or '#4ade80' }}">
+                <input type="text" class="color-hex" id="hexUnhideBtnColor" value="{{ settings.theme.unhide_btn_color or '#4ade80' }}" spellcheck="false" maxlength="7" placeholder="#4ade80" autocomplete="off">
+              </div>
             </div>
           </div>
         </div>
@@ -1348,72 +1428,114 @@ const THEME_PRESETS = {
     bg_header: '#1c1f26',
     bg_tabs: '#181b21',
     bg_card: '#22262e',
+    border_color: '#2a2e37',
+    border_input: '#3a3f4b',
+    btn_hover_bg: '#343a46',
+    text_primary: '#e8e8e8',
+    text_muted: '#9aa4b2',
     accent_color: '#3a7bd5',
     tab_active_text: '#ffffff',
-    favorite_color: '#ff00ff',
     favorite_star_color: '#ffd700',
-    text_primary: '#e8e8e8',
-    text_muted: '#9aa4b2'
+    favorite_color: '#ff00ff',
+    playing_color: '#10b981',
+    badge_update_color: '#ef4444',
+    hide_btn_color: '#ff3333',
+    unhide_btn_color: '#4ade80'
   },
   oled: {
     bg_body: '#000000',
     bg_header: '#0a0a0a',
     bg_tabs: '#050505',
     bg_card: '#121212',
+    border_color: '#222222',
+    border_input: '#333333',
+    btn_hover_bg: '#1f1f1f',
+    text_primary: '#ffffff',
+    text_muted: '#888888',
     accent_color: '#00f0ff',
     tab_active_text: '#000000',
-    favorite_color: '#ffd700',
     favorite_star_color: '#ffd700',
-    text_primary: '#ffffff',
-    text_muted: '#888888'
+    favorite_color: '#ffd700',
+    playing_color: '#00ff66',
+    badge_update_color: '#ff3344',
+    hide_btn_color: '#ff3333',
+    unhide_btn_color: '#00ff66'
   },
   catppuccin: {
     bg_body: '#1e1e2e',
     bg_header: '#181825',
     bg_tabs: '#11111b',
     bg_card: '#313244',
+    border_color: '#45475a',
+    border_input: '#585b70',
+    btn_hover_bg: '#3b3d54',
+    text_primary: '#cdd6f4',
+    text_muted: '#a6adc8',
     accent_color: '#cba6f7',
     tab_active_text: '#11111b',
-    favorite_color: '#fab387',
     favorite_star_color: '#f9e2af',
-    text_primary: '#cdd6f4',
-    text_muted: '#a6adc8'
+    favorite_color: '#fab387',
+    playing_color: '#a6da95',
+    badge_update_color: '#f38ba8',
+    hide_btn_color: '#f38ba8',
+    unhide_btn_color: '#a6da95'
   },
   cyberpunk: {
     bg_body: '#0b0410',
     bg_header: '#180829',
     bg_tabs: '#120520',
     bg_card: '#250e3d',
+    border_color: '#3d1663',
+    border_input: '#5a2291',
+    btn_hover_bg: '#331353',
+    text_primary: '#fcee0a',
+    text_muted: '#00f0ff',
     accent_color: '#ffe600',
     tab_active_text: '#000000',
-    favorite_color: '#ff007f',
     favorite_star_color: '#fcee0a',
-    text_primary: '#fcee0a',
-    text_muted: '#00f0ff'
+    favorite_color: '#ff007f',
+    playing_color: '#00ff9f',
+    badge_update_color: '#ff0055',
+    hide_btn_color: '#ff0055',
+    unhide_btn_color: '#00ff9f'
   },
   nord: {
     bg_body: '#2e3440',
     bg_header: '#3b4252',
     bg_tabs: '#2e3440',
     bg_card: '#434c5e',
+    border_color: '#4c566a',
+    border_input: '#5e6779',
+    btn_hover_bg: '#4c566a',
+    text_primary: '#eceff4',
+    text_muted: '#d8dee9',
     accent_color: '#88c0d0',
     tab_active_text: '#1e222a',
-    favorite_color: '#ebcb8b',
     favorite_star_color: '#ebcb8b',
-    text_primary: '#eceff4',
-    text_muted: '#d8dee9'
+    favorite_color: '#ebcb8b',
+    playing_color: '#a3be8c',
+    badge_update_color: '#bf616a',
+    hide_btn_color: '#bf616a',
+    unhide_btn_color: '#a3be8c'
   },
   emerald: {
     bg_body: '#0c1511',
     bg_header: '#13231c',
     bg_tabs: '#0f1c16',
     bg_card: '#1a3328',
+    border_color: '#244738',
+    border_input: '#2f5a48',
+    btn_hover_bg: '#234436',
+    text_primary: '#ecfdf5',
+    text_muted: '#6ee7b7',
     accent_color: '#10b981',
     tab_active_text: '#052e16',
-    favorite_color: '#38bdf8',
     favorite_star_color: '#facc15',
-    text_primary: '#ecfdf5',
-    text_muted: '#6ee7b7'
+    favorite_color: '#38bdf8',
+    playing_color: '#34d399',
+    badge_update_color: '#f87171',
+    hide_btn_color: '#f87171',
+    unhide_btn_color: '#34d399'
   }
 };
 
@@ -1428,16 +1550,30 @@ const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
 const catalogTitleInput = document.getElementById('catalogTitleInput');
 
 const colorInputs = {
+  // Category 1: Core Surfaces & Borders
   bg_body: { picker: document.getElementById('colBgBody'), hex: document.getElementById('hexBgBody'), cssVar: '--bg-body' },
   bg_header: { picker: document.getElementById('colBgHeader'), hex: document.getElementById('hexBgHeader'), cssVar: '--bg-header' },
   bg_tabs: { picker: document.getElementById('colBgTabs'), hex: document.getElementById('hexBgTabs'), cssVar: '--bg-tabs' },
   bg_card: { picker: document.getElementById('colBgCard'), hex: document.getElementById('hexBgCard'), cssVar: '--bg-card' },
+  border_color: { picker: document.getElementById('colBorderColor'), hex: document.getElementById('hexBorderColor'), cssVar: '--border-color' },
+  border_input: { picker: document.getElementById('colBorderInput'), hex: document.getElementById('hexBorderInput'), cssVar: '--border-input' },
+  btn_hover_bg: { picker: document.getElementById('colBtnHoverBg'), hex: document.getElementById('hexBtnHoverBg'), cssVar: '--btn-hover-bg' },
+
+  // Category 2: Typography
+  text_primary: { picker: document.getElementById('colTextPrimary'), hex: document.getElementById('hexTextPrimary'), cssVar: '--text-primary' },
+  text_muted: { picker: document.getElementById('colTextMuted'), hex: document.getElementById('hexTextMuted'), cssVar: '--text-muted' },
+
+  // Category 3: Navigation & Accents
   accent_color: { picker: document.getElementById('colAccent'), hex: document.getElementById('hexAccent'), cssVar: '--accent-color' },
   tab_active_text: { picker: document.getElementById('colTabActiveText'), hex: document.getElementById('hexTabActiveText'), cssVar: '--tab-active-text' },
+
+  // Category 4: Favorites & Status Indicators
   favorite_star_color: { picker: document.getElementById('colFavoriteStar'), hex: document.getElementById('hexFavoriteStar'), cssVar: '--favorite-star-color' },
   favorite_color: { picker: document.getElementById('colFavorite'), hex: document.getElementById('hexFavorite'), cssVar: '--favorite-color' },
-  text_primary: { picker: document.getElementById('colTextPrimary'), hex: document.getElementById('hexTextPrimary'), cssVar: '--text-primary' },
-  text_muted: { picker: document.getElementById('colTextMuted'), hex: document.getElementById('hexTextMuted'), cssVar: '--text-muted' }
+  playing_color: { picker: document.getElementById('colPlayingColor'), hex: document.getElementById('hexPlayingColor'), cssVar: '--playing-color' },
+  badge_update_color: { picker: document.getElementById('colBadgeUpdateColor'), hex: document.getElementById('hexBadgeUpdateColor'), cssVar: '--badge-update-color' },
+  hide_btn_color: { picker: document.getElementById('colHideBtnColor'), hex: document.getElementById('hexHideBtnColor'), cssVar: '--hide-btn-color' },
+  unhide_btn_color: { picker: document.getElementById('colUnhideBtnColor'), hex: document.getElementById('hexUnhideBtnColor'), cssVar: '--unhide-btn-color' }
 };
 
 function getContrastColor(hexColor) {

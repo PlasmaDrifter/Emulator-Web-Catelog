@@ -12,7 +12,8 @@
     --bg-header: {{ settings.theme.bg_header }};
     --bg-tabs: {{ settings.theme.bg_tabs }};
     --bg-card: {{ settings.theme.bg_card }};
-    --border-color: {{ settings.theme.border_color }};
+    --border-color: {{ settings.theme.border_color or '#2a2e37' }};
+    --border-input: {{ settings.theme.border_input or '#3a3f4b' }};
     --text-primary: {{ settings.theme.text_primary }};
     --text-muted: {{ settings.theme.text_muted }};
     --accent-color: {{ settings.theme.accent_color }};
@@ -21,6 +22,11 @@
     --card-title-size: {{ settings.theme.card_title_size }};
     --card-title-color: {{ settings.theme.card_title_color }};
     --card-title-weight: {{ settings.theme.card_title_weight }};
+    --btn-hover-bg: {{ settings.theme.btn_hover_bg or '#343a46' }};
+    --playing-color: {{ settings.theme.playing_color or '#10b981' }};
+    --badge-update-color: {{ settings.theme.badge_update_color or '#ef4444' }};
+    --hide-btn-color: {{ settings.theme.hide_btn_color or '#ff3333' }};
+    --unhide-btn-color: {{ settings.theme.unhide_btn_color or '#4ade80' }};
   }
 
 </style>

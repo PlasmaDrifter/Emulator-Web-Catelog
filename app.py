@@ -28,7 +28,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.7.9"
+__version__ = "0.8.0"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -88,7 +88,13 @@ DEFAULT_SETTINGS = {
         "favorite_star_color": "#ffd700",
         "text_primary": "#e8e8e8",
         "text_muted": "#9aa4b2",
-        "border_color": "#2a2e37"
+        "border_color": "#2a2e37",
+        "border_input": "#3a3f4b",
+        "btn_hover_bg": "#343a46",
+        "playing_color": "#10b981",
+        "badge_update_color": "#ef4444",
+        "hide_btn_color": "#ff3333",
+        "unhide_btn_color": "#4ade80"
     },
     "custom_themes": {},
     "tab_icons": {},

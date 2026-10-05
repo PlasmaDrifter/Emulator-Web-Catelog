@@ -11,6 +11,11 @@
   --tab-active-text: #ffffff;
   --favorite-color: #ff00ff;
   --favorite-star-color: #ffd700;
+  --btn-hover-bg: #343a46;
+  --playing-color: #10b981;
+  --badge-update-color: #ef4444;
+  --hide-btn-color: #ff3333;
+  --unhide-btn-color: #4ade80;
 }
 
 * { box-sizing: border-box; }
@@ -65,7 +70,7 @@ button, .icon-btn {
   text-decoration: none;
   box-sizing: border-box;
 }
-button:hover, .icon-btn:hover { background: #343a46; color: var(--text-primary); }
+button:hover, .icon-btn:hover { background: var(--btn-hover-bg, #343a46); color: var(--text-primary); }
 .icon-btn {
   padding: 6px 10px;
   font-size: 1rem;
@@ -93,7 +98,7 @@ button.icon-btn.spinning svg {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #ef4444;
+  background: var(--badge-update-color, #ef4444);
   color: #ffffff;
   font-size: 0.65rem;
   font-weight: 800;
@@ -102,7 +107,7 @@ button.icon-btn.spinning svg {
   justify-content: center;
   line-height: 1;
   border: 1.5px solid var(--bg-header);
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--badge-update-color, #ef4444) 75%, transparent);
   animation: pulse-update-badge 2s infinite ease-in-out;
   pointer-events: none;
 }
@@ -378,12 +383,12 @@ main { padding: 12px 24px 24px; }
   transform: translate(-50%, -50%);
   z-index: 4;
   background: #000000;
-  color: #ff3333;
+  color: var(--hide-btn-color, #ff3333);
   font-weight: 800;
   font-size: 0.72rem;
   letter-spacing: 1px;
   text-transform: uppercase;
-  border: 1.5px solid #ff3333;
+  border: 1.5px solid var(--hide-btn-color, #ff3333);
   border-radius: 4px;
   padding: 4px 14px;
   cursor: pointer;
@@ -398,20 +403,21 @@ body.show-hide-controls .hide-toggle {
   display: inline-flex;
 }
 .hide-toggle:hover {
-  background: #ff3333;
+  background: var(--hide-btn-color, #ff3333);
   color: #000000;
-  border-color: #ff3333;
+  border-color: var(--hide-btn-color, #ff3333);
   transform: translate(-50%, -50%) scale(1.06);
 }
 .hide-toggle.active {
   background: #000000;
-  color: #4ade80;
-  border-color: #4ade80;
+  color: var(--unhide-btn-color, #4ade80);
+  border-color: var(--unhide-btn-color, #4ade80);
 }
 .hide-toggle.active:hover {
-  background: #4ade80;
+  background: var(--unhide-btn-color, #4ade80);
   color: #000000;
-  border-color: #4ade80;
+  border-color: var(--unhide-btn-color, #4ade80);
+  transform: translate(-50%, -50%) scale(1.06);
 }
 
 .card[data-hidden="true"] .cover,
@@ -477,7 +483,7 @@ body.show-hide-controls .hide-toggle {
   padding: 4px 8px;
   cursor: pointer;
 }
-.fix-btn:hover { background: #343a46; }
+.fix-btn:hover { background: var(--btn-hover-bg, #343a46); }
 .fix-btn:disabled { opacity: 0.6; cursor: default; }
 
 .title {
@@ -928,11 +934,27 @@ body.hide-update-badge .settings-update-banner {
   color: #e01b24;
 }
 
-/* Color Pickers Grid */
+/* Color Pickers Categories & Grid */
+.color-picker-category {
+  margin-bottom: 16px;
+}
+.color-picker-category-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .color-picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 .color-picker-row {
   display: flex;
@@ -2367,8 +2389,8 @@ button.btn-primary:active {
 }
 
 .card.playing-now .cover {
-  border-color: #10b981 !important;
-  box-shadow: 0 0 14px rgba(16, 185, 129, 0.6) !important;
+  border-color: var(--playing-color, #10b981) !important;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--playing-color, #10b981) 60%, transparent) !important;
 }
 
 .card.playing-now .card-play-stats {
@@ -2378,10 +2400,10 @@ button.btn-primary:active {
 }
 
 .card.playing-now .card-stat-pill {
-  border-color: #10b981 !important;
-  color: #10b981 !important;
+  border-color: var(--playing-color, #10b981) !important;
+  color: var(--playing-color, #10b981) !important;
   font-weight: 700 !important;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--playing-color, #10b981) 35%, transparent) !important;
 }
 
 /* --- Play Statistics & Insights Dialog --- */
