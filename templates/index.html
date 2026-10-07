@@ -2223,18 +2223,18 @@ function initColorPicker() {
 
     popover.classList.remove('hidden');
     const rect = btn.getBoundingClientRect();
-    const popoverWidth = 340;
-    const popoverHeight = 135;
+    const popoverWidth = popover.offsetWidth || 340;
+    const popoverHeight = popover.offsetHeight || 135;
 
-    let left = rect.left;
+    let left = Math.round(rect.left + (rect.width / 2) - (popoverWidth / 2));
     if (left + popoverWidth > window.innerWidth - 12) {
       left = window.innerWidth - popoverWidth - 12;
     }
     if (left < 12) left = 12;
 
-    let top = rect.bottom + 6;
+    let top = Math.round(rect.bottom + 6);
     if (top + popoverHeight > window.innerHeight - 12) {
-      top = Math.max(12, rect.top - popoverHeight - 6);
+      top = Math.max(12, Math.round(rect.top - popoverHeight - 6));
     }
 
     popover.style.top = `${top}px`;
