@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title id="pageTitle">{{ settings.title }}</title>
 <link rel="icon" id="faviconLink" href="{{ settings.icon or '/static/favicon.png' }}">
-<link rel="stylesheet" href="/static/css/style.css?v=7.23">
+<link rel="stylesheet" href="/static/css/style.css?v=7.25">
 <style id="themeStyle">
   :root {
     --bg-body: {{ settings.theme.bg_body }};
@@ -25,6 +25,210 @@
     --badge-update-color: {{ settings.theme.badge_update_color or '#ef4444' }};
     --hide-btn-color: {{ settings.theme.hide_btn_color or '#ff3333' }};
     --unhide-btn-color: {{ settings.theme.unhide_btn_color or '#4ade80' }};
+  }
+
+  /* In-App Bidirectional Shade Color Picker styles */
+  .swatch-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background-color: var(--bg-tabs, #181b21) !important;
+    border: 1px solid var(--border-input, #3a3f4b) !important;
+    border-radius: 8px !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    outline: none !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    min-width: 90px !important;
+    justify-content: flex-start !important;
+  }
+  .swatch-btn:hover,
+  .swatch-btn.active {
+    border-color: var(--accent-color, #3a7bd5) !important;
+    box-shadow: 0 0 0 2px rgba(58, 123, 213, 0.25) !important;
+  }
+  .swatch-preview {
+    display: inline-block !important;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 5px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+  }
+  .color-hex {
+    font-family: monospace !important;
+    font-size: 11px !important;
+    color: var(--text-primary, #e8e8e8) !important;
+    text-transform: uppercase !important;
+  }
+  #app-color-popover.custom-color-panel {
+    position: fixed !important;
+    z-index: 999999 !important;
+    width: 340px !important;
+    background-color: var(--bg-card, #22262e) !important;
+    border: 1px solid var(--border-color, #2a2e37) !important;
+    border-radius: 12px !important;
+    padding: 12px 14px !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.2) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    box-sizing: border-box !important;
+  }
+  #app-color-popover.hidden {
+    display: none !important;
+  }
+  .color-popover-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08)) !important;
+    padding-bottom: 8px !important;
+  }
+  .color-popover-title {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--text-primary, #e8e8e8) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+  }
+  .color-popover-header-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+  .color-popover-btn {
+    background: none !important;
+    border: 1px solid transparent !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 3px 8px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.12s ease !important;
+    line-height: 1.2 !important;
+  }
+  .color-popover-cancel {
+    color: var(--text-muted, #9aa4b2) !important;
+    border-color: var(--border-input, #3a3f4b) !important;
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+  .color-popover-cancel:hover {
+    color: #ed8796 !important;
+    border-color: #ed8796 !important;
+    background-color: rgba(237, 135, 150, 0.12) !important;
+  }
+  .color-popover-done {
+    color: var(--accent-contrast, #ffffff) !important;
+    background-color: var(--accent-color, #3a7bd5) !important;
+    border-color: var(--accent-color, #3a7bd5) !important;
+  }
+  .color-popover-done:hover {
+    filter: brightness(1.1) !important;
+  }
+  .custom-chips-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 5px !important;
+  }
+  .color-chip {
+    flex: 1 !important;
+    height: 24px !important;
+    border-radius: 5px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    cursor: pointer !important;
+    transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+    padding: 0 !important;
+    outline: none !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+  }
+  .color-chip:hover {
+    transform: translateY(-2px) scale(1.12) !important;
+    box-shadow: 0 0 0 1.5px #ffffff, 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+  }
+  .color-chip.active {
+    box-shadow: 0 0 0 2.5px #ffffff, 0 0 8px rgba(0, 0, 0, 0.8) !important;
+    transform: scale(1.1) !important;
+  }
+  .picker-bottom-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  .custom-preview-dot {
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 6px !important;
+    background-color: var(--accent-color, #3a7bd5) !important;
+    flex-shrink: 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45) !important;
+  }
+  .shade-slider-track {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  .shade-slider {
+    width: 100% !important;
+    height: 10px !important;
+    border-radius: 5px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background: linear-gradient(to right, #000000 0%, #3a7bd5 50%, #ffffff 100%) !important;
+    outline: none !important;
+    cursor: pointer !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+  .shade-slider::-moz-range-thumb {
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 50% !important;
+    background: #ffffff !important;
+    border: 2px solid #18181b !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6) !important;
+    cursor: pointer !important;
+  }
+  .shade-slider::-webkit-slider-thumb {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 50% !important;
+    background: #ffffff !important;
+    border: 2px solid #18181b !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6) !important;
+    cursor: pointer !important;
+  }
+  .custom-hex-box {
+    display: flex !important;
+    align-items: center !important;
+    background: var(--bg-body, #14161a) !important;
+    border: 1px solid var(--border-input, #3a3f4b) !important;
+    border-radius: 5px !important;
+    padding: 4px 8px !important;
+    width: 80px !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+  }
+  .custom-hex-prefix {
+    color: var(--text-muted, #9aa4b2) !important;
+    font-size: 12px !important;
+    font-family: monospace !important;
+    margin-right: 3px !important;
+  }
+  .custom-hex-input {
+    background: none !important;
+    border: none !important;
+    color: var(--text-primary, #e8e8e8) !important;
+    font-size: 12px !important;
+    font-family: monospace !important;
+    width: 100% !important;
+    outline: none !important;
+    text-transform: uppercase !important;
+    padding: 0 !important;
   }
 </style>
 </head>
@@ -881,6 +1085,41 @@
     <button type="button" id="saveSettingsBtn" class="btn-primary">Save</button>
   </div>
 </div>
+
+<!-- Custom In-App Bidirectional Shade Color Picker Popover (Inside settingsDialog for Top-Layer Modal Visibility) -->
+<div id="app-color-popover" class="custom-color-panel hidden" role="dialog" aria-label="Color Picker">
+  <div class="color-popover-header">
+    <span class="color-popover-title" id="colorPopoverTitle">Color Picker</span>
+    <div class="color-popover-header-actions">
+      <button type="button" class="color-popover-btn color-popover-cancel" id="colorPopoverCancel" title="Revert and close">Cancel</button>
+      <button type="button" class="color-popover-btn color-popover-done" id="colorPopoverDone" title="Confirm and close">Done</button>
+    </div>
+  </div>
+
+  <div class="custom-chips-row">
+    <button type="button" class="color-chip" data-color="#ef4444" style="background-color: #ef4444;" title="Red"></button>
+    <button type="button" class="color-chip" data-color="#f97316" style="background-color: #f97316;" title="Orange"></button>
+    <button type="button" class="color-chip" data-color="#eab308" style="background-color: #eab308;" title="Yellow"></button>
+    <button type="button" class="color-chip" data-color="#84cc16" style="background-color: #84cc16;" title="Lime"></button>
+    <button type="button" class="color-chip" data-color="#22c55e" style="background-color: #22c55e;" title="Green"></button>
+    <button type="button" class="color-chip" data-color="#06b6d4" style="background-color: #06b6d4;" title="Cyan"></button>
+    <button type="button" class="color-chip" data-color="#3b82f6" style="background-color: #3b82f6;" title="Blue"></button>
+    <button type="button" class="color-chip" data-color="#9146ff" style="background-color: #9146ff;" title="Purple"></button>
+    <button type="button" class="color-chip" data-color="#ec4899" style="background-color: #ec4899;" title="Pink"></button>
+    <button type="button" class="color-chip" data-color="#ffffff" style="background-color: #ffffff;" title="White"></button>
+  </div>
+
+  <div class="picker-bottom-row">
+    <span class="custom-preview-dot" id="pickerPreviewDot" title="Current shade preview"></span>
+    <div class="shade-slider-track">
+      <input type="range" id="customShadeSlider" min="0" max="100" value="50" class="shade-slider" title="Drag left for darker shades, right for lighter shades">
+    </div>
+    <div class="custom-hex-box">
+      <span class="custom-hex-prefix">#</span>
+      <input type="text" id="customHexInput" class="custom-hex-input" maxlength="6" placeholder="8AADF4" spellcheck="false" title="Hex code">
+    </div>
+  </div>
+</div>
 </dialog>
 
 <!-- Validation Error Popup Dialog -->
@@ -1033,41 +1272,6 @@
       </svg>
       <h3 id="updateProgressTitle">Updating Application...</h3>
       <p id="updateProgressDesc">Applying latest release and restarting server. Please wait...</p>
-    </div>
-  </div>
-</div>
-
-<!-- Custom In-App Bidirectional Shade Color Picker Popover -->
-<div id="app-color-popover" class="custom-color-panel hidden" role="dialog" aria-label="Color Picker">
-  <div class="color-popover-header">
-    <span class="color-popover-title" id="colorPopoverTitle">Color Picker</span>
-    <div class="color-popover-header-actions">
-      <button type="button" class="color-popover-btn color-popover-cancel" id="colorPopoverCancel" title="Revert and close">Cancel</button>
-      <button type="button" class="color-popover-btn color-popover-done" id="colorPopoverDone" title="Confirm and close">Done</button>
-    </div>
-  </div>
-
-  <div class="custom-chips-row">
-    <button type="button" class="color-chip" data-color="#ef4444" style="background-color: #ef4444;" title="Red"></button>
-    <button type="button" class="color-chip" data-color="#f97316" style="background-color: #f97316;" title="Orange"></button>
-    <button type="button" class="color-chip" data-color="#eab308" style="background-color: #eab308;" title="Yellow"></button>
-    <button type="button" class="color-chip" data-color="#84cc16" style="background-color: #84cc16;" title="Lime"></button>
-    <button type="button" class="color-chip" data-color="#22c55e" style="background-color: #22c55e;" title="Green"></button>
-    <button type="button" class="color-chip" data-color="#06b6d4" style="background-color: #06b6d4;" title="Cyan"></button>
-    <button type="button" class="color-chip" data-color="#3b82f6" style="background-color: #3b82f6;" title="Blue"></button>
-    <button type="button" class="color-chip" data-color="#9146ff" style="background-color: #9146ff;" title="Purple"></button>
-    <button type="button" class="color-chip" data-color="#ec4899" style="background-color: #ec4899;" title="Pink"></button>
-    <button type="button" class="color-chip" data-color="#ffffff" style="background-color: #ffffff;" title="White"></button>
-  </div>
-
-  <div class="picker-bottom-row">
-    <span class="custom-preview-dot" id="pickerPreviewDot" title="Current shade preview"></span>
-    <div class="shade-slider-track">
-      <input type="range" id="customShadeSlider" min="0" max="100" value="50" class="shade-slider" title="Drag left for darker shades, right for lighter shades">
-    </div>
-    <div class="custom-hex-box">
-      <span class="custom-hex-prefix">#</span>
-      <input type="text" id="customHexInput" class="custom-hex-input" maxlength="6" placeholder="8AADF4" spellcheck="false" title="Hex code">
     </div>
   </div>
 </div>
@@ -1940,11 +2144,28 @@ function initColorPicker() {
 
   if (!popover) return;
 
+  const settingsDialog = document.getElementById('settingsDialog');
+  if (settingsDialog && !settingsDialog.contains(popover)) {
+    settingsDialog.appendChild(popover);
+  }
+
   function closePopover() {
     popover.classList.add('hidden');
     if (activeColorPicker.activeButton) {
       activeColorPicker.activeButton.classList.remove('active');
       activeColorPicker.activeButton = null;
+    }
+  }
+
+  if (settingsDialog) {
+    settingsDialog.addEventListener('close', closePopover);
+    const modalBody = settingsDialog.querySelector('.modal-body');
+    if (modalBody) {
+      modalBody.addEventListener('scroll', () => {
+        if (!popover.classList.contains('hidden') && activeColorPicker.activeButton) {
+          openPopover(activeColorPicker.activeButton);
+        }
+      }, { passive: true });
     }
   }
 
