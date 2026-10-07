@@ -218,52 +218,59 @@
           <div class="color-picker-grid">
             <div class="color-picker-row">
               <span>Body Background</span>
-              <div class="color-inputs">
-                <input type="color" id="colBgBody" value="{{ settings.theme.bg_body }}">
-                <input type="text" class="color-hex" id="hexBgBody" value="{{ settings.theme.bg_body }}" spellcheck="false" maxlength="7" placeholder="#14161a" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colBgBody" data-hex-id="hexBgBody" data-var="--bg-body" data-label="Body Background">
+                <span class="swatch-preview" id="preview-colBgBody" style="background-color: {{ settings.theme.bg_body }};"></span>
+                <span class="color-hex" id="hexBgBody">{{ settings.theme.bg_body }}</span>
+                <input type="hidden" id="colBgBody" value="{{ settings.theme.bg_body }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Header Bar</span>
-              <div class="color-inputs">
-                <input type="color" id="colBgHeader" value="{{ settings.theme.bg_header }}">
-                <input type="text" class="color-hex" id="hexBgHeader" value="{{ settings.theme.bg_header }}" spellcheck="false" maxlength="7" placeholder="#1c1f26" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colBgHeader" data-hex-id="hexBgHeader" data-var="--bg-header" data-label="Header Bar">
+                <span class="swatch-preview" id="preview-colBgHeader" style="background-color: {{ settings.theme.bg_header }};"></span>
+                <span class="color-hex" id="hexBgHeader">{{ settings.theme.bg_header }}</span>
+                <input type="hidden" id="colBgHeader" value="{{ settings.theme.bg_header }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Tabs Bar</span>
-              <div class="color-inputs">
-                <input type="color" id="colBgTabs" value="{{ settings.theme.bg_tabs }}">
-                <input type="text" class="color-hex" id="hexBgTabs" value="{{ settings.theme.bg_tabs }}" spellcheck="false" maxlength="7" placeholder="#181b21" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colBgTabs" data-hex-id="hexBgTabs" data-var="--bg-tabs" data-label="Tabs Bar">
+                <span class="swatch-preview" id="preview-colBgTabs" style="background-color: {{ settings.theme.bg_tabs }};"></span>
+                <span class="color-hex" id="hexBgTabs">{{ settings.theme.bg_tabs }}</span>
+                <input type="hidden" id="colBgTabs" value="{{ settings.theme.bg_tabs }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Card Background</span>
-              <div class="color-inputs">
-                <input type="color" id="colBgCard" value="{{ settings.theme.bg_card }}">
-                <input type="text" class="color-hex" id="hexBgCard" value="{{ settings.theme.bg_card }}" spellcheck="false" maxlength="7" placeholder="#22262e" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colBgCard" data-hex-id="hexBgCard" data-var="--bg-card" data-label="Card Background">
+                <span class="swatch-preview" id="preview-colBgCard" style="background-color: {{ settings.theme.bg_card }};"></span>
+                <span class="color-hex" id="hexBgCard">{{ settings.theme.bg_card }}</span>
+                <input type="hidden" id="colBgCard" value="{{ settings.theme.bg_card }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Section &amp; Card Borders</span>
-              <div class="color-inputs">
-                <input type="color" id="colBorderColor" value="{{ settings.theme.border_color or '#2a2e37' }}">
-                <input type="text" class="color-hex" id="hexBorderColor" value="{{ settings.theme.border_color or '#2a2e37' }}" spellcheck="false" maxlength="7" placeholder="#2a2e37" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colBorderColor" data-hex-id="hexBorderColor" data-var="--border-color" data-label="Section &amp; Card Borders">
+                <span class="swatch-preview" id="preview-colBorderColor" style="background-color: {{ settings.theme.border_color or '#2a2e37' }};"></span>
+                <span class="color-hex" id="hexBorderColor">{{ settings.theme.border_color or '#2a2e37' }}</span>
+                <input type="hidden" id="colBorderColor" value="{{ settings.theme.border_color or '#2a2e37' }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Control &amp; Input Borders</span>
-              <div class="color-inputs">
-                <input type="color" id="colBorderInput" value="{{ settings.theme.border_input or '#3a3f4b' }}">
-                <input type="text" class="color-hex" id="hexBorderInput" value="{{ settings.theme.border_input or '#3a3f4b' }}" spellcheck="false" maxlength="7" placeholder="#3a3f4b" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colBorderInput" data-hex-id="hexBorderInput" data-var="--border-input" data-label="Control &amp; Input Borders">
+                <span class="swatch-preview" id="preview-colBorderInput" style="background-color: {{ settings.theme.border_input or '#3a3f4b' }};"></span>
+                <span class="color-hex" id="hexBorderInput">{{ settings.theme.border_input or '#3a3f4b' }}</span>
+                <input type="hidden" id="colBorderInput" value="{{ settings.theme.border_input or '#3a3f4b' }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Button Hover Surface</span>
-              <div class="color-inputs">
-                <input type="color" id="colBtnHoverBg" value="{{ settings.theme.btn_hover_bg or '#343a46' }}">
-                <input type="text" class="color-hex" id="hexBtnHoverBg" value="{{ settings.theme.btn_hover_bg or '#343a46' }}" spellcheck="false" maxlength="7" placeholder="#343a46" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colBtnHoverBg" data-hex-id="hexBtnHoverBg" data-var="--btn-hover-bg" data-label="Button Hover Surface">
+                <span class="swatch-preview" id="preview-colBtnHoverBg" style="background-color: {{ settings.theme.btn_hover_bg or '#343a46' }};"></span>
+                <span class="color-hex" id="hexBtnHoverBg">{{ settings.theme.btn_hover_bg or '#343a46' }}</span>
+                <input type="hidden" id="colBtnHoverBg" value="{{ settings.theme.btn_hover_bg or '#343a46' }}">
+              </button>
             </div>
           </div>
         </div>
@@ -274,17 +281,19 @@
           <div class="color-picker-grid">
             <div class="color-picker-row">
               <span>Primary Text</span>
-              <div class="color-inputs">
-                <input type="color" id="colTextPrimary" value="{{ settings.theme.text_primary }}">
-                <input type="text" class="color-hex" id="hexTextPrimary" value="{{ settings.theme.text_primary }}" spellcheck="false" maxlength="7" placeholder="#e8e8e8" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colTextPrimary" data-hex-id="hexTextPrimary" data-var="--text-primary" data-label="Primary Text">
+                <span class="swatch-preview" id="preview-colTextPrimary" style="background-color: {{ settings.theme.text_primary }};"></span>
+                <span class="color-hex" id="hexTextPrimary">{{ settings.theme.text_primary }}</span>
+                <input type="hidden" id="colTextPrimary" value="{{ settings.theme.text_primary }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Muted Text</span>
-              <div class="color-inputs">
-                <input type="color" id="colTextMuted" value="{{ settings.theme.text_muted }}">
-                <input type="text" class="color-hex" id="hexTextMuted" value="{{ settings.theme.text_muted }}" spellcheck="false" maxlength="7" placeholder="#9aa4b2" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colTextMuted" data-hex-id="hexTextMuted" data-var="--text-muted" data-label="Muted Text">
+                <span class="swatch-preview" id="preview-colTextMuted" style="background-color: {{ settings.theme.text_muted }};"></span>
+                <span class="color-hex" id="hexTextMuted">{{ settings.theme.text_muted }}</span>
+                <input type="hidden" id="colTextMuted" value="{{ settings.theme.text_muted }}">
+              </button>
             </div>
           </div>
         </div>
@@ -295,17 +304,19 @@
           <div class="color-picker-grid">
             <div class="color-picker-row">
               <span>Primary Accent</span>
-              <div class="color-inputs">
-                <input type="color" id="colAccent" value="{{ settings.theme.accent_color }}">
-                <input type="text" class="color-hex" id="hexAccent" value="{{ settings.theme.accent_color }}" spellcheck="false" maxlength="7" placeholder="#3a7bd5" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colAccent" data-hex-id="hexAccent" data-var="--accent-color" data-label="Primary Accent">
+                <span class="swatch-preview" id="preview-colAccent" style="background-color: {{ settings.theme.accent_color }};"></span>
+                <span class="color-hex" id="hexAccent">{{ settings.theme.accent_color }}</span>
+                <input type="hidden" id="colAccent" value="{{ settings.theme.accent_color }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Selected Tab Text</span>
-              <div class="color-inputs">
-                <input type="color" id="colTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
-                <input type="text" class="color-hex" id="hexTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}" spellcheck="false" maxlength="7" placeholder="#ffffff" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colTabActiveText" data-hex-id="hexTabActiveText" data-var="--tab-active-text" data-label="Selected Tab Text">
+                <span class="swatch-preview" id="preview-colTabActiveText" style="background-color: {{ settings.theme.tab_active_text or '#ffffff' }};"></span>
+                <span class="color-hex" id="hexTabActiveText">{{ settings.theme.tab_active_text or '#ffffff' }}</span>
+                <input type="hidden" id="colTabActiveText" value="{{ settings.theme.tab_active_text or '#ffffff' }}">
+              </button>
             </div>
           </div>
         </div>
@@ -316,45 +327,51 @@
           <div class="color-picker-grid">
             <div class="color-picker-row">
               <span>Favorite Star Color</span>
-              <div class="color-inputs">
-                <input type="color" id="colFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
-                <input type="text" class="color-hex" id="hexFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}" spellcheck="false" maxlength="7" placeholder="#ffd700" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colFavoriteStar" data-hex-id="hexFavoriteStar" data-var="--favorite-star-color" data-label="Favorite Star Color">
+                <span class="swatch-preview" id="preview-colFavoriteStar" style="background-color: {{ settings.theme.favorite_star_color or '#ffd700' }};"></span>
+                <span class="color-hex" id="hexFavoriteStar">{{ settings.theme.favorite_star_color or '#ffd700' }}</span>
+                <input type="hidden" id="colFavoriteStar" value="{{ settings.theme.favorite_star_color or '#ffd700' }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Favorite Card Border &amp; Glow</span>
-              <div class="color-inputs">
-                <input type="color" id="colFavorite" value="{{ settings.theme.favorite_color }}">
-                <input type="text" class="color-hex" id="hexFavorite" value="{{ settings.theme.favorite_color }}" spellcheck="false" maxlength="7" placeholder="#ff00ff" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colFavorite" data-hex-id="hexFavorite" data-var="--favorite-color" data-label="Favorite Card Border &amp; Glow">
+                <span class="swatch-preview" id="preview-colFavorite" style="background-color: {{ settings.theme.favorite_color }};"></span>
+                <span class="color-hex" id="hexFavorite">{{ settings.theme.favorite_color }}</span>
+                <input type="hidden" id="colFavorite" value="{{ settings.theme.favorite_color }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Playing Now Status Glow</span>
-              <div class="color-inputs">
-                <input type="color" id="colPlayingColor" value="{{ settings.theme.playing_color or '#10b981' }}">
-                <input type="text" class="color-hex" id="hexPlayingColor" value="{{ settings.theme.playing_color or '#10b981' }}" spellcheck="false" maxlength="7" placeholder="#10b981" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colPlayingColor" data-hex-id="hexPlayingColor" data-var="--playing-color" data-label="Playing Now Status Glow">
+                <span class="swatch-preview" id="preview-colPlayingColor" style="background-color: {{ settings.theme.playing_color or '#10b981' }};"></span>
+                <span class="color-hex" id="hexPlayingColor">{{ settings.theme.playing_color or '#10b981' }}</span>
+                <input type="hidden" id="colPlayingColor" value="{{ settings.theme.playing_color or '#10b981' }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Update Notification Badge</span>
-              <div class="color-inputs">
-                <input type="color" id="colBadgeUpdateColor" value="{{ settings.theme.badge_update_color or '#ef4444' }}">
-                <input type="text" class="color-hex" id="hexBadgeUpdateColor" value="{{ settings.theme.badge_update_color or '#ef4444' }}" spellcheck="false" maxlength="7" placeholder="#ef4444" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colBadgeUpdateColor" data-hex-id="hexBadgeUpdateColor" data-var="--badge-update-color" data-label="Update Notification Badge">
+                <span class="swatch-preview" id="preview-colBadgeUpdateColor" style="background-color: {{ settings.theme.badge_update_color or '#ef4444' }};"></span>
+                <span class="color-hex" id="hexBadgeUpdateColor">{{ settings.theme.badge_update_color or '#ef4444' }}</span>
+                <input type="hidden" id="colBadgeUpdateColor" value="{{ settings.theme.badge_update_color or '#ef4444' }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Hide Button Text &amp; Border</span>
-              <div class="color-inputs">
-                <input type="color" id="colHideBtnColor" value="{{ settings.theme.hide_btn_color or '#ff3333' }}">
-                <input type="text" class="color-hex" id="hexHideBtnColor" value="{{ settings.theme.hide_btn_color or '#ff3333' }}" spellcheck="false" maxlength="7" placeholder="#ff3333" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colHideBtnColor" data-hex-id="hexHideBtnColor" data-var="--hide-btn-color" data-label="Hide Button Text &amp; Border">
+                <span class="swatch-preview" id="preview-colHideBtnColor" style="background-color: {{ settings.theme.hide_btn_color or '#ff3333' }};"></span>
+                <span class="color-hex" id="hexHideBtnColor">{{ settings.theme.hide_btn_color or '#ff3333' }}</span>
+                <input type="hidden" id="colHideBtnColor" value="{{ settings.theme.hide_btn_color or '#ff3333' }}">
+              </button>
             </div>
             <div class="color-picker-row">
               <span>Unhide Button Text &amp; Border</span>
-              <div class="color-inputs">
-                <input type="color" id="colUnhideBtnColor" value="{{ settings.theme.unhide_btn_color or '#4ade80' }}">
-                <input type="text" class="color-hex" id="hexUnhideBtnColor" value="{{ settings.theme.unhide_btn_color or '#4ade80' }}" spellcheck="false" maxlength="7" placeholder="#4ade80" autocomplete="off">
-              </div>
+              <button type="button" class="swatch-btn" data-input-id="colUnhideBtnColor" data-hex-id="hexUnhideBtnColor" data-var="--unhide-btn-color" data-label="Unhide Button Text &amp; Border">
+                <span class="swatch-preview" id="preview-colUnhideBtnColor" style="background-color: {{ settings.theme.unhide_btn_color or '#4ade80' }};"></span>
+                <span class="color-hex" id="hexUnhideBtnColor">{{ settings.theme.unhide_btn_color or '#4ade80' }}</span>
+                <input type="hidden" id="colUnhideBtnColor" value="{{ settings.theme.unhide_btn_color or '#4ade80' }}">
+              </button>
             </div>
           </div>
         </div>
@@ -1020,6 +1037,41 @@
   </div>
 </div>
 
+<!-- Custom In-App Bidirectional Shade Color Picker Popover -->
+<div id="app-color-popover" class="custom-color-panel hidden" role="dialog" aria-label="Color Picker">
+  <div class="color-popover-header">
+    <span class="color-popover-title" id="colorPopoverTitle">Color Picker</span>
+    <div class="color-popover-header-actions">
+      <button type="button" class="color-popover-btn color-popover-cancel" id="colorPopoverCancel" title="Revert and close">Cancel</button>
+      <button type="button" class="color-popover-btn color-popover-done" id="colorPopoverDone" title="Confirm and close">Done</button>
+    </div>
+  </div>
+
+  <div class="custom-chips-row">
+    <button type="button" class="color-chip" data-color="#ef4444" style="background-color: #ef4444;" title="Red"></button>
+    <button type="button" class="color-chip" data-color="#f97316" style="background-color: #f97316;" title="Orange"></button>
+    <button type="button" class="color-chip" data-color="#eab308" style="background-color: #eab308;" title="Yellow"></button>
+    <button type="button" class="color-chip" data-color="#84cc16" style="background-color: #84cc16;" title="Lime"></button>
+    <button type="button" class="color-chip" data-color="#22c55e" style="background-color: #22c55e;" title="Green"></button>
+    <button type="button" class="color-chip" data-color="#06b6d4" style="background-color: #06b6d4;" title="Cyan"></button>
+    <button type="button" class="color-chip" data-color="#3b82f6" style="background-color: #3b82f6;" title="Blue"></button>
+    <button type="button" class="color-chip" data-color="#9146ff" style="background-color: #9146ff;" title="Purple"></button>
+    <button type="button" class="color-chip" data-color="#ec4899" style="background-color: #ec4899;" title="Pink"></button>
+    <button type="button" class="color-chip" data-color="#ffffff" style="background-color: #ffffff;" title="White"></button>
+  </div>
+
+  <div class="picker-bottom-row">
+    <span class="custom-preview-dot" id="pickerPreviewDot" title="Current shade preview"></span>
+    <div class="shade-slider-track">
+      <input type="range" id="customShadeSlider" min="0" max="100" value="50" class="shade-slider" title="Drag left for darker shades, right for lighter shades">
+    </div>
+    <div class="custom-hex-box">
+      <span class="custom-hex-prefix">#</span>
+      <input type="text" id="customHexInput" class="custom-hex-input" maxlength="6" placeholder="8AADF4" spellcheck="false" title="Hex code">
+    </div>
+  </div>
+</div>
+
 <script>
 // Delegated click handling on game cards and their controls
 document.addEventListener('click', async (e) => {
@@ -1577,13 +1629,53 @@ const colorInputs = {
 };
 
 function getContrastColor(hexColor) {
-  const hex = hexColor.replace('#', '');
+  const hex = (hexColor || '').replace('#', '');
   if (hex.length !== 6) return '#ffffff';
   const r = parseInt(hex.substring(0, 2), 16);
   const g = parseInt(hex.substring(2, 4), 16);
   const b = parseInt(hex.substring(4, 6), 16);
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
   return (yiq >= 140) ? '#000000' : '#ffffff';
+}
+
+function normalizeHex(input) {
+  if (!input) return null;
+  let val = String(input).trim();
+  if (val.startsWith('#')) val = val.substring(1).trim();
+  if (/^[0-9A-Fa-f]{3}$/.test(val)) {
+    val = val.split('').map(c => c + c).join('');
+  }
+  if (/^[0-9A-Fa-f]{6}$/.test(val)) {
+    return ('#' + val).toUpperCase();
+  }
+  return null;
+}
+
+function getColorValue(item) {
+  if (!item) return '';
+  if (item.picker && item.picker.value) return item.picker.value;
+  if (item.hex) {
+    return item.hex.tagName === 'INPUT' ? item.hex.value : (item.hex.textContent || '');
+  }
+  return '';
+}
+
+function setColorValue(key, val) {
+  const item = colorInputs[key];
+  if (!item) return;
+  const cleanHex = normalizeHex(val) || val;
+  if (item.picker) item.picker.value = cleanHex;
+  if (item.hex) {
+    if (item.hex.tagName === 'INPUT') {
+      item.hex.value = cleanHex;
+    } else {
+      item.hex.textContent = cleanHex;
+    }
+  }
+  if (item.picker && item.picker.id) {
+    const prev = document.getElementById('preview-' + item.picker.id);
+    if (prev) prev.style.backgroundColor = cleanHex;
+  }
 }
 
 const visibilityToggles = {
@@ -1702,7 +1794,7 @@ function matchAndPopulateCategoryIcons() {
 function updateActivePresetState() {
   const current = {};
   for (const [key, item] of Object.entries(colorInputs)) {
-    current[key] = (item.hex.value.trim() || item.picker.value).toLowerCase();
+    current[key] = (getColorValue(item) || '').trim().toLowerCase();
   }
 
   let matchedElement = null;
@@ -1745,29 +1837,16 @@ function updateActivePresetState() {
   }
 }
 
-function normalizeHex(input) {
-  if (!input) return null;
-  let val = String(input).trim();
-  if (val.startsWith('#')) val = val.substring(1).trim();
-  if (/^[0-9A-Fa-f]{3}$/.test(val)) {
-    val = val.split('').map(c => c + c).join('');
-  }
-  if (/^[0-9A-Fa-f]{6}$/.test(val)) {
-    return '#' + val.toLowerCase();
-  }
-  return null;
-}
-
 function applyLiveTheme() {
   for (const [key, item] of Object.entries(colorInputs)) {
-    const val = normalizeHex(item.hex.value) || item.picker.getAttribute('data-color') || item.picker.value || '#14161a';
+    const val = normalizeHex(getColorValue(item)) || item.picker.getAttribute('data-color') || '#14161a';
     document.documentElement.style.setProperty(item.cssVar, val);
   }
-  const accentVal = normalizeHex(colorInputs.accent_color.hex.value) || colorInputs.accent_color.picker.getAttribute('data-color') || colorInputs.accent_color.picker.value || '#3a7bd5';
+  const accentVal = normalizeHex(getColorValue(colorInputs.accent_color)) || '#3a7bd5';
   const accentContrast = getContrastColor(accentVal);
   document.documentElement.style.setProperty('--accent-contrast', accentContrast);
 
-  const activeTextColor = normalizeHex(colorInputs.tab_active_text.hex.value) || colorInputs.tab_active_text.picker.getAttribute('data-color') || colorInputs.tab_active_text.picker.value || '#ffffff';
+  const activeTextColor = normalizeHex(getColorValue(colorInputs.tab_active_text)) || '#ffffff';
   const isDarkText = accentContrast === '#000000';
   document.body.classList.toggle('dark-tab-text', isDarkText || activeTextColor === '#000000');
 
@@ -1809,46 +1888,242 @@ function applyLiveTitle() {
   if (headerEl) headerEl.textContent = title;
 }
 
-// Bind Color inputs
-for (const [key, item] of Object.entries(colorInputs)) {
-  item.picker.addEventListener('input', () => {
-    item.hex.value = item.picker.value;
-    if (key === 'accent_color') {
-      const autoText = getContrastColor(item.picker.value);
-      colorInputs.tab_active_text.picker.value = autoText;
-      colorInputs.tab_active_text.hex.value = autoText;
-    }
-    applyLiveTheme();
-  });
+function computeShade(baseHex, val) {
+  let hex = (baseHex || '#8AADF4').replace(/^#/, '');
+  if (hex.length === 3) {
+    hex = hex.split('').map(c => c + c).join('');
+  }
+  const num = parseInt(hex, 16);
+  if (isNaN(num)) return '#8AADF4';
 
-  const handleHexChange = () => {
-    const validHex = normalizeHex(item.hex.value);
-    if (validHex) {
-      item.picker.value = validHex;
-      if (key === 'accent_color') {
-        const autoText = getContrastColor(validHex);
-        colorInputs.tab_active_text.picker.value = autoText;
-        colorInputs.tab_active_text.hex.value = autoText;
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+
+  let outR, outG, outB;
+  if (val <= 50) {
+    const factor = val / 50;
+    outR = Math.round(r * factor);
+    outG = Math.round(g * factor);
+    outB = Math.round(b * factor);
+  } else {
+    const factor = (val - 50) / 50;
+    outR = Math.round(r + (255 - r) * factor);
+    outG = Math.round(g + (255 - g) * factor);
+    outB = Math.round(b + (255 - b) * factor);
+  }
+
+  const toHex = n => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0');
+  return `#${toHex(outR)}${toHex(outG)}${toHex(outB)}`.toUpperCase();
+}
+
+let activeColorPicker = {
+  activeButton: null,
+  inputId: null,
+  hexId: null,
+  varName: null,
+  originalColor: '#8AADF4',
+  baseColor: '#8AADF4',
+  currentColor: '#8AADF4',
+  shade: 50
+};
+
+function initColorPicker() {
+  const popover = document.getElementById('app-color-popover');
+  const cancelBtn = document.getElementById('colorPopoverCancel');
+  const doneBtn = document.getElementById('colorPopoverDone');
+  const titleEl = document.getElementById('colorPopoverTitle');
+  const previewDot = document.getElementById('pickerPreviewDot');
+  const slider = document.getElementById('customShadeSlider');
+  const hexInput = document.getElementById('customHexInput');
+  const chips = popover ? popover.querySelectorAll('.color-chip') : [];
+
+  if (!popover) return;
+
+  function closePopover() {
+    popover.classList.add('hidden');
+    if (activeColorPicker.activeButton) {
+      activeColorPicker.activeButton.classList.remove('active');
+      activeColorPicker.activeButton = null;
+    }
+  }
+
+  function cancelAndRevert() {
+    if (activeColorPicker.originalColor) {
+      applyActiveColor(activeColorPicker.originalColor, activeColorPicker.originalColor, 50);
+    }
+    closePopover();
+  }
+
+  if (cancelBtn) cancelBtn.addEventListener('click', cancelAndRevert);
+  if (doneBtn) doneBtn.addEventListener('click', closePopover);
+
+  function openPopover(btn) {
+    if (activeColorPicker.activeButton) {
+      activeColorPicker.activeButton.classList.remove('active');
+    }
+
+    activeColorPicker.activeButton = btn;
+    btn.classList.add('active');
+
+    const inputId = btn.dataset.inputId;
+    const hexId = btn.dataset.hexId;
+    const varName = btn.dataset.var;
+    const label = btn.dataset.label || 'Color Picker';
+    const input = document.getElementById(inputId);
+
+    let currentVal = input ? input.value : '';
+    if (!currentVal && varName) {
+      currentVal = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    }
+    currentVal = normalizeHex(currentVal) || '#3A7BD5';
+
+    activeColorPicker.inputId = inputId;
+    activeColorPicker.hexId = hexId;
+    activeColorPicker.varName = varName;
+    activeColorPicker.originalColor = currentVal;
+    activeColorPicker.baseColor = currentVal;
+    activeColorPicker.currentColor = currentVal;
+    activeColorPicker.shade = 50;
+
+    if (titleEl) titleEl.textContent = label;
+    if (previewDot) previewDot.style.backgroundColor = currentVal;
+    if (slider) {
+      slider.value = 50;
+      slider.style.background = `linear-gradient(to right, #000000 0%, ${currentVal} 50%, #ffffff 100%)`;
+    }
+    if (hexInput) hexInput.value = currentVal.replace(/^#/, '').toUpperCase();
+
+    // Match base chip if applicable
+    const cleanLower = currentVal.toLowerCase();
+    chips.forEach(c => {
+      c.classList.toggle('active', (c.dataset.color || '').toLowerCase() === cleanLower);
+    });
+
+    popover.classList.remove('hidden');
+    const rect = btn.getBoundingClientRect();
+    const popoverWidth = 340;
+    const popoverHeight = 135;
+
+    let left = rect.left;
+    if (left + popoverWidth > window.innerWidth - 12) {
+      left = window.innerWidth - popoverWidth - 12;
+    }
+    if (left < 12) left = 12;
+
+    let top = rect.bottom + 6;
+    if (top + popoverHeight > window.innerHeight - 12) {
+      top = Math.max(12, rect.top - popoverHeight - 6);
+    }
+
+    popover.style.top = `${top}px`;
+    popover.style.left = `${left}px`;
+  }
+
+  function applyActiveColor(newHex, baseColor, shadeVal) {
+    const cleanHex = normalizeHex(newHex) || '#14161A';
+    activeColorPicker.currentColor = cleanHex;
+    if (baseColor) activeColorPicker.baseColor = normalizeHex(baseColor) || cleanHex;
+    if (shadeVal !== undefined) activeColorPicker.shade = shadeVal;
+
+    // Sync popover controls
+    if (previewDot) previewDot.style.backgroundColor = cleanHex;
+    if (hexInput && document.activeElement !== hexInput) {
+      hexInput.value = cleanHex.replace(/^#/, '').toUpperCase();
+    }
+    if (slider && activeColorPicker.baseColor) {
+      slider.style.background = `linear-gradient(to right, #000000 0%, ${activeColorPicker.baseColor} 50%, #ffffff 100%)`;
+      if (document.activeElement !== slider && shadeVal !== undefined) {
+        slider.value = shadeVal;
       }
-      applyLiveTheme();
     }
-  };
 
-  item.hex.addEventListener('input', handleHexChange);
-  item.hex.addEventListener('change', () => {
-    const validHex = normalizeHex(item.hex.value);
-    if (validHex) {
-      item.hex.value = validHex;
+    // Sync trigger swatch & inputs
+    if (activeColorPicker.inputId) {
+      const targetInput = document.getElementById(activeColorPicker.inputId);
+      const targetHex = document.getElementById(activeColorPicker.hexId);
+      const targetPreview = document.getElementById('preview-' + activeColorPicker.inputId);
+
+      if (targetInput) targetInput.value = cleanHex;
+      if (targetHex) targetHex.textContent = cleanHex;
+      if (targetPreview) targetPreview.style.backgroundColor = cleanHex;
+
+      if (activeColorPicker.inputId === 'colAccent') {
+        const autoText = getContrastColor(cleanHex);
+        setColorValue('tab_active_text', autoText);
+      }
     }
-    handleHexChange();
+
+    applyLiveTheme();
+  }
+
+  // Bind trigger buttons
+  document.querySelectorAll('.swatch-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (activeColorPicker.activeButton === btn && !popover.classList.contains('hidden')) {
+        closePopover();
+      } else {
+        openPopover(btn);
+      }
+    });
   });
-  item.hex.addEventListener('blur', () => {
-    const validHex = normalizeHex(item.hex.value);
-    if (validHex) {
-      item.hex.value = validHex;
+
+  // Base chips
+  chips.forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const col = chip.dataset.color;
+      chips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      applyActiveColor(col, col, 50);
+    });
+  });
+
+  // Slider dragging
+  if (slider) {
+    slider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      const shaded = computeShade(activeColorPicker.baseColor, val);
+      applyActiveColor(shaded, activeColorPicker.baseColor, val);
+    });
+  }
+
+  // Hex input typing
+  if (hexInput) {
+    hexInput.addEventListener('input', (e) => {
+      let val = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
+      e.target.value = val.toUpperCase();
+      if (val.length === 6 || val.length === 3) {
+        const fullHex = normalizeHex('#' + val);
+        if (fullHex) {
+          chips.forEach(c => {
+            c.classList.toggle('active', (c.dataset.color || '').toLowerCase() === fullHex.toLowerCase());
+          });
+          applyActiveColor(fullHex, fullHex, 50);
+        }
+      }
+    });
+  }
+
+  // Dismiss on click outside
+  document.addEventListener('pointerdown', (e) => {
+    if (popover.classList.contains('hidden')) return;
+    if (popover.contains(e.target) || (activeColorPicker.activeButton && activeColorPicker.activeButton.contains(e.target))) {
+      return;
+    }
+    closePopover();
+  });
+
+  // Dismiss on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !popover.classList.contains('hidden')) {
+      closePopover();
     }
   });
 }
+
+initColorPicker();
 
 let customThemes = {{ (settings.custom_themes or {}) | tojson }};
 const themePresetsGrid = document.getElementById('themePresetsGrid');
@@ -1926,8 +2201,7 @@ function renderCustomThemes() {
       btn.classList.add('active');
       for (const [key, val] of Object.entries(colors)) {
         if (colorInputs[key]) {
-          colorInputs[key].picker.value = val;
-          colorInputs[key].hex.value = val;
+          setColorValue(key, val);
         }
       }
       applyLiveTheme();
@@ -1949,9 +2223,9 @@ if (saveThemePresetBtn && customThemeNameInput) {
 
     const theme = {};
     for (const [key, item] of Object.entries(colorInputs)) {
-      theme[key] = item.hex.value.trim() || item.picker.value;
+      theme[key] = getColorValue(item) || '#14161A';
     }
-    const accentVal = theme.accent_color || '#3a7bd5';
+    const accentVal = theme.accent_color || '#3A7BD5';
     theme.accent_contrast = getContrastColor(accentVal);
 
     saveThemePresetBtn.disabled = true;
@@ -1995,8 +2269,7 @@ document.querySelectorAll('.preset-btn').forEach(btn => {
     if (!preset) return;
     for (const [key, val] of Object.entries(preset)) {
       if (colorInputs[key]) {
-        colorInputs[key].picker.value = val;
-        colorInputs[key].hex.value = val;
+        setColorValue(key, val);
       }
     }
     applyLiveTheme();
@@ -2626,9 +2899,9 @@ settingsDialog.addEventListener('cancel', (e) => {
 async function saveAllSettings() {
   const theme = {};
   for (const [key, item] of Object.entries(colorInputs)) {
-    theme[key] = normalizeHex(item.hex.value) || item.picker.getAttribute('data-color') || item.picker.value || '#14161a';
+    theme[key] = normalizeHex(getColorValue(item)) || item.picker.getAttribute('data-color') || '#14161A';
   }
-  const accentVal = theme.accent_color || '#3a7bd5';
+  const accentVal = theme.accent_color || '#3A7BD5';
   theme.accent_contrast = getContrastColor(accentVal);
 
   const visibility = {};
@@ -2734,8 +3007,7 @@ if (resetDefaultsBtn) {
     const defTheme = THEME_PRESETS.default;
     for (const [key, val] of Object.entries(defTheme)) {
       if (colorInputs[key]) {
-        colorInputs[key].picker.value = val;
-        colorInputs[key].hex.value = val;
+        setColorValue(key, val);
       }
     }
     applyLiveTheme();
@@ -3772,8 +4044,7 @@ if (autoTheme && THEME_PRESETS[autoTheme]) {
   const preset = THEME_PRESETS[autoTheme];
   for (const [key, val] of Object.entries(preset)) {
     if (colorInputs[key]) {
-      colorInputs[key].picker.value = val;
-      colorInputs[key].hex.value = val;
+      setColorValue(key, val);
     }
   }
 }
