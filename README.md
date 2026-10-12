@@ -34,20 +34,34 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 ### Theme Presets (Loop)
 ![ROMcat Themes Animated Preview](screenshots/themes_preview.gif?raw=true&v=3)
 
-### Settings: Appearance Tab
-![Settings Appearance Tab](screenshots/settings_appearance.png?raw=true&v=7)
+### Settings & Customization
 
-### Settings: Favicon and Console Icon Tab
-![Settings Favicon and Console Icon Tab](screenshots/settings_favicon_console_icon.png?raw=true&v=8)
-
-### Settings: UI Tab
-![Settings UI Tab](screenshots/settings_ui.png?raw=true&v=7)
-
-### Settings: Consoles & Emulators Tab
-![Settings Consoles & Emulators Tab](screenshots/settings_consoles.png?raw=true&v=8)
-
-### Settings: Interactive Command Guide
-![Settings Command Guide](screenshots/settings_consoles_help.png?raw=true&v=7)
+<table>
+  <tr>
+    <th width="50%">Appearance Tab</th>
+    <th width="50%">Favicon &amp; Console Icon Tab</th>
+  </tr>
+  <tr>
+    <td><a href="screenshots/settings_appearance.png"><img src="screenshots/settings_appearance.png?raw=true&v=7" alt="Settings Appearance Tab"></a></td>
+    <td><a href="screenshots/settings_favicon_console_icon.png"><img src="screenshots/settings_favicon_console_icon.png?raw=true&v=8" alt="Settings Favicon and Console Icon Tab"></a></td>
+  </tr>
+  <tr>
+    <th width="50%">UI Tab</th>
+    <th width="50%">Consoles &amp; Emulators Tab</th>
+  </tr>
+  <tr>
+    <td><a href="screenshots/settings_ui.png"><img src="screenshots/settings_ui.png?raw=true&v=7" alt="Settings UI Tab"></a></td>
+    <td><a href="screenshots/settings_consoles.png"><img src="screenshots/settings_consoles.png?raw=true&v=8" alt="Settings Consoles & Emulators Tab"></a></td>
+  </tr>
+  <tr>
+    <th width="50%">Interactive Command Guide</th>
+    <th width="50%"></th>
+  </tr>
+  <tr>
+    <td><a href="screenshots/settings_consoles_help.png"><img src="screenshots/settings_consoles_help.png?raw=true&v=7" alt="Settings Command Guide"></a></td>
+    <td></td>
+  </tr>
+</table>
 
 ---
 
