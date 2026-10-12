@@ -65,9 +65,6 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 - **Favorites & Visibility Management**: Toggle game favorites with custom glowing highlights, or hide unwanted duplicates/updates from the main catalog.
 - **Zero Heavy Databases**: Library state is indexed dynamically from your real directory structure, with cached metadata and settings stored in lightweight JSON files.
 - **Built-in Settings & Theme Customization**: Click the gear icon in the header to customize the catalog title, select from 6 built-in theme presets, or configure custom colors with live previews.
-- **Console Category Reordering**: Easily rearrange the display order of your consoles and categories using Move Up (▲) / Move Down (▼) buttons or intuitive drag-and-drop handles directly from Settings, updating navigation tabs and catalog sections automatically.
-- **Automatic High-Contrast Text**: Active tab text dynamically detects background color luminance to ensure legibility on both bright and dark themes.
-- **UI Visibility Controls**: Toggle visibility of the search bar, cover scraping buttons, rescan button, numeric ROM counts, and tabs.
 
 ---
 
