@@ -232,7 +232,7 @@
   }
 </style>
 </head>
-<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_all_tab %}hide-all-tab {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}{% if settings.visibility.show_tab_icons %}show-tab-icons {% endif %}{% if settings.visibility.show_favorite_stars == false %}hide-favorite-stars {% endif %}{% if settings.visibility.show_github_link == false %}hide-github-link {% endif %}{% if settings.visibility.show_update_notification == false %}hide-update-badge {% endif %}{% if settings.visibility.show_card_play_stats == false %}hide-card-play-stats {% endif %}{% if settings.visibility.show_stats_button == false %}hide-stats-button {% endif %}{% if settings.visibility.show_sort_control == false %}hide-sort-control {% endif %}">
+<body class="{% if not settings.visibility.show_search %}hide-search {% endif %}{% if not settings.visibility.show_counts %}hide-counts {% endif %}{% if not settings.visibility.show_all_tab %}hide-all-tab {% endif %}{% if not settings.visibility.show_favorites_tab %}hide-favorites-tab {% endif %}{% if not settings.visibility.show_hidden_tab %}hide-hidden-tab {% endif %}{% if settings.visibility.show_card_hide_buttons %}show-hide-controls {% endif %}{% if settings.visibility.show_tab_icons %}show-tab-icons {% endif %}{% if settings.visibility.show_favorite_stars == false %}hide-favorite-stars {% endif %}{% if settings.visibility.show_github_link == false %}hide-github-link {% endif %}{% if not settings.visibility.show_update_notification %}hide-update-badge {% endif %}{% if settings.visibility.show_card_play_stats == false %}hide-card-play-stats {% endif %}{% if settings.visibility.show_stats_button == false %}hide-stats-button {% endif %}{% if settings.visibility.show_sort_control == false %}hide-sort-control {% endif %}">
 <header>
   <div class="header-brand">
     <img id="headerIcon" src="{{ settings.icon or '/static/favicon.png' }}" class="header-icon" alt="">
@@ -868,6 +868,16 @@
       <section class="settings-section">
         <h4>UI Visibility</h4>
         <div class="toggle-list">
+          <label class="toggle-row update-check-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Check for New Updates</span>
+              <span class="toggle-desc">Checks weekly for updates</span>
+            </div>
+            <div class="switch">
+              <input type="checkbox" id="toggleCheckUpdates" {% if settings.visibility.show_update_notification %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+          </label>
           <label class="toggle-row">
             <div class="toggle-info">
               <span class="toggle-title">Show Search Bar</span>
@@ -925,16 +935,6 @@
             </div>
             <div class="switch">
               <input type="checkbox" id="toggleGithubLink" {% if settings.visibility.show_github_link != false %}checked{% endif %}>
-              <span class="slider"></span>
-            </div>
-          </label>
-          <label class="toggle-row">
-            <div class="toggle-info">
-              <span class="toggle-title">Check for New Releases</span>
-              <span class="toggle-desc">Checks weekly for updates and displays a notification badge on the Settings button</span>
-            </div>
-            <div class="switch">
-              <input type="checkbox" id="toggleCheckUpdates" {% if settings.visibility.show_update_notification != false %}checked{% endif %}>
               <span class="slider"></span>
             </div>
           </label>
@@ -3235,7 +3235,7 @@ if (resetDefaultsBtn) {
 
     for (const [key, item] of Object.entries(visibilityToggles)) {
       if (item.el) {
-        if (['show_hidden_tab', 'show_card_hide_buttons', 'show_tab_icons'].includes(key)) {
+        if (['show_hidden_tab', 'show_card_hide_buttons', 'show_tab_icons', 'show_update_notification'].includes(key)) {
           item.el.checked = false;
         } else {
           item.el.checked = true;
@@ -4890,6 +4890,11 @@ initPlayStatsAndSorting();
 if (urlParams.get('test_settings')) {
   const dlg = document.getElementById('settingsDialog');
   if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
+  const testTab = urlParams.get('test_tab');
+  if (testTab) {
+    const tabBtn = document.querySelector(`.modal-nav-tab[data-tab-target="${testTab}"]`);
+    if (tabBtn) tabBtn.click();
+  }
 }
 </script>
 </body>

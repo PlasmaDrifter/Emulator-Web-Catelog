@@ -73,49 +73,44 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 
 ## Ways to Run ROMcat
 
-### Option 1: Always-On Background Web Service (Recommended for Linux)
+### Option 1: Automated Installer (Recommended for Linux)
 
-Run ROMcat as a persistent background service so your catalog is always loaded, instantly accessible, and ready to launch games whenever your computer boots. Simply bookmark `http://localhost:8420` in your web browser and open it anytime.
+Run the included automated installer to set up ROMcat with a single command. The installer automatically installs Python dependencies, registers the desktop menu launcher and application icon, creates the `romcat` CLI command in `~/.local/bin`, and enables the background systemd user service (`romcat.service`):
 
-1. Clone the repository and install dependencies:
+1. Clone the repository and run the installer:
    ```bash
    git clone https://github.com/PlasmaDrifter/Emulator-Web-Catelog.git ~/romcat
    cd ~/romcat
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
+   ./install.sh
    ```
-2. Create a systemd user service file at `~/.config/systemd/user/romcat.service`:
-   ```ini
-   [Unit]
-   Description=ROMcat Emulator Web Catalog
-   After=network.target
-
-   [Service]
-   Type=simple
-   WorkingDirectory=%h/romcat
-   ExecStart=%h/romcat/venv/bin/python3 %h/romcat/app.py
-   Restart=on-failure
-   RestartSec=5
-
-   [Install]
-   WantedBy=default.target
-   ```
-3. Enable and start the background service:
-   ```bash
-   systemctl --user daemon-reload
-   systemctl --user enable --now romcat.service
-   ```
-4. Open your browser, bookmark the URL, and navigate to:
+2. Open your browser and navigate to:
    ```text
    http://localhost:8420
    ```
-   *(Bookmark this address in your browser to access your game catalog instantly anytime, or connect from any device on your local network using `http://<your-ip>:8420`).*
+   *(Bookmark this address in your browser to access your game catalog instantly anytime, or launch it from your desktop applications menu under **Games**).*
 
-To check service status or view logs:
+#### CLI Commands
+
+After installation, you can control ROMcat directly from your terminal:
+
 ```bash
-systemctl --user status romcat.service
-journalctl --user -u romcat.service -f
+romcat          # Ensure server is running and open in default browser
+romcat start    # Start background service
+romcat stop     # Stop background service
+romcat restart  # Restart background service
+romcat status   # View current service status
+romcat logs     # View live service journal logs
+```
+
+#### Uninstallation
+
+To uninstall ROMcat and remove its desktop entry, icons, and systemd service:
+
+```bash
+./uninstall.sh
+
+# Or uninstall and purge local settings/covers:
+./uninstall.sh --purge
 ```
 
 ---
@@ -463,6 +458,9 @@ You can add new consoles either directly through the **web interface** (recommen
 ```text
 Emulator-Web-Catelog/
 ├── README.md                # Full documentation, configuration guides, and theme options
+├── install.sh               # Automated installer (systemd service, desktop launcher, CLI)
+├── uninstall.sh             # Clean uninstaller with optional --purge support
+├── romcat.sh                # Portable CLI and browser launcher script
 ├── config.example.yaml      # Clean configuration template (systems, paths, commands, SteamGridDB)
 ├── app.py                   # Flask server, library scanner, SteamGridDB client, and launcher
 ├── requirements.txt         # Python dependencies (flask, pyyaml, requests, pillow, ujson)

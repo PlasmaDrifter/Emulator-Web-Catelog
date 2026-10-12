@@ -108,7 +108,7 @@ DEFAULT_SETTINGS = {
         "show_tab_icons": False,
         "show_favorite_stars": True,
         "show_github_link": True,
-        "show_update_notification": True,
+        "show_update_notification": False,
         "show_card_play_stats": True,
         "show_stats_button": True,
         "show_sort_control": True

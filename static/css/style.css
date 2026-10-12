@@ -1224,6 +1224,17 @@ body.hide-update-badge .settings-update-banner {
   padding: 10px 14px;
   cursor: pointer;
 }
+.update-check-row {
+  border: 2px solid #10b981 !important;
+  border-radius: 8px !important;
+  background: var(--bg-body) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.update-check-row:hover {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.28);
+}
 .toggle-row span,
 .toggle-title {
   font-size: 0.85rem;
