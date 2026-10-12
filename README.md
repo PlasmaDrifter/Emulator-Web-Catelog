@@ -246,46 +246,46 @@ ROMcat includes a tabbed Settings interface directly in the web UI (accessible v
 
 ### 1. Appearance Tab
 - **General Settings**:
-  - **Catalog Title**: Update the dashboard title and browser tab title on the fly.
-- **Theme Presets**: Switch instantly between 6 presets: Default Dark, Pure OLED, Catppuccin, Cyberpunk, Nord Frost, and Emerald.
-- **Custom Color Pickers**: Fine-tune every color element individually with real-time live preview (backgrounds, accents, glowing borders, active tab text, favorite star).
+  - **Catalog Title**
+- **Theme Presets**
+- **Custom Color Pickers**
 
 ### 2. Favicon and Console Icon Tab
-- **Favicon & Header Icon**: Select from retro and modern console icons (Nintendo, PlayStation, Xbox, Sega, Atari, Commodore, Retro, Custom) or upload custom images to immediately update your browser favicon and header icon.
-- **Show Console Tab Icons Toggle**: Automatically match and display console & system icons on navigation tabs.
-- **Customize Console Tab Icons**: Expandable list to inspect and override icons for individual navigation tabs with custom uploads or system icons.
-- **Folder & Icon Management**: Open `static/icons/` in system file manager, create new console folders, and organize icons per console.
+- **Favicon & Header Icon**
+- **Show Console Tab Icons Toggle**
+- **Customize Console Tab Icons**
+- **Folder & Icon Management**
 
 ### 3. UI Tab
 - **Library Actions**:
-  - **Fetch Cover Art**: One-click automated cover scraping from SteamGridDB with live status feedback.
-  - **Rescan Library**: Scan storage paths for newly added, moved, or deleted ROM files.
+  - **Fetch Cover Art**
+  - **Rescan Library**
 - **Hidden Games & Edit Mode**:
-  - **Show Card Hide Buttons (Edit Mode)**: Displays eye buttons on individual game cards to hide duplicates, DLCs, and unwanted ROMs.
-  - **Show "Hidden" Tab in Navigation**: Adds a "Hidden" tab to the top navigation bar.
-  - **View Hidden ROMs Button**: Jump straight to hidden ROMs with a single click.
+  - **Show Card Hide Buttons (Edit Mode)**
+  - **Show "Hidden" Tab in Navigation**
+  - **View Hidden ROMs Button**
 - **UI Visibility Controls**:
-  - **Show Search Bar**: Toggle real-time search input in the header.
-  - **Show ROM Count Badges**: Display numeric game counts on system tabs (e.g. `(42)`).
-  - **Show "Favorites" Tab**: Toggle favorites tab on the navigation bar.
-  - **Show GitHub Link in Header**: Toggle the repository shortcut button in the header bar.
-  - **Check for New Releases**: Weekly background release check that alerts you with a notification badge and one-click in-app update banner when new versions are available.
+  - **Show Search Bar**
+  - **Show ROM Count Badges**
+  - **Show "Favorites" Tab**
+  - **Show GitHub Link in Header**
+  - **Check for New Updates**
 
 ### 4. Consoles & Emulators Tab
 - **Console Category Reordering**:
-  - **Move Up (▲) / Move Down (▼) Buttons**: Shift consoles up or down one position at a time with instant boundary detection (first/last buttons disable appropriately).
-  - **Drag-and-Drop Handles (`⋮⋮`)**: Click and drag the handle icon on any console card to drop it into a new position, complete with dynamic drop-line indicators.
-  - **Dynamic Persistence**: Saving configuration writes out the exact card order to `config.yaml` and refreshes the view so dashboard category tabs and library sections mirror your custom order immediately.
-- **Visual Console Form Cards**: Add, configure, and remove consoles through clean input fields without manually formatting YAML:
-  - **Display Name**: User-facing name shown in tabs and headers.
-  - **System Identifier**: Lowercase key used internally (e.g. `nes`, `switch`).
-  - **ROM Folder Path(s)**: Host directory path (or multiple lines for multi-folder scanning).
-  - **Allowed Extensions**: Comma-separated list (e.g. `.iso, .rvz, .zip`).
-  - **Emulator Command**: Full command line template with `{rom}` token.
-- **SteamGridDB API Key Field**: Direct input with show/hide password toggle.
-- **+ Add Console**: Instantly append a new console configuration card.
-- **Advanced Raw YAML Editor (Collapsible)**: Optional raw editor with two-way sync for advanced users.
-- **Instant Save & Rescan**: Automatically compiles the form into `config.yaml`, validates structure, and rescans your library immediately.
+  - **Move Up (▲) / Move Down (▼) Buttons**
+  - **Drag-and-Drop Handles (`⋮⋮`)**
+  - **Dynamic Persistence**
+- **Visual Console Form Cards**:
+  - **Display Name**
+  - **System Identifier**
+  - **ROM Folder Path(s)**
+  - **Allowed Extensions**
+  - **Emulator Command**
+- **SteamGridDB API Key Field**
+- **+ Add Console**
+- **Advanced Raw YAML Editor (Collapsible)**
+- **Instant Save & Rescan**
 
 Settings and theme configurations are stored on disk in `settings.json` and persist across browser sessions.
 
