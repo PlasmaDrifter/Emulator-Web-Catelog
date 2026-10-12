@@ -115,7 +115,7 @@ To uninstall ROMcat and remove its desktop entry, icons, and systemd service:
 
 ---
 
-### Option 2: Standalone Desktop App (Recommended for Windows & Desktop Setups)
+### Option 2: Standalone Desktop App (Recommended for Windows)
 
 The packaged standalone desktop app provides a self-contained executable with native desktop windowing and launcher integration. No Python installation or command-line setup is required (ideal for Windows users).
 
