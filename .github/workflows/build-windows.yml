@@ -1,0 +1,74 @@
+name: Build Windows Standalone
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to upload to (e.g. v0.8.1)'
+        required: true
+        default: 'v0.8.1'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller pywebview[winforms] pythonnet
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller --noconfirm ROMCat_windows.spec
+
+      - name: Package Standalone Windows Bundle
+        shell: pwsh
+        run: |
+          $tag = "${{ github.event.inputs.tag }}"
+          New-Item -ItemType Directory -Force -Path bundle
+          Copy-Item dist\ROMCat.exe -Destination bundle\
+          Copy-Item icon.ico -Destination bundle\
+          Copy-Item static\favicon.png -Destination bundle\icon.png
+          Copy-Item config.example.yaml -Destination bundle\
+
+          @"
+          ROMcat - Standalone Windows Desktop App
+          ========================================
+
+          How to run:
+          1. Double-click ROMCat.exe to start ROMcat.
+          2. The application will start its internal engine and open the ROMcat window.
+          3. Configure your emulator paths and ROM folders under Settings (gear icon) -> Consoles & Emulators.
+
+          How to update:
+          1. Download the newest release zip from the GitHub Releases page.
+          2. Replace ROMCat.exe in this folder with the new version (your config.yaml, covers, and settings will remain untouched).
+
+          Files:
+          - ROMCat.exe: Standalone Windows 64-bit application executable
+          - icon.ico / icon.png: Application icon assets
+          - config.example.yaml: Example emulator and console configuration
+          "@ | Out-File -FilePath bundle\README.txt -Encoding utf8
+
+          Compress-Archive -Path bundle\* -DestinationPath "ROMCat-$tag-windows-x64.zip" -Force
+
+      - name: Upload to Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ github.event.inputs.tag }}"
+          gh release upload $tag "ROMCat-$tag-windows-x64.zip" dist\ROMCat.exe --clobber

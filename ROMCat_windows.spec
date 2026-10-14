@@ -8,6 +8,7 @@ datas = [
     ('static/icons', 'static/icons'),
     ('static/favicon.png', 'static'),
     ('config.example.yaml', '.'),
+    ('icon.ico', '.'),
 ]
 
 a = Analysis(
@@ -16,7 +17,9 @@ a = Analysis(
     binaries=[],
     datas=datas,
     hiddenimports=[
+        'webview',
         'webview.platforms.winforms',
+        'webview.platforms.edgechromium',
         'clr',
         'pythonnet',
         'ujson',
