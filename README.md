@@ -144,7 +144,7 @@ The standalone Windows application provides a self-contained portable executable
 
 For Linux users who prefer a portable, self-contained desktop window without setting up a background systemd service:
 
-1. Download the latest Linux release bundle (`ROMCat-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+1. Download the latest Linux release bundle (**`ROMCat-linux-x86_64.tar.gz`**, **`ROMCat-linux-x86_64.zip`**, or the standalone **`ROMCat`** binary) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
 2. Extract the archive:
    ```bash
    tar -xzf ROMCat-*-linux-x86_64.tar.gz
@@ -247,7 +247,7 @@ systemctl --user restart romcat.service
    *(Your `config.yaml`, `static/covers/`, and `settings.json` are preserved).*
 
 #### On Linux:
-1. Download the latest Linux release bundle (`ROMCat-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+1. Download the latest Linux release bundle (**`ROMCat-linux-x86_64.tar.gz`**, **`ROMCat-linux-x86_64.zip`**, or standalone **`ROMCat`** binary) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
 2. Extract the archive and replace the `ROMCat` executable inside your `Standalone.app/` directory:
    ```bash
    tar -xzf ROMCat-*-linux-x86_64.tar.gz
