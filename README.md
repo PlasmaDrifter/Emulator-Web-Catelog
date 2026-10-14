@@ -130,8 +130,8 @@ To uninstall ROMcat and remove its desktop entry, icons, and systemd service:
 
 The standalone Windows application provides a self-contained portable executable with dedicated desktop windowing. No Python installation, terminal commands, or background services are required:
 
-1. Download the latest Windows release bundle (`ROMCat-windows-x64.zip` or standalone package) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
-2. Extract the ZIP archive to your preferred folder (for example `C:\ROMcat` or `D:\ROMcat`).
+1. Download the Windows release bundle (**`ROMCat-windows-x64.zip`** or standalone **`ROMCat.exe`**) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+2. If using the ZIP, extract it to your preferred folder (for example `C:\ROMcat` or `D:\ROMcat`). If using `ROMCat.exe`, place it in your chosen folder.
 3. Double-click **`ROMCat.exe`** to launch ROMcat.
    *(Optional: Right-click `ROMCat.exe` &rarr; **Send to** &rarr; **Desktop (create shortcut)** for quick access).*
 4. Open **Settings** (gear icon in the top header) &rarr; **Consoles & Emulators** to configure your ROM folder paths (e.g. `D:\ROMs\NES`) and emulator commands (e.g. `"C:\Emulators\snes9x\snes9x.exe" {rom}`).
@@ -242,8 +242,8 @@ systemctl --user restart romcat.service
 ### Updating the Standalone Desktop Application
 
 #### On Windows:
-1. Download the latest Windows release bundle (`ROMCat-windows-x64.zip` or standalone package) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
-2. Extract the archive and replace `ROMCat.exe` inside your ROMcat folder.
+1. Download the latest Windows release bundle (**`ROMCat-windows-x64.zip`** or **`ROMCat.exe`**) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+2. Replace `ROMCat.exe` inside your ROMcat folder with the newly downloaded version.
    *(Your `config.yaml`, `static/covers/`, and `settings.json` are preserved).*
 
 #### On Linux:
