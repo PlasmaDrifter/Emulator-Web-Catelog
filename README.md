@@ -144,8 +144,9 @@ The standalone Windows application provides a self-contained portable executable
 
 For Linux users who prefer a portable, self-contained desktop window without setting up a background systemd service:
 
-1. Download the latest Linux release bundle (**`ROMCat-v*-linux-x86_64.tar.gz`**, **`ROMCat-v*-linux-x86_64.zip`**, or the standalone **`ROMCat`** binary) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
-2. Extract the archive:
+1. Download the latest Linux release bundle (**`ROMCat-v*-linux-x86_64.tar.gz`**, **`ROMCat-v*-linux-x86_64.zip`**, or the standalone Linux executable **`ROMCat`**) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+   *(Note: The standalone Linux binary is named `ROMCat` without a `.exe` extension. If downloading it directly, ensure executable permission with `chmod +x ROMCat`).*
+2. If using an archive, extract it:
    ```bash
    tar -xzf ROMCat-*-linux-x86_64.tar.gz
    cd Standalone.app
@@ -247,11 +248,16 @@ systemctl --user restart romcat.service
    *(Your `config.yaml`, `static/covers/`, and `settings.json` are preserved).*
 
 #### On Linux:
-1. Download the latest Linux release bundle (**`ROMCat-v*-linux-x86_64.tar.gz`**, **`ROMCat-v*-linux-x86_64.zip`**, or standalone **`ROMCat`** binary) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
-2. Extract the archive and replace the `ROMCat` executable inside your `Standalone.app/` directory:
+1. Download the latest Linux release bundle (**`ROMCat-v*-linux-x86_64.tar.gz`**, **`ROMCat-v*-linux-x86_64.zip`**, or the standalone Linux executable **`ROMCat`**) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+2. If updating with an archive, extract and replace the executable:
    ```bash
    tar -xzf ROMCat-*-linux-x86_64.tar.gz
    cp Standalone.app/ROMCat ~/path/to/your/Standalone.app/ROMCat
+   ```
+   If updating directly with the standalone `ROMCat` binary:
+   ```bash
+   chmod +x ROMCat
+   cp ROMCat ~/path/to/your/Standalone.app/ROMCat
    ```
    *(Your `config.yaml`, `static/covers/`, and custom settings are untouched).*
 
