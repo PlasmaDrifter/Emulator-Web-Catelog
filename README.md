@@ -126,14 +126,28 @@ To uninstall ROMcat and remove its desktop entry, icons, and systemd service:
 
 ---
 
-### Option 2: Standalone Desktop App (Recommended for Windows)
+### Option 2: Standalone Windows App (Recommended for Windows)
 
-The packaged standalone desktop app provides a self-contained executable with native desktop windowing and launcher integration. No Python installation or command-line setup is required (ideal for Windows users).
+The standalone Windows application provides a self-contained portable executable with dedicated desktop windowing. No Python installation, terminal commands, or background services are required:
 
-1. Download the latest Linux release bundle (`ROMCat-v0.6.7-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+1. Download the latest Windows release bundle (`ROMCat-windows-x64.zip` or standalone package) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+2. Extract the ZIP archive to your preferred folder (for example `C:\ROMcat` or `D:\ROMcat`).
+3. Double-click **`ROMCat.exe`** to launch ROMcat.
+   *(Optional: Right-click `ROMCat.exe` &rarr; **Send to** &rarr; **Desktop (create shortcut)** for quick access).*
+4. Open **Settings** (gear icon in the top header) &rarr; **Consoles & Emulators** to configure your ROM folder paths (e.g. `D:\ROMs\NES`) and emulator commands (e.g. `"C:\Emulators\snes9x\snes9x.exe" {rom}`).
+
+*(Your `config.yaml`, custom settings in `settings.json`, and downloaded covers in `static/covers/` are saved directly in the application directory and persist across restarts).*
+
+---
+
+### Option 3: Standalone Linux Desktop App (Portable Binary)
+
+For Linux users who prefer a portable, self-contained desktop window without setting up a background systemd service:
+
+1. Download the latest Linux release bundle (`ROMCat-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
 2. Extract the archive:
    ```bash
-   tar -xzf ROMCat-v0.6.7-linux-x86_64.tar.gz
+   tar -xzf ROMCat-*-linux-x86_64.tar.gz
    cd Standalone.app
    ```
 3. Run the application directly:
@@ -151,23 +165,31 @@ The packaged standalone desktop app provides a self-contained executable with na
 
 ---
 
-### Option 3: Manual Python Web Server (Development / Command Line)
+### Option 4: Manual Python Web Server (Development / Command Line)
 
-If you prefer starting the web server manually via the command line:
+If you prefer starting the local web server manually via the command line (cross-platform for Linux, Windows, or macOS):
 
-1. Clone and install dependencies:
-   ```bash
-   git clone https://github.com/PlasmaDrifter/Emulator-Web-Catelog.git romcat
-   cd romcat
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
-2. Run the application:
-   ```bash
-   python3 app.py
-   ```
-3. Open your browser at `http://localhost:8420`.
+**On Linux / macOS**:
+```bash
+git clone https://github.com/PlasmaDrifter/Emulator-Web-Catelog.git romcat
+cd romcat
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python3 app.py
+```
+
+**On Windows (PowerShell / Command Prompt)**:
+```powershell
+git clone https://github.com/PlasmaDrifter/Emulator-Web-Catelog.git romcat
+cd romcat
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
+python app.py
+```
+
+Open your browser at `http://localhost:8420`.
 
 ---
 
@@ -219,10 +241,16 @@ systemctl --user restart romcat.service
 
 ### Updating the Standalone Desktop Application
 
-1. Download the latest Linux release bundle (`ROMCat-vX.Y.Z-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+#### On Windows:
+1. Download the latest Windows release bundle (`ROMCat-windows-x64.zip` or standalone package) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
+2. Extract the archive and replace `ROMCat.exe` inside your ROMcat folder.
+   *(Your `config.yaml`, `static/covers/`, and `settings.json` are preserved).*
+
+#### On Linux:
+1. Download the latest Linux release bundle (`ROMCat-linux-x86_64.tar.gz` or `.zip`) from the [Releases page](https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases).
 2. Extract the archive and replace the `ROMCat` executable inside your `Standalone.app/` directory:
    ```bash
-   tar -xzf ROMCat-v*-linux-x86_64.tar.gz
+   tar -xzf ROMCat-*-linux-x86_64.tar.gz
    cp Standalone.app/ROMCat ~/path/to/your/Standalone.app/ROMCat
    ```
    *(Your `config.yaml`, `static/covers/`, and custom settings are untouched).*
