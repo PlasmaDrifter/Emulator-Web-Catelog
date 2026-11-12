@@ -856,7 +856,7 @@ async function launchGame(system, filename, path, card, title) {
     const res = await fetch('/api/launch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system, filename, path })
+      body: JSON.stringify({ system, filename, path, window_title: document.title })
     });
     const data = await res.json();
     if (data.ok) {

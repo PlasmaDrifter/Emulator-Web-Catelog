@@ -28,7 +28,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.8.1"
+__version__ = "0.8.2"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -111,7 +111,8 @@ DEFAULT_SETTINGS = {
         "show_update_notification": False,
         "show_card_play_stats": True,
         "show_stats_button": True,
-        "show_sort_control": True
+        "show_sort_control": True,
+        "match_webpage_monitor": True
     }
 }
 
@@ -1121,12 +1122,552 @@ def api_hide():
     return jsonify({"ok": True, "hidden": is_hidden})
 
 
+_KWIN_IGNORED_WINDOW_CLASSES = (
+    "zen",
+    "zen-beta",
+    "zen-twilight",
+    "firefox",
+    "org.mozilla.firefox",
+    "firefox-esr",
+    "librewolf",
+    "floorp",
+    "google-chrome",
+    "chromium",
+    "chromium-browser",
+    "brave-browser",
+    "vivaldi-stable",
+    "opera",
+    "microsoft-edge",
+    "org.kde.dolphin",
+    "org.kde.konsole",
+    "org.gnome.ptyxis",
+    "kitty",
+    "alacritty",
+    "wezterm",
+    "org.telegram.desktop",
+    "antigravity",
+    "romcat",
+)
+
+
+def _extract_emulator_window_tokens(cmd_template: str) -> list:
+    """Extract lowercase window class/title match tokens from an emulator command."""
+    stop_words = {
+        "flatpak", "run", "env", "home", "usr", "bin", "opt", "local",
+        "share", "applications", "appimage", "org", "com", "net", "io",
+        "info", "dev", "app", "emu", "rom", "exe", "var", "lib",
+        "github", "gitlab", "codeberg",
+    }
+    tokens = []
+    seen = set()
+    try:
+        raw_parts = shlex.split(cmd_template.replace("{rom}", ""))
+    except Exception:
+        raw_parts = cmd_template.replace("{rom}", "").split()
+
+    for part in raw_parts:
+        if part.startswith("-"):
+            continue
+        cleaned = part.strip().strip('"').strip("'").lower()
+        if not cleaned or "{" in cleaned or "}" in cleaned:
+            continue
+        base = os.path.basename(cleaned)
+        candidates = [base] + re.split(r"[.\-_/:\\]+", cleaned)
+        if base.endswith(".appimage"):
+            candidates.append(base[:-9])
+        for candidate in candidates:
+            tok = candidate.strip()
+            if not tok or tok.startswith("$"):
+                continue
+            if len(tok) < 3 or tok in stop_words or tok.endswith(".appimage"):
+                continue
+            if tok not in seen:
+                seen.add(tok)
+                tokens.append(tok)
+    return tokens
+
+
+def _kwin_open_bus(dbus_addr: str = None):
+    """Open a Gio session D-Bus connection, returning (bus, Gio, GLib, owns_bus)."""
+    try:
+        from gi.repository import Gio, GLib
+    except Exception:
+        return None, None, None, False
+    try:
+        addr = dbus_addr or os.environ.get("DBUS_SESSION_BUS_ADDRESS")
+        if addr:
+            bus = Gio.DBusConnection.new_for_address_sync(
+                addr,
+                Gio.DBusConnectionFlags.AUTHENTICATION_CLIENT
+                | Gio.DBusConnectionFlags.MESSAGE_BUS_CONNECTION,
+                None,
+                None,
+            )
+            return bus, Gio, GLib, True
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        return bus, Gio, GLib, False
+    except Exception:
+        return None, None, None, False
+
+
+def _kwin_load_and_run_script(bus, Gio, GLib, js_code: str, prefix: str):
+    """Write a temporary KWin script, load it via D-Bus, run it, and return (plugin_name, js_path)."""
+    fd, js_path = tempfile.mkstemp(suffix=".js", prefix=f"{prefix}_")
+    plugin_name = f"{prefix}_{os.getpid()}_{threading.get_ident()}_{int(time.time() * 1000)}"
+    try:
+        os.write(fd, js_code.encode("utf-8"))
+        os.close(fd)
+        ret = bus.call_sync(
+            "org.kde.KWin",
+            "/Scripting",
+            "org.kde.kwin.Scripting",
+            "loadScript",
+            GLib.Variant("(ss)", (js_path, plugin_name)),
+            GLib.VariantType("(i)"),
+            Gio.DBusCallFlags.NONE,
+            1500,
+            None,
+        )
+        script_id = ret.unpack()[0]
+        if script_id < 0:
+            raise RuntimeError("KWin rejected script")
+        bus.call_sync(
+            "org.kde.KWin",
+            f"/Scripting/Script{script_id}",
+            "org.kde.kwin.Script",
+            "run",
+            None,
+            None,
+            Gio.DBusCallFlags.NONE,
+            1500,
+            None,
+        )
+        return plugin_name, js_path
+    except Exception:
+        try:
+            os.unlink(js_path)
+        except Exception:
+            pass
+        raise
+
+
+def _kwin_unload_script(bus, Gio, GLib, plugin_name: str, js_path: str):
+    """Best-effort unload of a temporary KWin script and removal of its temp file."""
+    try:
+        if plugin_name:
+            bus.call_sync(
+                "org.kde.KWin",
+                "/Scripting",
+                "org.kde.kwin.Scripting",
+                "unloadScript",
+                GLib.Variant("(s)", (plugin_name,)),
+                GLib.VariantType("(b)"),
+                Gio.DBusCallFlags.NONE,
+                1500,
+                None,
+            )
+    except Exception:
+        pass
+    try:
+        if js_path and os.path.exists(js_path):
+            os.unlink(js_path)
+    except Exception:
+        pass
+
+
+def _kwin_eval_json(dbus_addr: str, body_js: str, timeout_ms: int = 1200):
+    """Execute a short one-shot KWin script that passes a JSON result back over D-Bus."""
+    bus, Gio, GLib, owns_bus = _kwin_open_bus(dbus_addr)
+    if not bus:
+        return None
+
+    ctx = GLib.MainContext.new()
+    ctx.push_thread_default()
+    reg_id = None
+    plugin_name = None
+    js_path = None
+    loop = GLib.MainLoop.new(ctx, False)
+    results = []
+
+    obj_path = f"/RomcatKWin_{os.getpid()}_{threading.get_ident()}"
+    node_info = Gio.DBusNodeInfo.new_for_xml(
+        """
+        <node>
+          <interface name="local.romcat.KWinBridge">
+            <method name="Report">
+              <arg type="s" name="payload" direction="in"/>
+            </method>
+          </interface>
+        </node>
+        """
+    )
+
+    def _on_report(_conn, _sender, _path, _iface, _method, params, invocation):
+        results.append(params.unpack()[0])
+        invocation.return_value(None)
+        loop.quit()
+
+    try:
+        reg_id = bus.register_object_with_closures2(
+            obj_path, node_info.interfaces[0], _on_report, None, None
+        )
+        unique_name = bus.get_unique_name()
+        full_js = f"""
+(function() {{
+    var __payload = null;
+    try {{
+        __payload = (function() {{
+{body_js}
+        }})();
+    }} catch (e) {{
+        __payload = {{ error: String(e) }};
+    }}
+    callDBus({json.dumps(unique_name)}, {json.dumps(obj_path)}, "local.romcat.KWinBridge", "Report", JSON.stringify(__payload));
+}})();
+"""
+        plugin_name, js_path = _kwin_load_and_run_script(bus, Gio, GLib, full_js, "romcat_kwin_q")
+        timer = GLib.timeout_source_new(timeout_ms)
+        timer.set_callback(lambda *_args: loop.quit())
+        timer.attach(ctx)
+        loop.run()
+        if not results:
+            return None
+        parsed = json.loads(results[0])
+        if isinstance(parsed, dict) and parsed.get("error"):
+            logging.debug(f"KWin script error: {parsed['error']}")
+            return None
+        return parsed
+    except Exception as e:
+        logging.debug(f"KWin D-Bus query skipped: {e}")
+        return None
+    finally:
+        _kwin_unload_script(bus, Gio, GLib, plugin_name, js_path)
+        if reg_id is not None:
+            try:
+                bus.unregister_object(reg_id)
+            except Exception:
+                pass
+        ctx.pop_thread_default()
+        if owns_bus:
+            try:
+                bus.close_sync(None)
+            except Exception:
+                pass
+
+
+def _start_kwin_monitor_placement(env: dict, window_title: str, cmd_template: str):
+    """Detect the monitor holding the ROMcat window and arm a KWin windowAdded placement watcher."""
+    dbus_addr = env.get("DBUS_SESSION_BUS_ADDRESS")
+    probe_js = f"""
+var titleQuery = {json.dumps(window_title or "")}.toLowerCase();
+var wins = workspace.windowList() || [];
+var aw = workspace.activeWindow;
+var browserHints = ["zen", "firefox", "chrome", "chromium", "brave", "vivaldi", "opera", "edge", "librewolf", "floorp", "romcat"];
+var nonWebUtilities = ["org.kde.dolphin", "org.kde.konsole", "org.gnome.ptyxis", "kitty", "alacritty", "wezterm", "antigravity", "org.telegram.desktop"];
+function isBrowserOrApp(w) {{
+    var cls = (w && w.resourceClass ? w.resourceClass : "").toLowerCase();
+    var cap = (w && w.caption ? w.caption : "").toLowerCase();
+    for (var b = 0; b < browserHints.length; b++) {{
+        if (cls.indexOf(browserHints[b]) !== -1) return true;
+    }}
+    return (
+        cap.indexOf("zen browser") !== -1 ||
+        cap.indexOf("mozilla firefox") !== -1 ||
+        cap.indexOf("google chrome") !== -1 ||
+        cap.indexOf("microsoft edge") !== -1
+    );
+}}
+function isNonWebUtility(w) {{
+    var cls = (w && w.resourceClass ? w.resourceClass : "").toLowerCase();
+    for (var u = 0; u < nonWebUtilities.length; u++) {{
+        if (cls === nonWebUtilities[u] || cls.indexOf(nonWebUtilities[u] + ".") === 0) return true;
+    }}
+    return false;
+}}
+var srcWin = null;
+if (aw && !aw.specialWindow && aw.output) {{
+    var awCap = (aw.caption || "").toLowerCase();
+    if (!titleQuery || (isBrowserOrApp(aw) && awCap.indexOf(titleQuery) !== -1)) {{
+        srcWin = aw;
+    }}
+}}
+if (!srcWin && titleQuery) {{
+    var matches = [];
+    for (var i = 0; i < wins.length; i++) {{
+        var w = wins[i];
+        if (!w || w.specialWindow || !w.output) continue;
+        var cap = (w.caption || "").toLowerCase();
+        if (cap.indexOf(titleQuery) !== -1) {{
+            matches.push(w);
+        }}
+    }}
+    if (matches.length > 0) {{
+        matches.sort(function(a, b) {{
+            var ab = isBrowserOrApp(a) ? 2 : (isNonWebUtility(a) ? 0 : 1);
+            var bb = isBrowserOrApp(b) ? 2 : (isNonWebUtility(b) ? 0 : 1);
+            if (ab !== bb) return bb - ab;
+            if (a.minimized !== b.minimized) return a.minimized ? 1 : -1;
+            return (b.stackingOrder || 0) - (a.stackingOrder || 0);
+        }});
+        srcWin = matches[0];
+    }}
+}}
+if (!srcWin && aw && aw.output) {{
+    srcWin = aw;
+}}
+var targetOutput = (srcWin && srcWin.output) ? srcWin.output.name : (workspace.activeScreen ? workspace.activeScreen.name : null);
+var existingIds = [];
+for (var j = 0; j < wins.length; j++) {{
+    if (wins[j] && wins[j].internalId) {{
+        existingIds.push(wins[j].internalId.toString());
+    }}
+}}
+return {{
+    targetOutput: targetOutput,
+    sourceWinId: (srcWin && srcWin.internalId) ? srcWin.internalId.toString() : "",
+    screenCount: (workspace.screens || []).length,
+    existingIds: existingIds
+}};
+"""
+    probe = _kwin_eval_json(dbus_addr, probe_js)
+    if not probe or probe.get("screenCount", 0) <= 1 or not probe.get("targetOutput"):
+        return None
+
+    target_output = probe["targetOutput"]
+    source_win_id = probe.get("sourceWinId", "")
+    existing_ids = probe.get("existingIds") or []
+    match_tokens = _extract_emulator_window_tokens(cmd_template)
+
+    watcher_js = f"""
+(function() {{
+    var targetOutputName = {json.dumps(target_output)};
+    var sourceWinId = {json.dumps(source_win_id)};
+    var existingMap = {{}};
+    var initialIds = {json.dumps(existing_ids)};
+    for (var i = 0; i < initialIds.length; i++) {{
+        existingMap[initialIds[i]] = true;
+    }}
+    var neverMove = {json.dumps(list(_KWIN_IGNORED_WINDOW_CLASSES))};
+    var seenNew = {{}};
+
+    function getTargetOutput() {{
+        var screens = workspace.screens || [];
+        for (var i = 0; i < screens.length; i++) {{
+            if (screens[i] && screens[i].name === targetOutputName) {{
+                return screens[i];
+            }}
+        }}
+        return null;
+    }}
+
+    function isIgnoredWindow(w) {{
+        var id = w.internalId ? w.internalId.toString() : "";
+        if (!id || id === sourceWinId) return true;
+        var cls = (w.resourceClass || "").toLowerCase();
+        for (var i = 0; i < neverMove.length; i++) {{
+            if (cls === neverMove[i] || cls.indexOf(neverMove[i] + ".") === 0) {{
+                return true;
+            }}
+        }}
+        return false;
+    }}
+
+    function placeWindow(w) {{
+        if (!w || w.deleted || w.specialWindow || !w.moveableAcrossScreens) return;
+        var out = getTargetOutput();
+        if (!out) return;
+        if (!w.output || w.output.name !== out.name) {{
+            workspace.sendClientToScreen(w, out);
+        }}
+        workspace.activeWindow = w;
+    }}
+
+    workspace.windowAdded.connect(function(w) {{
+        if (!w || w.specialWindow || !w.moveableAcrossScreens) return;
+        var id = w.internalId ? w.internalId.toString() : "";
+        if (!id || existingMap[id] || seenNew[id]) return;
+        if (isIgnoredWindow(w)) return;
+
+        seenNew[id] = Date.now();
+        placeWindow(w);
+
+        var moving = false;
+        function keepOnTarget() {{
+            if (moving || w.deleted) return;
+            var addedAt = seenNew[id] || 0;
+            if (Date.now() - addedAt > 2000) return;
+            var out = getTargetOutput();
+            if (out && (!w.output || w.output.name !== out.name)) {{
+                moving = true;
+                try {{
+                    workspace.sendClientToScreen(w, out);
+                }} finally {{
+                    moving = false;
+                }}
+            }}
+        }}
+        w.outputChanged.connect(keepOnTarget);
+        w.fullScreenChanged.connect(keepOnTarget);
+    }});
+}})();
+"""
+    bus, Gio, GLib, owns_bus = _kwin_open_bus(dbus_addr)
+    if not bus:
+        return None
+    try:
+        plugin_name, js_path = _kwin_load_and_run_script(bus, Gio, GLib, watcher_js, "romcat_place")
+        logging.info(f"Armed KWin monitor placement targeting output '{target_output}'")
+        return {
+            "dbus_addr": dbus_addr,
+            "target_output": target_output,
+            "source_win_id": source_win_id,
+            "existing_ids": existing_ids,
+            "match_tokens": match_tokens,
+            "plugin_name": plugin_name,
+            "js_path": js_path,
+        }
+    except Exception as e:
+        logging.debug(f"Could not arm KWin watcher: {e}")
+        return None
+    finally:
+        if owns_bus:
+            try:
+                bus.close_sync(None)
+            except Exception:
+                pass
+
+
+def _cleanup_kwin_ctx(ctx_data: dict):
+    """Unload a previously armed KWin placement script immediately."""
+    if not ctx_data:
+        return
+    bus, Gio, GLib, owns_bus = _kwin_open_bus(ctx_data.get("dbus_addr"))
+    plugin_name = ctx_data.get("plugin_name")
+    js_path = ctx_data.get("js_path")
+    if bus:
+        try:
+            _kwin_unload_script(bus, Gio, GLib, plugin_name, js_path)
+        finally:
+            if owns_bus:
+                try:
+                    bus.close_sync(None)
+                except Exception:
+                    pass
+    elif js_path and os.path.exists(js_path):
+        try:
+            os.unlink(js_path)
+        except Exception:
+            pass
+
+
+def _finish_kwin_monitor_placement(ctx_data: dict, proc):
+    """Wait for the launched emulator window to appear/settle on targetOutput, then clean up KWin script."""
+    if not ctx_data:
+        return
+    dbus_addr = ctx_data.get("dbus_addr")
+    target_output = ctx_data.get("target_output")
+    existing_ids = ctx_data.get("existing_ids") or []
+    source_win_id = ctx_data.get("source_win_id") or ""
+    match_tokens = ctx_data.get("match_tokens") or []
+
+    check_new_js = f"""
+var existingMap = {{}};
+var initIds = {json.dumps(existing_ids)};
+for (var i = 0; i < initIds.length; i++) existingMap[initIds[i]] = true;
+var neverMove = {json.dumps(list(_KWIN_IGNORED_WINDOW_CLASSES))};
+var sourceWinId = {json.dumps(source_win_id)};
+var wins = workspace.windowList() || [];
+var newCount = 0;
+for (var j = 0; j < wins.length; j++) {{
+    var w = wins[j];
+    if (!w || w.specialWindow || !w.moveableAcrossScreens || !w.internalId) continue;
+    var id = w.internalId.toString();
+    if (existingMap[id] || id === sourceWinId) continue;
+    var cls = (w.resourceClass || "").toLowerCase();
+    var skip = false;
+    for (var k = 0; k < neverMove.length; k++) {{
+        if (cls === neverMove[k] || cls.indexOf(neverMove[k] + ".") === 0) {{ skip = true; break; }}
+    }}
+    if (!skip) newCount++;
+}}
+return {{ newCount: newCount }};
+"""
+
+    fallback_existing_js = f"""
+var targetOutputName = {json.dumps(target_output)};
+var tokens = {json.dumps(match_tokens)};
+var neverMove = {json.dumps(list(_KWIN_IGNORED_WINDOW_CLASSES))};
+var out = null;
+var screens = workspace.screens || [];
+for (var s = 0; s < screens.length; s++) {{
+    if (screens[s] && screens[s].name === targetOutputName) {{ out = screens[s]; break; }}
+}}
+if (!out || tokens.length === 0) return {{ moved: 0 }};
+var moved = 0;
+var wins = workspace.windowList() || [];
+for (var i = 0; i < wins.length; i++) {{
+    var w = wins[i];
+    if (!w || w.specialWindow || !w.moveableAcrossScreens) continue;
+    var cls = (w.resourceClass || "").toLowerCase();
+    var skip = false;
+    for (var k = 0; k < neverMove.length; k++) {{
+        if (cls === neverMove[k] || cls.indexOf(neverMove[k] + ".") === 0) {{ skip = true; break; }}
+    }}
+    if (skip) continue;
+    var cap = (w.caption || "").toLowerCase();
+    var matched = false;
+    for (var t = 0; t < tokens.length; t++) {{
+        if (cls.indexOf(tokens[t]) !== -1 || cap.indexOf(tokens[t]) !== -1) {{
+            matched = true;
+            break;
+        }}
+    }}
+    if (matched) {{
+        if (!w.output || w.output.name !== out.name) {{
+            workspace.sendClientToScreen(w, out);
+        }}
+        workspace.activeWindow = w;
+        moved++;
+    }}
+}}
+return {{ moved: moved }};
+"""
+
+    try:
+        start = time.time()
+        tried_existing_fallback = False
+        while time.time() - start < 10.0:
+            time.sleep(0.5)
+            proc_exited = proc is not None and proc.poll() is not None
+            res = _kwin_eval_json(dbus_addr, check_new_js)
+            if res and res.get("newCount", 0) > 0:
+                deadline = min(start + 10.0, time.time() + 2.5)
+                while time.time() < deadline:
+                    time.sleep(0.3)
+                break
+
+            elapsed = time.time() - start
+            if (proc_exited or elapsed >= 2.5) and not tried_existing_fallback and match_tokens:
+                tried_existing_fallback = True
+                fb = _kwin_eval_json(dbus_addr, fallback_existing_js)
+                if fb and fb.get("moved", 0) > 0:
+                    logging.info(f"Moved existing matching emulator window to '{target_output}'")
+                    time.sleep(1.5)
+                    break
+
+            if proc_exited and elapsed >= 1.5:
+                break
+    finally:
+        _cleanup_kwin_ctx(ctx_data)
+
+
 @app.route("/api/launch", methods=["POST"])
 def api_launch():
     data = request.get_json(force=True)
     system = data.get("system")
     path_param = str(data.get("path") or "").strip().strip('"').strip("'")
     filename_param = str(data.get("filename") or "").strip()
+    window_title = str(data.get("window_title") or "").strip()
 
     config = load_config()
     sys_cfg = config["systems"].get(system)
@@ -1155,6 +1696,7 @@ def api_launch():
         return jsonify({"ok": False, "error": "Game not found in library cache"}), 404
 
     cmd_template = sys_cfg["command"]
+    kwin_ctx = None
     if os.name == "nt":
         # Windows execution (shell=False to prevent command injection)
         cmd = cmd_template.format(rom=f'"{matched_path}"')
@@ -1227,6 +1769,11 @@ def api_launch():
             args = ["systemd-run", "--user", "--scope", "--quiet"] + args
 
         exec_desc = ' '.join(args) if isinstance(args, list) else cmd
+        settings = load_settings()
+        if settings.get("visibility", {}).get("match_webpage_monitor", True):
+            kwin_ctx = _start_kwin_monitor_placement(env, window_title, cmd_template)
+        else:
+            kwin_ctx = None
         logging.info(f"Launching [{system}] '{os.path.basename(matched_path)}' with command: {exec_desc}")
         try:
             proc = subprocess.Popen(
@@ -1237,11 +1784,21 @@ def api_launch():
                 start_new_session=True,
             )
         except FileNotFoundError:
+            _cleanup_kwin_ctx(kwin_ctx)
             logging.error(f"Emulator executable not found for [{system}]. Command: {exec_desc}")
             return jsonify({"ok": False, "error": "Emulator executable not found. Please check your command in settings."}), 500
         except Exception as e:
+            _cleanup_kwin_ctx(kwin_ctx)
             logging.error(f"Failed to launch emulator process for [{system}]: {e}")
             return jsonify({"ok": False, "error": "Failed to launch emulator process."}), 500
+
+    if kwin_ctx:
+        placement_thread = threading.Thread(
+            target=_finish_kwin_monitor_placement,
+            args=(kwin_ctx, proc),
+            daemon=True,
+        )
+        placement_thread.start()
 
     start_time = time.time()
     filename_val = os.path.basename(matched_path)
