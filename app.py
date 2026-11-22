@@ -724,6 +724,8 @@ CONSOLE_DISPLAY_NAMES = {
     "wii": "Wii",
     "wiiu": "Wii U",
     "switch": "Switch",
+    "switch2": "Switch 2",
+    "switch 2": "Switch 2",
     "gameboy": "Game Boy",
     "gba": "GBA",
     "ds": "Nintendo DS",
@@ -770,15 +772,16 @@ MANUFACTURER_GROUPS = {
     "wii": (5, "Nintendo"),
     "wiiu": (6, "Nintendo"),
     "switch": (7, "Nintendo"),
-    "gameboy": (8, "Nintendo"),
-    "gba": (9, "Nintendo"),
-    "gbc": (10, "Nintendo"),
-    "ds": (11, "Nintendo"),
-    "3ds": (12, "Nintendo"),
-    "famicom": (13, "Nintendo"),
-    "sfc": (14, "Nintendo"),
-    "virtualboy": (15, "Nintendo"),
-    "pokemonmini": (16, "Nintendo"),
+    "switch2": (8, "Nintendo"),
+    "gameboy": (9, "Nintendo"),
+    "gba": (10, "Nintendo"),
+    "gbc": (11, "Nintendo"),
+    "ds": (12, "Nintendo"),
+    "3ds": (13, "Nintendo"),
+    "famicom": (14, "Nintendo"),
+    "sfc": (15, "Nintendo"),
+    "virtualboy": (16, "Nintendo"),
+    "pokemonmini": (17, "Nintendo"),
 
     # PlayStation
     "ps1": (20, "PlayStation"),
@@ -1765,6 +1768,20 @@ def api_launch():
 
         raw_args = shlex.split(cmd)
         args = [os.path.expanduser(os.path.expandvars(a)) for a in raw_args]
+        if args and not os.path.isabs(args[0]):
+            resolved_bin = shutil.which(args[0])
+            if not resolved_bin:
+                candidates = [
+                    Path.home() / ".local" / "bin" / args[0],
+                    Path.home() / "Applications" / args[0],
+                    Path.home() / "Applications" / args[0].capitalize(),
+                ]
+                for cand in candidates:
+                    if cand.is_file() and os.access(str(cand), os.X_OK):
+                        resolved_bin = str(cand)
+                        break
+            if resolved_bin:
+                args[0] = resolved_bin
         if shutil.which("systemd-run") and os.path.exists(f"{runtime_dir}/bus"):
             args = ["systemd-run", "--user", "--scope", "--quiet"] + args
 

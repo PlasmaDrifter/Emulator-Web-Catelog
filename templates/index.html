@@ -1044,6 +1044,7 @@
             <div class="example-row"><span class="ex-sys">AppImage / Binary:</span> <code>/home/user/Applications/emulator.AppImage {rom}</code></div>
             <div class="example-row"><span class="ex-sys">Windows (.exe):</span> <code>"C:\Emulators\Dolphin\Dolphin.exe" -b -e {rom}</code></div>
             <div class="example-row"><span class="ex-sys">Eden / Standalone:</span> <code>/home/user/Applications/Eden -g {rom}</code></div>
+            <div class="example-row"><span class="ex-sys">Switch 2 / Lichii:</span> <code>$HOME/Applications/Lichii -g {rom}</code></div>
           </div>
         </div>
       </div>
@@ -1911,6 +1912,7 @@ const visibilityToggles = {
 
 const CONSOLE_ICON_MAP = [
   // Nintendo
+  { pattern: /switch\s*2/i, src: '/static/icons/switch2/nintendo-switch-2.svg' },
   { pattern: /switch/i, src: '/static/icons/nintendo-switch.svg' },
   { pattern: /wii\s*u/i, src: '/static/icons/nintendo-wiiu.svg' },
   { pattern: /wii/i, src: '/static/icons/nintendo-wii.svg' },

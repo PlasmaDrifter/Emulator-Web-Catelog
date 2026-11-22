@@ -72,7 +72,7 @@ ROMcat provides an interactive dashboard with automated cover art scraping, syst
 - **Play Time Statistics Dashboard**: Dedicated statistics page (`/stats`) tracking total play time, session counts, distinct games played, and top consoles. Includes interactive console breakdown charts, play leaderboards, recent activity feeds, per-game reset controls, interactive detailed game statistics modal with 7-Day, 14-Day, 30-Day, and 1-Year timeframe controls, effortless magnetic hover tracking, and responsive category filtering.
 - **Dynamic Sorting & Filtering**: Sort your game catalog by Name (A-Z with favorites prioritized), Most Played (by cumulative play time), Most Played (by total play sessions), or Recently Played.
 - **Background Session Tracking**: Automatically monitors active emulator processes and systemd scopes in the background to log play sessions (with minimum time threshold) without manual logging.
-- **System Tabs & Live Counters**: Instant switching between systems (e.g. NES, SNES, N64, GameCube, Wii U, Switch, Favorites, All, Hidden).
+- **System Tabs & Live Counters**: Instant switching between systems (e.g. NES, SNES, N64, GameCube, Wii U, Switch, Switch 2, Favorites, All, Hidden).
 - **Fast Search & Filtering**: Real-time title search across thousands of ROMs with automatic title normalization (stripping tags like `[!]`, `(USA)`, `(Rev 1)`, `.nkit`).
 - **Automated Cover Art Scraping & Interactive Picker**: One-click cover fetching from SteamGridDB with per-console targeting, overwrite controls, multi-pass fallback title matching, and authentic portrait box-art filtering (600x900). Includes an interactive modal on game cards to search, browse, and select between alternative box arts with live previews.
 - **Manual Cover Art Override**: Drop custom cover art directly into the web UI or filesystem for unmatched or homebrew titles.
@@ -400,6 +400,7 @@ Common standalone and AppImage examples:
 | System | Emulator / Binary | Example Command in `config.yaml` |
 |---|---|---|
 | **Nintendo Switch** | Eden (AppImage / Binary) | `/home/user/Applications/Eden -g {rom}` |
+| **Nintendo Switch 2** | Lichii (AppImage / Binary) | `/home/user/Applications/Lichii -g {rom}` |
 | **PlayStation 3** | RPCS3 (AppImage) | `/home/user/Applications/RPCS3.AppImage {rom}` |
 | **Nintendo Switch** | Ryujinx | `/home/user/Applications/Ryujinx/Ryujinx {rom}` |
 | **PlayStation 2** | PCSX2 (AppImage) | `/home/user/Applications/pcsx2.AppImage {rom}` |

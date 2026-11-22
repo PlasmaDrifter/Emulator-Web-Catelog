@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Left Joy-Con (Red) -->
+  <path d="M6 22c0-6 4.5-10 10-10h19v76H16c-5.5 0-10-4.5-10-10V22z" fill="#e11d48"/>
+  <circle cx="21" cy="36" r="6" fill="#ffffff"/>
+  <circle cx="21" cy="62" r="2.8" fill="#ffffff"/>
+
+  <!-- Right Joy-Con (Cyan / Blue) -->
+  <path d="M41 12h19c5.5 0 10 4.5 10 10v46h-10c-5.5 0-10 4.5-10 10v10H41V12z" fill="#0284c7"/>
+  <circle cx="56" cy="38" r="2.8" fill="#ffffff"/>
+  <circle cx="56" cy="56" r="5" fill="none" stroke="#ffffff" stroke-width="3"/>
+
+  <!-- Switch 2 Badge (Bottom-Right) -->
+  <circle cx="76" cy="72" r="19" fill="#181b21" stroke="#e11d48" stroke-width="3"/>
+  <text x="76" y="80.5" fill="#ffffff" font-family="'Trebuchet MS', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="900" text-anchor="middle">2</text>
+</svg>
