@@ -27,6 +27,8 @@ a = Analysis(
         'PIL',
         'PIL.Image',
         'requests',
+        'defusedxml',
+        'defusedxml.ElementTree',
         'flask',
         'jinja2',
         'werkzeug',

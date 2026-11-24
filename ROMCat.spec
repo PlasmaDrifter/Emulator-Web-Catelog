@@ -22,6 +22,8 @@ a = Analysis(
         'PIL',
         'PIL.Image',
         'requests',
+        'defusedxml',
+        'defusedxml.ElementTree',
         'gi',
         'gi.repository.Gtk',
         'gi.repository.WebKit2',

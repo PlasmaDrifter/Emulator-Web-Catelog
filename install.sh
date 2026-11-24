@@ -30,7 +30,7 @@ fi
 # 2. Check and install Python dependencies
 check_and_install_dependencies() {
     local missing=()
-    for mod in flask yaml requests PIL ujson; do
+    for mod in flask yaml requests PIL ujson defusedxml; do
         if ! python3 -c "import ${mod}" >/dev/null 2>&1; then
             missing+=("${mod}")
         fi
@@ -48,7 +48,7 @@ check_and_install_dependencies() {
         fi
 
         local still_missing=()
-        for mod in flask yaml requests PIL ujson; do
+        for mod in flask yaml requests PIL ujson defusedxml; do
             if ! python3 -c "import ${mod}" >/dev/null 2>&1; then
                 still_missing+=("${mod}")
             fi
@@ -58,9 +58,9 @@ check_and_install_dependencies() {
             echo ""
             echo "Notice: Some dependencies could not be automatically installed: ${still_missing[*]}"
             echo "You can install them via your distribution package manager or pip:"
-            echo "  Fedora / Nobara: sudo dnf install python3-flask python3-pyyaml python3-requests python3-pillow python3-ujson"
-            echo "  Ubuntu / Debian: sudo apt install python3-flask python3-yaml python3-requests python3-pil python3-ujson"
-            echo "  Arch Linux:      sudo pacman -S python-flask python-pyyaml python-requests python-pillow python-ujson"
+            echo "  Fedora / Nobara: sudo dnf install python3-flask python3-pyyaml python3-requests python3-pillow python3-ujson python3-defusedxml"
+            echo "  Ubuntu / Debian: sudo apt install python3-flask python3-yaml python3-requests python3-pil python3-ujson python3-defusedxml"
+            echo "  Arch Linux:      sudo pacman -S python-flask python-pyyaml python-requests python-pillow python-ujson python-defusedxml"
             echo "  Pip:             pip install -r requirements.txt"
             echo ""
         fi

@@ -21,7 +21,8 @@ import requests
 import urllib.parse
 import shutil
 import logging
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as ET
+from defusedxml import DefusedXmlException
 from collections import deque
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -238,8 +239,8 @@ def _sanitize_svg_bytes(raw_bytes: bytes) -> bytes | None:
     if re.search(r"<!\s*(DOCTYPE|ENTITY)\b", text, flags=re.IGNORECASE):
         return None
     try:
-        root = ET.fromstring(text)  # noqa: S314 (DOCTYPE/ENTITY declarations rejected above)
-    except ET.ParseError:
+        root = ET.fromstring(text)
+    except (ET.ParseError, DefusedXmlException):
         return None
     root_local = root.tag.rsplit("}", 1)[-1].lower()
     if root_local != "svg":
