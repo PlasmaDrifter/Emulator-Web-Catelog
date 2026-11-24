@@ -1287,7 +1287,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ g.csp_nonce }}">
 // Delegated click handling on game cards and their controls
 document.addEventListener('click', async (e) => {
   // 1. Star click
@@ -1461,7 +1461,12 @@ async function searchAndRenderCovers(query) {
             if (applyData.ok) {
               const coverDiv = currentPickerCard.querySelector('.cover');
               if (coverDiv) {
-                coverDiv.innerHTML = `<img src="${applyData.cover}?t=${Date.now()}" alt="${currentPickerCard.dataset.filename}" loading="lazy">`;
+                coverDiv.innerHTML = '';
+                const coverImg = document.createElement('img');
+                coverImg.src = `${applyData.cover}?t=${Date.now()}`;
+                coverImg.alt = currentPickerCard.dataset.filename || '';
+                coverImg.loading = 'lazy';
+                coverDiv.appendChild(coverImg);
               }
               currentPickerCard.dataset.hasCover = 'true';
               applyFilters();
@@ -1965,17 +1970,17 @@ const CONSOLE_ICON_MAP = [
 ];
 
 function matchIconForCategory(sysId, sysName) {
+  const text = (sysId + ' ' + (sysName || '')).trim();
+  for (const item of CONSOLE_ICON_MAP) {
+    if (item.pattern.test(text)) {
+      return item.src;
+    }
+  }
   const cleanId = (sysId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   if (Array.isArray(dynamicIconsList) && dynamicIconsList.length > 0) {
     const matchInCat = dynamicIconsList.find(i => i.cat === cleanId);
     if (matchInCat) {
       return matchInCat.src;
-    }
-  }
-  const text = (sysId + ' ' + (sysName || '')).trim();
-  for (const item of CONSOLE_ICON_MAP) {
-    if (item.pattern.test(text)) {
-      return item.src;
     }
   }
   return '/static/icons/retro/retro-gamepad.svg';
@@ -2042,7 +2047,7 @@ function updateActivePresetState() {
         }
       }
       if (match) {
-        matchedElement = document.querySelector(`.custom-preset-btn[data-theme-name="${tName}"]`);
+        matchedElement = document.querySelector(`.custom-preset-btn[data-theme-name="${CSS.escape(tName)}"]`);
         break;
       }
     }
@@ -2525,7 +2530,7 @@ const iconGrid = document.getElementById('iconGrid');
 const iconCatTabs = document.getElementById('iconCatTabs');
 const customIconUrl = document.getElementById('customIconUrl');
 const iconFileInput = document.getElementById('iconFileInput');
-let selectedIconUrl = "{{ settings.icon or '/static/favicon.png' }}";
+let selectedIconUrl = {{ (settings.icon or '/static/favicon.png') | tojson }};
 
 async function loadDynamicIcons() {
   try {
@@ -3331,7 +3336,6 @@ const syncFormToYamlBtn = document.getElementById('syncFormToYamlBtn');
 const syncYamlToFormBtn = document.getElementById('syncYamlToFormBtn');
 const configStatusAlert = document.getElementById('configStatusAlert');
 const reloadConfigBtn = document.getElementById('reloadConfigBtn');
-const saveConfigBtn = document.getElementById('saveConfigBtn');
 const modalFetchCoversBtn = document.getElementById('modalFetchCoversBtn');
 const modalRescanBtn = document.getElementById('modalRescanBtn');
 const modalStatusAlert = document.getElementById('modalStatusAlert');
@@ -3506,7 +3510,7 @@ if (modalRescanBtn) {
 
 function escapeHtml(str) {
   if (typeof str !== 'string') return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function getCollapsedConsoles() {
@@ -4028,32 +4032,6 @@ if (addNewSystemCardBtn && systemsListContainer) {
 if (reloadConfigBtn) {
   reloadConfigBtn.addEventListener('click', () => {
     loadConfigData();
-  });
-}
-
-if (syncFormToYamlBtn && yamlConfigEditor) {
-  syncFormToYamlBtn.addEventListener('click', async () => {
-    const configObj = collectConfigFromForm();
-    try {
-      const res = await fetch('/api/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config: configObj })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        const getRes = await fetch('/api/config');
-        const getData = await getRes.json();
-        if (getData.ok) yamlConfigEditor.value = getData.raw_yaml;
-        configStatusAlert.className = 'config-status-msg success';
-        configStatusAlert.textContent = 'YAML editor updated from form!';
-        configStatusAlert.style.display = 'block';
-      }
-    } catch(err) {
-      configStatusAlert.className = 'config-status-msg error';
-      configStatusAlert.textContent = 'Error updating YAML: ' + err;
-      configStatusAlert.style.display = 'block';
-    }
   });
 }
 
@@ -4848,7 +4826,7 @@ function startActiveSessionTracking() {
 
       if (data.active_sessions && data.active_sessions.length > 0) {
         data.active_sessions.forEach(sess => {
-          const card = document.querySelector(`.card[data-system="${sess.system}"][data-filename="${sess.filename}"]`);
+          const card = document.querySelector(`.card[data-system="${CSS.escape(sess.system || '')}"][data-filename="${CSS.escape(sess.filename || '')}"]`);
           if (card) {
             card.classList.add('playing-now');
             const pill = card.querySelector('.card-stat-pill');
@@ -4905,7 +4883,7 @@ if (urlParams.get('test_settings')) {
   if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
   const testTab = urlParams.get('test_tab');
   if (testTab) {
-    const tabBtn = document.querySelector(`.modal-nav-tab[data-tab-target="${testTab}"]`);
+    const tabBtn = document.querySelector(`.modal-nav-tab[data-tab-target="${CSS.escape(testTab)}"]`);
     if (tabBtn) tabBtn.click();
   }
 }

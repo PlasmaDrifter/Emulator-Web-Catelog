@@ -62,8 +62,9 @@ def setup_desktop_integration(title, icon_path):
         apps_dir.mkdir(parents=True, exist_ok=True)
         desktop_file = apps_dir / "romcat.desktop"
         exec_path = str(Path(sys.executable if getattr(sys, "frozen", False) else sys.argv[0]).resolve())
+        safe_title = str(title or "ROMcat").replace("\r", " ").replace("\n", " ").strip() or "ROMcat"
         desktop_content = f"""[Desktop Entry]
-Name={title}
+Name={safe_title}
 Comment=Modern Retro ROM Library & Game Launcher
 Exec="{exec_path}"
 Icon=romcat
@@ -90,7 +91,7 @@ def main():
 
     setup_desktop_integration(title, icon_path)
 
-    window = webview.create_window(
+    webview.create_window(
         title=title,
         url=f'http://127.0.0.1:{port}',
         width=1440,

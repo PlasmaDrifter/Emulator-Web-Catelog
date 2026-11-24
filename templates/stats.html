@@ -276,7 +276,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ g.csp_nonce }}">
 const tabIconsOverrides = {{ settings.tab_icons | tojson if settings.tab_icons else '{}' }};
 
 const CONSOLE_ICON_MAP = [
@@ -438,8 +438,8 @@ function renderPlayedGamesList() {
         <div class="stats-game-meta">
           <div class="stats-game-title" title="${escapeHtml(g.title)}">${escapeHtml(g.title)}</div>
           <div class="stats-game-tags">
-            <span class="stats-sys-badge" onclick="event.stopPropagation(); selectConsoleCategory('${escapeHtml(g.system)}')">
-              <img src="${iconSrc}" class="stats-badge-icon" alt="">
+            <span class="stats-sys-badge" data-category="${escapeHtml(g.system)}" role="button" tabindex="0">
+              <img src="${encodeURI(iconSrc)}" class="stats-badge-icon" alt="">
               ${escapeHtml(g.system_name || g.system)}
             </span>
             <span class="stats-metric-tag">
@@ -613,12 +613,13 @@ function selectConsoleCategory(sysId) {
     });
   }
   document.querySelectorAll('.stats-console-item').forEach(item => {
-    item.classList.toggle('active-filter', item.getAttribute('onclick')?.includes(`'${currentStatsCategory}'`));
+    item.classList.toggle('active-filter', item.dataset.category === currentStatsCategory);
   });
   renderPlayedGamesList();
 }
 
 let lastRenderedSignature = '';
+let initialCategoryApplied = false;
 
 function renderStatsPage(data, force = false) {
   latestStatsData = data;
@@ -668,10 +669,10 @@ function renderStatsPage(data, force = false) {
         const iconSrc = getConsoleIconSrc(s.system, s.name);
         const isActiveFilter = currentStatsCategory === s.system;
         return `
-          <div class="stats-console-item ${isActiveFilter ? 'active-filter' : ''}" onclick="selectConsoleCategory('${escapeHtml(s.system)}')">
+          <div class="stats-console-item ${isActiveFilter ? 'active-filter' : ''}" data-category="${escapeHtml(s.system)}" role="button" tabindex="0">
             <div class="stats-console-item-left">
               <div class="stats-console-icon-wrap">
-                <img src="${iconSrc}" alt="" class="stats-console-icon" loading="lazy">
+                <img src="${encodeURI(iconSrc)}" alt="" class="stats-console-icon" loading="lazy">
               </div>
               <div class="stats-console-titles">
                 <span class="stats-console-name">${escapeHtml(s.name)}</span>
@@ -732,7 +733,10 @@ function renderStatsPage(data, force = false) {
       }
     });
 
-    const initialUrlCat = new URLSearchParams(window.location.search).get('category') || window.location.hash.replace('#', '');
+    const initialUrlCat = !initialCategoryApplied
+      ? (new URLSearchParams(window.location.search).get('category') || window.location.hash.replace('#', ''))
+      : '';
+    initialCategoryApplied = true;
     if (initialUrlCat && pillsData.some(p => p.id.toLowerCase() === initialUrlCat.toLowerCase())) {
       const match = pillsData.find(p => p.id.toLowerCase() === initialUrlCat.toLowerCase());
       currentStatsCategory = match.id;
@@ -745,7 +749,7 @@ function renderStatsPage(data, force = false) {
 
     pillsContainer.innerHTML = pillsData.map(p => `
       <button type="button" class="stats-pill-btn ${p.id === currentStatsCategory ? 'active' : ''}" data-category="${escapeHtml(p.id)}">
-        <img src="${p.icon}" class="pill-console-icon" alt="" loading="lazy">
+        <img src="${encodeURI(p.icon)}" class="pill-console-icon" alt="" loading="lazy">
         <span class="stats-pill-label">${escapeHtml(p.name)}</span>
         <span class="stats-pill-count">(${p.count})</span>
       </button>
@@ -780,8 +784,8 @@ function renderStatsPage(data, force = false) {
             <div class="stats-recent-info">
               <div class="stats-recent-title" title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</div>
               <div class="stats-recent-meta">
-                <span class="stats-sys-badge mini" onclick="event.stopPropagation(); selectConsoleCategory('${escapeHtml(r.system)}')">
-                  <img src="${iconSrc}" class="stats-badge-icon mini" alt="">
+                <span class="stats-sys-badge mini" data-category="${escapeHtml(r.system)}" role="button" tabindex="0">
+                  <img src="${encodeURI(iconSrc)}" class="stats-badge-icon mini" alt="">
                   ${escapeHtml(r.system_name || r.system)}
                 </span>
                 <span class="stats-recent-time">${formatRelativeTimestamp(r.started_at)}</span>
@@ -1509,10 +1513,23 @@ function initStatsPage() {
       return;
     }
 
+    // Sys badge / console breakdown category selection (delegated, avoids inline onclick)
+    const sysBadge = e.target.closest('.stats-sys-badge');
+    if (sysBadge && sysBadge.dataset.category) {
+      e.stopPropagation();
+      selectConsoleCategory(sysBadge.dataset.category);
+      return;
+    }
+
+    const consoleItem = e.target.closest('.stats-console-item');
+    if (consoleItem && consoleItem.dataset.category) {
+      selectConsoleCategory(consoleItem.dataset.category);
+      return;
+    }
+
     // Card click triggers detailed statistics modal
     const card = e.target.closest('.stats-game-card, .stats-recent-card');
     if (card) {
-      if (e.target.closest('.stats-sys-badge')) return;
       const gameKey = card.dataset.gameKey;
       if (gameKey) {
         showGameDetailModal(gameKey);

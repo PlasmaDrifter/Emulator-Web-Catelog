@@ -9,6 +9,7 @@ import sys
 import re
 import time
 import io
+import secrets
 import tarfile
 import tempfile
 import threading
@@ -20,15 +21,16 @@ import requests
 import urllib.parse
 import shutil
 import logging
+import xml.etree.ElementTree as ET
 from collections import deque
 from datetime import datetime, timedelta
 from pathlib import Path
-from flask import Flask, render_template, jsonify, request, send_from_directory
+from flask import Flask, render_template, jsonify, request, send_from_directory, g
 from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -68,6 +70,12 @@ LIBRARY_CACHE_PATH = BASE_DIR / "library.json"
 SETTINGS_PATH = BASE_DIR / "settings.json"
 STATS_PATH = BASE_DIR / "stats.json"
 STATS_LOCK = threading.RLock()
+SETTINGS_LOCK = threading.RLock()
+CONFIG_LOCK = threading.RLock()
+LIBRARY_LOCK = threading.RLock()
+FAVORITES_LOCK = threading.RLock()
+HIDDEN_LOCK = threading.RLock()
+ICON_CACHE_LOCK = threading.RLock()
 ACTIVE_SESSIONS = {}
 ACTIVE_SESSIONS_LOCK = threading.RLock()
 UPDATE_CACHE_PATH = BASE_DIR / "update_cache.json"
@@ -125,9 +133,208 @@ app = Flask(
     static_folder=str(static_dir)
 )
 app.json.sort_keys = False
+# Enforce conservative request and multipart upload limits
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
+app.config["MAX_FORM_MEMORY_SIZE"] = 1024 * 1024
+app.config["MAX_FORM_PARTS"] = 64
 
 # Global memory cache for library metadata
 _library_cache = None
+
+_HEX_COLOR_RE = re.compile(r"^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$")
+_SAFE_FONT_FAMILY_RE = re.compile(r"^[A-Za-z0-9 ,\-_\"']{0,60}$")
+_SAFE_FONT_SIZE_RE = re.compile(r"^\d{1,3}px$")
+_SAFE_TAG_RE = re.compile(r"^v?\d+\.\d+\.\d+(?:[-+][A-Za-z0-9._-]+)?$")
+_SVG_UNSAFE_TAGS = {"script", "foreignobject", "iframe", "object", "embed", "audio", "video", "animate", "set"}
+
+
+def _atomic_write_text(target_path: Path, content: str):
+    """Write text atomically via a same-directory temporary file and os.replace."""
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=str(target_path.parent),
+            prefix=f".{target_path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as f:
+            tmp_path = Path(f.name)
+            f.write(content)
+            f.flush()
+        os.replace(str(tmp_path), str(target_path))
+    except Exception:
+        if tmp_path is not None:
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except Exception:
+                pass
+        raise
+
+
+def _normalize_hex_color(value) -> str | None:
+    """Validate and normalize #RGB or #RRGGBB hex colors to prevent CSS injection."""
+    if not isinstance(value, str):
+        return None
+    s = value.strip()
+    if not _HEX_COLOR_RE.match(s):
+        return None
+    if len(s) == 4:
+        return ("#" + "".join(ch * 2 for ch in s[1:])).upper()
+    return s.lower()
+
+
+def _sanitize_theme_dict(raw_theme: dict, fallback_theme: dict | None = None) -> dict:
+    """Validate theme keys/values against strict hex colors and safe font constraints."""
+    clean = dict(fallback_theme) if fallback_theme else {}
+    if not isinstance(raw_theme, dict):
+        return clean
+    for k, v in raw_theme.items():
+        if not isinstance(k, str) or not re.match(r"^[a-z0-9_]{1,30}$", k):
+            continue
+        if not isinstance(v, str):
+            continue
+        s = v.strip()
+        if k in ("font_family", "custom_font_family"):
+            if _SAFE_FONT_FAMILY_RE.match(s):
+                clean[k] = s
+        elif k == "font_size":
+            if _SAFE_FONT_SIZE_RE.match(s):
+                clean[k] = s
+        else:
+            norm = _normalize_hex_color(s)
+            if norm:
+                clean[k] = norm
+    return clean
+
+
+def _sanitize_icon_url(url) -> str | None:
+    """Allow safe local /static/... paths or http(s) URLs; reject scriptable schemes."""
+    if not isinstance(url, str):
+        return None
+    s = url.strip()
+    if not s or len(s) > 500:
+        return None
+    if any(ch in s for ch in ('"', "'", "<", ">", "\\", "\n", "\r", "\0")):
+        return None
+    if s.startswith("/static/"):
+        if ".." in s.split("/"):
+            return None
+        return s
+    parsed = urllib.parse.urlparse(s)
+    if parsed.scheme in ("http", "https") and parsed.netloc:
+        return s
+    return None
+
+
+def _sanitize_svg_bytes(raw_bytes: bytes) -> bytes | None:
+    """Strip active script/event/external-object elements from uploaded SVGs."""
+    try:
+        text = raw_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    if re.search(r"<!\s*(DOCTYPE|ENTITY)\b", text, flags=re.IGNORECASE):
+        return None
+    try:
+        root = ET.fromstring(text)  # noqa: S314 (DOCTYPE/ENTITY declarations rejected above)
+    except ET.ParseError:
+        return None
+    root_local = root.tag.rsplit("}", 1)[-1].lower()
+    if root_local != "svg":
+        return None
+
+    def _clean_elem(elem):
+        for child in list(elem):
+            local = child.tag.rsplit("}", 1)[-1].lower()
+            if local in _SVG_UNSAFE_TAGS:
+                elem.remove(child)
+            else:
+                _clean_elem(child)
+        for attr in list(elem.attrib.keys()):
+            attr_local = attr.rsplit("}", 1)[-1].lower()
+            val = elem.attrib.get(attr, "").strip()
+            if attr_local.startswith("on"):
+                del elem.attrib[attr]
+            elif attr_local in ("href", "src"):
+                if re.match(r"^(javascript|vbscript|data):", val, flags=re.IGNORECASE):
+                    del elem.attrib[attr]
+
+    _clean_elem(root)
+    return ET.tostring(root, encoding="utf-8", xml_declaration=False)
+
+
+def _get_json_dict() -> tuple[dict | None, tuple | None]:
+    """Parse request JSON as a dict, rejecting non-JSON or non-object payloads."""
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return None, (jsonify({"ok": False, "error": "Invalid JSON object payload"}), 400)
+    return data, None
+
+
+def _is_valid_release_tag(tag: str) -> bool:
+    return isinstance(tag, str) and bool(_SAFE_TAG_RE.match(tag.strip()))
+
+
+def _validate_steamgriddb_url(image_url: str) -> str | None:
+    """Ensure image URL strictly points to an allowed SteamGridDB HTTPS host and clean path."""
+    if not isinstance(image_url, str) or not image_url.strip():
+        return None
+    parsed_url = urllib.parse.urlparse(image_url.strip())
+    if parsed_url.scheme not in ("http", "https"):
+        return None
+    hostname = (parsed_url.hostname or "").lower()
+    if hostname == "cdn2.steamgriddb.com":
+        base_host = "cdn2.steamgriddb.com"
+    elif hostname == "images.steamgriddb.com":
+        base_host = "images.steamgriddb.com"
+    elif hostname in ("steamgriddb.com", "www.steamgriddb.com"):
+        base_host = "www.steamgriddb.com"
+    else:
+        return None
+    path = parsed_url.path
+    if not re.match(r"^/[a-zA-Z0-9_\-\./]+$", path) or ".." in path:
+        return None
+    safe_url = f"https://{base_host}{path}"
+    if parsed_url.query and re.match(r"^[a-zA-Z0-9_=&-]+$", parsed_url.query):
+        safe_url = f"{safe_url}?{parsed_url.query}"
+    return safe_url
+
+
+def _is_same_host_origin(header_url: str, expected_host: str) -> bool:
+    """Validate Origin/Referer netloc matches request host (treating localhost/127.0.0.1 as loopback equivalents)."""
+    try:
+        parsed = urllib.parse.urlparse(header_url)
+    except Exception:
+        return False
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return False
+    req_host = expected_host.lower()
+    hdr_host = parsed.netloc.lower()
+    if hdr_host == req_host:
+        return True
+    loopback_aliases = {"127.0.0.1", "localhost", "[::1]"}
+    req_name, _, req_port = req_host.rpartition(":") if ":" in req_host and not req_host.endswith("]") else (req_host, "", "")
+    hdr_name, _, hdr_port = hdr_host.rpartition(":") if ":" in hdr_host and not hdr_host.endswith("]") else (hdr_host, "", "")
+    return req_name in loopback_aliases and hdr_name in loopback_aliases and req_port == hdr_port
+
+
+@app.before_request
+def security_before_request():
+    g.csp_nonce = secrets.token_urlsafe(16)
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        sec_fetch_site = (request.headers.get("Sec-Fetch-Site") or "").strip().lower()
+        if sec_fetch_site and sec_fetch_site not in ("same-origin", "none"):
+            return jsonify({"ok": False, "error": "Cross-origin request blocked"}), 403
+        origin = request.headers.get("Origin")
+        if origin:
+            if not _is_same_host_origin(origin, request.host):
+                return jsonify({"ok": False, "error": "Invalid request origin"}), 403
+        else:
+            referer = request.headers.get("Referer")
+            if referer and not _is_same_host_origin(referer, request.host):
+                return jsonify({"ok": False, "error": "Invalid request referer"}), 403
 
 
 def get_contrast_color(hex_color: str) -> str:
@@ -156,6 +363,7 @@ def _build_default_settings() -> dict:
         "icon": DEFAULT_SETTINGS["icon"],
         "theme": dict(DEFAULT_SETTINGS["theme"]),
         "custom_themes": dict(DEFAULT_SETTINGS["custom_themes"]),
+        "tab_icons": dict(DEFAULT_SETTINGS["tab_icons"]),
         "visibility": dict(DEFAULT_SETTINGS["visibility"]),
     }
     settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
@@ -164,67 +372,87 @@ def _build_default_settings() -> dict:
 
 def load_settings() -> dict:
     global _settings_cache, _settings_mtime
-    if not SETTINGS_PATH.exists():
-        return _build_default_settings()
-    try:
-        current_mtime = SETTINGS_PATH.stat().st_mtime
-        if _settings_cache is not None and current_mtime == _settings_mtime:
-            return _settings_cache
-        data = json.loads(SETTINGS_PATH.read_text())
-        settings = _build_default_settings()
-        if isinstance(data, dict):
-            if "title" in data and data["title"]:
-                settings["title"] = str(data["title"])
-            if "icon" in data and data["icon"]:
-                settings["icon"] = str(data["icon"])
-            if "theme" in data and isinstance(data["theme"], dict):
-                settings["theme"].update(data["theme"])
-            if "custom_themes" in data and isinstance(data["custom_themes"], dict):
-                settings["custom_themes"] = data["custom_themes"]
-            if "visibility" in data and isinstance(data["visibility"], dict):
-                settings["visibility"].update(data["visibility"])
-        settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
-        _settings_cache = settings
-        _settings_mtime = current_mtime
-        return settings
-    except Exception:
-        return _build_default_settings()
+    with SETTINGS_LOCK:
+        if not SETTINGS_PATH.exists():
+            return _build_default_settings()
+        try:
+            current_mtime = SETTINGS_PATH.stat().st_mtime
+            if _settings_cache is not None and current_mtime == _settings_mtime:
+                return _settings_cache
+            data = json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
+            settings = _build_default_settings()
+            if isinstance(data, dict):
+                if data.get("title"):
+                    settings["title"] = str(data["title"])
+                safe_icon = _sanitize_icon_url(data.get("icon"))
+                if safe_icon:
+                    settings["icon"] = safe_icon
+                if isinstance(data.get("theme"), dict):
+                    settings["theme"] = _sanitize_theme_dict(data["theme"], settings["theme"])
+                if isinstance(data.get("custom_themes"), dict):
+                    sanitized_custom = {}
+                    for tname, tvals in data["custom_themes"].items():
+                        if isinstance(tname, str) and isinstance(tvals, dict):
+                            sanitized_custom[tname[:40]] = _sanitize_theme_dict(tvals)
+                    settings["custom_themes"] = sanitized_custom
+                if isinstance(data.get("tab_icons"), dict):
+                    clean_tab_icons = {}
+                    for tid, tsrc in data["tab_icons"].items():
+                        safe_tsrc = _sanitize_icon_url(tsrc)
+                        if isinstance(tid, str) and safe_tsrc:
+                            clean_tab_icons[tid] = safe_tsrc
+                    settings["tab_icons"] = clean_tab_icons
+                if isinstance(data.get("visibility"), dict):
+                    for vk, vv in data["visibility"].items():
+                        if isinstance(vk, str):
+                            settings["visibility"][vk] = bool(vv)
+            settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
+            _settings_cache = settings
+            _settings_mtime = current_mtime
+            return settings
+        except Exception:
+            return _build_default_settings()
 
 
 def save_settings(settings: dict):
     global _settings_cache, _settings_mtime
-    SETTINGS_PATH.write_text(json.dumps(settings, indent=2))
-    _settings_cache = settings
-    try:
-        _settings_mtime = SETTINGS_PATH.stat().st_mtime
-    except Exception:
-        pass
+    with SETTINGS_LOCK:
+        _atomic_write_text(SETTINGS_PATH, json.dumps(settings, indent=2))
+        _settings_cache = settings
+        try:
+            _settings_mtime = SETTINGS_PATH.stat().st_mtime
+        except Exception:
+            pass
 
 
 def load_favorites() -> set:
-    if not FAVORITES_PATH.exists():
-        return set()
-    try:
-        return set(json.loads(FAVORITES_PATH.read_text()))
-    except Exception:
-        return set()
+    with FAVORITES_LOCK:
+        if not FAVORITES_PATH.exists():
+            return set()
+        try:
+            return set(json.loads(FAVORITES_PATH.read_text(encoding="utf-8")))
+        except Exception:
+            return set()
 
 
 def save_favorites(favorites: set):
-    FAVORITES_PATH.write_text(json.dumps(sorted(favorites), indent=2))
+    with FAVORITES_LOCK:
+        _atomic_write_text(FAVORITES_PATH, json.dumps(sorted(favorites), indent=2))
 
 
 def load_hidden() -> set:
-    if not HIDDEN_PATH.exists():
-        return set()
-    try:
-        return set(json.loads(HIDDEN_PATH.read_text()))
-    except Exception:
-        return set()
+    with HIDDEN_LOCK:
+        if not HIDDEN_PATH.exists():
+            return set()
+        try:
+            return set(json.loads(HIDDEN_PATH.read_text(encoding="utf-8")))
+        except Exception:
+            return set()
 
 
 def save_hidden(hidden: set):
-    HIDDEN_PATH.write_text(json.dumps(sorted(hidden), indent=2))
+    with HIDDEN_LOCK:
+        _atomic_write_text(HIDDEN_PATH, json.dumps(sorted(hidden), indent=2))
 
 
 def format_duration(seconds: int) -> str:
@@ -398,26 +626,26 @@ _config_mtime = 0.0
 
 def load_config() -> dict:
     global _config_cache, _config_mtime
-    if not CONFIG_PATH.exists():
-        if CONFIG_EXAMPLE_PATH.exists():
-            import shutil
-            shutil.copy(CONFIG_EXAMPLE_PATH, CONFIG_PATH)
-        else:
+    with CONFIG_LOCK:
+        if not CONFIG_PATH.exists():
+            if CONFIG_EXAMPLE_PATH.exists():
+                shutil.copy(CONFIG_EXAMPLE_PATH, CONFIG_PATH)
+            else:
+                return {"systems": {}, "steamgriddb": {"api_key": ""}}
+        try:
+            current_mtime = CONFIG_PATH.stat().st_mtime
+            if _config_cache is not None and current_mtime == _config_mtime:
+                return _config_cache
+            raw_text = CONFIG_PATH.read_text(encoding="utf-8")
+            parsed = resilient_yaml_load(raw_text)
+            if isinstance(parsed, dict) and "systems" in parsed:
+                _config_cache = parsed
+                _config_mtime = current_mtime
+                return parsed
             return {"systems": {}, "steamgriddb": {"api_key": ""}}
-    try:
-        current_mtime = CONFIG_PATH.stat().st_mtime
-        if _config_cache is not None and current_mtime == _config_mtime:
-            return _config_cache
-        raw_text = CONFIG_PATH.read_text(encoding="utf-8")
-        parsed = resilient_yaml_load(raw_text)
-        if isinstance(parsed, dict) and "systems" in parsed:
-            _config_cache = parsed
-            _config_mtime = current_mtime
-            return parsed
-        return {"systems": {}, "steamgriddb": {"api_key": ""}}
-    except Exception as e:
-        logging.error(f"Error loading config.yaml: {e}")
-        return _config_cache if _config_cache is not None else {"systems": {}, "steamgriddb": {"api_key": ""}}
+        except Exception as e:
+            logging.error(f"Error loading config.yaml: {e}")
+            return _config_cache if _config_cache is not None else {"systems": {}, "steamgriddb": {"api_key": ""}}
 
 
 def remove_brackets_and_parentheses(text: str) -> str:
@@ -509,10 +737,9 @@ def scan_library():
             folder_real = os.path.realpath(os.path.abspath(expanded))
             if not os.path.isdir(folder_real):
                 continue
-            folder = Path(folder_real)
 
             # Case-insensitive filesystem walk
-            for root, dirs, files in os.walk(folder_real):
+            for root, _dirs, files in os.walk(folder_real):
                 for file in files:
                     ext = Path(file).suffix.lower()
                     if ext not in exts_set:
@@ -578,46 +805,49 @@ _game_lookup_cache = None
 def get_game_lookup() -> dict:
     """Fast in-memory index mapping '{system}:{filename}' to game metadata dict."""
     global _game_lookup_cache
-    if _game_lookup_cache is not None:
-        return _game_lookup_cache
-    library = load_cached_library()
-    lookup = {}
-    for sys_id, sys_data in library.items():
-        for g in sys_data.get("games", []):
-            fn = g.get("filename")
-            if fn:
-                lookup[f"{sys_id}:{fn}"] = g
-    _game_lookup_cache = lookup
-    return lookup
+    with LIBRARY_LOCK:
+        if _game_lookup_cache is not None:
+            return _game_lookup_cache
+        library = load_cached_library()
+        lookup = {}
+        for sys_id, sys_data in library.items():
+            for g_item in sys_data.get("games", []):
+                fn = g_item.get("filename")
+                if fn:
+                    lookup[f"{sys_id}:{fn}"] = g_item
+        _game_lookup_cache = lookup
+        return lookup
 
 
 def load_cached_library():
     """Load the pre-scanned library from disk if it exists."""
     global _library_cache
-    if _library_cache is not None:
-        return _library_cache
-
-    if LIBRARY_CACHE_PATH.exists():
-        try:
-            _library_cache = json.loads(LIBRARY_CACHE_PATH.read_text())
+    with LIBRARY_LOCK:
+        if _library_cache is not None:
             return _library_cache
-        except Exception as e:
-            logging.error(f"Error reading library cache file: {e}")
 
-    # Automated fall-back on first-ever run if JSON doesn't exist
-    return save_library_cache(scan_library())
+        if LIBRARY_CACHE_PATH.exists():
+            try:
+                _library_cache = json.loads(LIBRARY_CACHE_PATH.read_text(encoding="utf-8"))
+                return _library_cache
+            except Exception as e:
+                logging.error(f"Error reading library cache file: {e}")
+
+        # Automated fall-back on first-ever run if JSON doesn't exist
+        return save_library_cache(scan_library())
 
 
 def save_library_cache(library_data):
     """Save the library metadata to disk to avoid future scans."""
     global _library_cache, _game_lookup_cache
-    _library_cache = library_data
-    _game_lookup_cache = None
-    try:
-        LIBRARY_CACHE_PATH.write_text(json.dumps(library_data, indent=2))
-    except Exception as e:
-        logging.error(f"Error writing library cache file: {e}")
-    return _library_cache
+    with LIBRARY_LOCK:
+        _library_cache = library_data
+        _game_lookup_cache = None
+        try:
+            _atomic_write_text(LIBRARY_CACHE_PATH, json.dumps(library_data, indent=2))
+        except Exception as e:
+            logging.error(f"Error writing library cache file: {e}")
+        return _library_cache
 
 
 @app.template_filter("format_duration")
@@ -649,22 +879,40 @@ def stats_page():
 @app.route("/api/settings", methods=["GET", "POST"])
 def api_settings():
     if request.method == "POST":
-        data = request.get_json(force=True)
-        if not isinstance(data, dict):
-            return jsonify({"ok": False, "error": "invalid payload"}), 400
+        data, err_resp = _get_json_dict()
+        if err_resp:
+            return err_resp
         settings = load_settings()
         if "title" in data and data["title"] is not None:
-            settings["title"] = str(data["title"]).strip() or DEFAULT_SETTINGS["title"]
+            settings["title"] = str(data["title"]).replace("\r", " ").replace("\n", " ").strip()[:80] or DEFAULT_SETTINGS["title"]
         if "icon" in data and data["icon"] is not None:
-            settings["icon"] = str(data["icon"]).strip() or DEFAULT_SETTINGS["icon"]
+            safe_icon = _sanitize_icon_url(data["icon"])
+            if safe_icon:
+                settings["icon"] = safe_icon
+            elif str(data["icon"]).strip() == "":
+                settings["icon"] = DEFAULT_SETTINGS["icon"]
+            else:
+                return jsonify({"ok": False, "error": "Invalid icon URL"}), 400
         if "theme" in data and isinstance(data["theme"], dict):
-            settings["theme"].update(data["theme"])
+            settings["theme"] = _sanitize_theme_dict(data["theme"], settings["theme"])
+            settings["theme"]["accent_contrast"] = get_contrast_color(settings["theme"].get("accent_color", "#88c0d0"))
         if "custom_themes" in data and isinstance(data["custom_themes"], dict):
-            settings["custom_themes"] = data["custom_themes"]
+            sanitized_custom = {}
+            for tname, tvals in data["custom_themes"].items():
+                if isinstance(tname, str) and tname.strip() and isinstance(tvals, dict):
+                    sanitized_custom[tname.strip()[:40]] = _sanitize_theme_dict(tvals)
+            settings["custom_themes"] = sanitized_custom
         if "tab_icons" in data and isinstance(data["tab_icons"], dict):
-            settings["tab_icons"] = data["tab_icons"]
+            clean_tab_icons = {}
+            for tid, tsrc in data["tab_icons"].items():
+                safe_tsrc = _sanitize_icon_url(tsrc)
+                if isinstance(tid, str) and safe_tsrc:
+                    clean_tab_icons[tid] = safe_tsrc
+            settings["tab_icons"] = clean_tab_icons
         if "visibility" in data and isinstance(data["visibility"], dict):
-            settings["visibility"].update(data["visibility"])
+            for vk, vv in data["visibility"].items():
+                if isinstance(vk, str):
+                    settings["visibility"][vk] = bool(vv)
         save_settings(settings)
         return jsonify({"ok": True, "settings": settings})
     return jsonify(load_settings())
@@ -672,9 +920,9 @@ def api_settings():
 
 @app.route("/api/theme/save", methods=["POST"])
 def api_save_theme():
-    data = request.get_json(force=True)
-    if not isinstance(data, dict):
-        return jsonify({"ok": False, "error": "invalid payload"}), 400
+    data, err_resp = _get_json_dict()
+    if err_resp:
+        return err_resp
     name = str(data.get("name") or "").strip()
     theme_colors = data.get("theme")
     if not name:
@@ -688,10 +936,9 @@ def api_save_theme():
     if "custom_themes" not in settings or not isinstance(settings["custom_themes"], dict):
         settings["custom_themes"] = {}
 
-    clean_theme = {}
-    for k, v in theme_colors.items():
-        if isinstance(v, str) and (re.match(r"^#[0-9A-Fa-f]{6}$", v.strip()) or len(v.strip()) <= 20):
-            clean_theme[str(k)[:30]] = str(v).strip()
+    clean_theme = _sanitize_theme_dict(theme_colors)
+    if not clean_theme:
+        return jsonify({"ok": False, "error": "No valid theme color values provided"}), 400
 
     settings["custom_themes"][name] = clean_theme
     save_settings(settings)
@@ -700,9 +947,9 @@ def api_save_theme():
 
 @app.route("/api/theme/delete", methods=["POST"])
 def api_delete_theme():
-    data = request.get_json(force=True)
-    if not isinstance(data, dict):
-        return jsonify({"ok": False, "error": "invalid payload"}), 400
+    data, err_resp = _get_json_dict()
+    if err_resp:
+        return err_resp
     name = str(data.get("name") or "").strip()
     if not name:
         return jsonify({"ok": False, "error": "Theme name is required"}), 400
@@ -976,8 +1223,10 @@ def api_open_icons_folder():
 
 @app.route("/api/create_icon_folder", methods=["POST"])
 def api_create_icon_folder():
-    data = request.get_json() or {}
-    folder_name = data.get("folder", "").strip()
+    data, err_resp = _get_json_dict()
+    if err_resp:
+        return err_resp
+    folder_name = str(data.get("folder") or "").strip()
     if not folder_name:
         return jsonify({"ok": False, "error": "Folder name is required"}), 400
     safe_name = secure_filename(folder_name).lower().replace(" ", "_")
@@ -1004,6 +1253,23 @@ def api_upload_icon():
     if ext not in [".png", ".svg", ".ico", ".jpg", ".jpeg", ".webp"]:
         return jsonify({"ok": False, "error": "Invalid image format"}), 400
 
+    raw_bytes = file.read()
+    if not raw_bytes:
+        return jsonify({"ok": False, "error": "Empty file"}), 400
+
+    if ext == ".svg":
+        sanitized_svg = _sanitize_svg_bytes(raw_bytes)
+        if sanitized_svg is None:
+            return jsonify({"ok": False, "error": "Invalid or unsafe SVG file"}), 400
+        payload_bytes = sanitized_svg
+    else:
+        try:
+            with Image.open(io.BytesIO(raw_bytes)) as img_check:
+                img_check.verify()
+        except Exception:
+            return jsonify({"ok": False, "error": "Invalid image file content"}), 400
+        payload_bytes = raw_bytes
+
     icons_dir = (BASE_DIR / "static" / "icons").resolve()
     icons_dir.mkdir(parents=True, exist_ok=True)
     clean_stem = secure_filename(Path(file.filename).stem) or "custom_icon"
@@ -1016,14 +1282,14 @@ def api_upload_icon():
     if not target_folder or target_folder == "all":
         target_folder = "custom"
 
-    safe_folder = secure_filename(target_folder).lower().replace(" ", "_")
+    safe_folder = secure_filename(target_folder).lower().replace(" ", "_") or "custom"
     dest_dir = (icons_dir / safe_folder).resolve()
     dest_dir.mkdir(parents=True, exist_ok=True)
     filename = f"{clean_stem}{ext}"
     target_path = (dest_dir / filename).resolve()
     if os.path.commonpath([str(icons_dir), str(target_path)]) != str(icons_dir):
         return jsonify({"ok": False, "error": "Invalid path"}), 400
-    file.save(str(target_path))
+    target_path.write_bytes(payload_bytes)
     icon_url = f"/static/icons/{safe_folder}/{filename}"
 
     settings = load_settings()
@@ -1052,13 +1318,14 @@ def favicon():
     )
 
 
-@app.route("/api/rescan", methods=["GET", "POST"])
+@app.route("/api/rescan", methods=["POST"])
 def api_rescan():
     global _library_cache, _game_lookup_cache
-    _library_cache = None
-    _game_lookup_cache = None
-    library_data = scan_library()
-    save_library_cache(library_data)
+    with LIBRARY_LOCK:
+        _library_cache = None
+        _game_lookup_cache = None
+        library_data = scan_library()
+        save_library_cache(library_data)
     resp = {"ok": True, "library": library_data}
     resp.update(library_data)
     return jsonify(resp)
@@ -1066,61 +1333,69 @@ def api_rescan():
 
 @app.route("/api/favorite", methods=["POST"])
 def api_favorite():
-    data = request.get_json(force=True)
+    data, err_resp = _get_json_dict()
+    if err_resp:
+        return err_resp
     system = data.get("system")
     filename = data.get("filename")
     if not system or not filename:
         return jsonify({"ok": False, "error": "missing system or filename"}), 400
 
     fav_key = f"{system}:{filename}"
-    favorites = load_favorites()
-    if fav_key in favorites:
-        favorites.discard(fav_key)
-        is_fav = False
-    else:
-        favorites.add(fav_key)
-        is_fav = True
-    save_favorites(favorites)
+    with FAVORITES_LOCK:
+        favorites = load_favorites()
+        if fav_key in favorites:
+            favorites.discard(fav_key)
+            is_fav = False
+        else:
+            favorites.add(fav_key)
+            is_fav = True
+        save_favorites(favorites)
 
     # In-memory inline state updates prevent dropping cache
-    library = load_cached_library()
-    if system in library:
-        for game in library[system]["games"]:
-            if game["filename"] == filename:
-                game["favorite"] = is_fav
-                break
-        library[system]["games"].sort(key=lambda g: (not g["favorite"], get_sort_title(g["title"])))
-        save_library_cache(library)
+    with LIBRARY_LOCK:
+        library = load_cached_library()
+        if system in library:
+            for game in library[system]["games"]:
+                if game["filename"] == filename:
+                    game["favorite"] = is_fav
+                    break
+            library[system]["games"].sort(key=lambda g_item: (not g_item["favorite"], get_sort_title(g_item["title"])))
+            save_library_cache(library)
 
     return jsonify({"ok": True, "favorite": is_fav})
 
 
 @app.route("/api/hide", methods=["POST"])
 def api_hide():
-    data = request.get_json(force=True)
+    data, err_resp = _get_json_dict()
+    if err_resp:
+        return err_resp
     system = data.get("system")
     filename = data.get("filename")
     if not system or not filename:
         return jsonify({"ok": False, "error": "missing system or filename"}), 400
 
     hide_key = f"{system}:{filename}"
-    hidden = load_hidden()
-    if hide_key in hidden:
-        hidden.discard(hide_key)
-        is_hidden = False
-    else:
-        hidden.add(hide_key)
-        is_hidden = True
-    save_hidden(hidden)
+    with HIDDEN_LOCK:
+        hidden = load_hidden()
+        if hide_key in hidden:
+            hidden.discard(hide_key)
+            is_hidden = False
+        else:
+            hidden.add(hide_key)
+            is_hidden = True
+        save_hidden(hidden)
 
     # In-memory inline state updates prevent dropping cache
-    library = load_cached_library()
-    if system in library:
-        for game in library[system]["games"]:
-            if game["filename"] == filename:
-                game["hidden"] = is_hidden
-                break
-        save_library_cache(library)
+    with LIBRARY_LOCK:
+        library = load_cached_library()
+        if system in library:
+            for game in library[system]["games"]:
+                if game["filename"] == filename:
+                    game["hidden"] = is_hidden
+                    break
+            save_library_cache(library)
 
     return jsonify({"ok": True, "hidden": is_hidden})
 
@@ -1664,9 +1939,31 @@ return {{ moved: moved }};
         _cleanup_kwin_ctx(ctx_data)
 
 
+def _build_launch_args(cmd_template: str, rom_path: str, windows: bool = False) -> list[str]:
+    """Parse an emulator command template, expanding env vars only on template tokens, not on {rom}."""
+    raw_parts = shlex.split(cmd_template, posix=not windows)
+    args = []
+    replaced_rom = False
+    for raw_part in raw_parts:
+        part = raw_part[1:-1] if (windows and len(raw_part) >= 2 and raw_part[0] == '"' and raw_part[-1] == '"') else raw_part
+        if "{rom}" in part:
+            replaced_rom = True
+            idx = part.find("{rom}")
+            prefix = os.path.expanduser(os.path.expandvars(part[:idx]))
+            suffix = os.path.expanduser(os.path.expandvars(part[idx + 5:]))
+            args.append(f"{prefix}{rom_path}{suffix}")
+        else:
+            args.append(os.path.expanduser(os.path.expandvars(part)))
+    if not replaced_rom:
+        args.append(rom_path)
+    return args
+
+
 @app.route("/api/launch", methods=["POST"])
 def api_launch():
-    data = request.get_json(force=True)
+    data, err_resp = _get_json_dict()
+    if err_resp:
+        return err_resp
     system = data.get("system")
     path_param = str(data.get("path") or "").strip().strip('"').strip("'")
     filename_param = str(data.get("filename") or "").strip()
@@ -1682,9 +1979,9 @@ def api_launch():
     matched_path = None
     matched_title = ""
     if filename_param and f"{system}:{filename_param}" in lookup:
-        g = lookup[f"{system}:{filename_param}"]
-        matched_path = g.get("path")
-        matched_title = g.get("title") or os.path.basename(matched_path)
+        g_item = lookup[f"{system}:{filename_param}"]
+        matched_path = g_item.get("path")
+        matched_title = g_item.get("title") or os.path.basename(matched_path)
     else:
         library = load_cached_library()
         sys_games = library.get(system, {}).get("games", [])
@@ -1702,10 +1999,8 @@ def api_launch():
     kwin_ctx = None
     if os.name == "nt":
         # Windows execution (shell=False to prevent command injection)
-        cmd = cmd_template.format(rom=f'"{matched_path}"')
-        logging.info(f"Launching [{system}] '{os.path.basename(matched_path)}' on Windows with command: {cmd}")
-        raw_args = shlex.split(cmd, posix=False)
-        args = [os.path.expanduser(os.path.expandvars(a)) for a in raw_args]
+        args = _build_launch_args(cmd_template, matched_path, windows=True)
+        logging.info(f"Launching [{system}] '{os.path.basename(matched_path)}' on Windows with args: {args}")
         try:
             proc = subprocess.Popen(
                 args,
@@ -1717,7 +2012,6 @@ def api_launch():
             return jsonify({"ok": False, "error": "Emulator launch failed on Windows."}), 500
     else:
         # Linux / Unix execution
-        cmd = cmd_template.format(rom=shlex.quote(matched_path))
         env = os.environ.copy()
         uid = os.getuid() if hasattr(os, "getuid") else 1000
         runtime_dir = f"/run/user/{uid}"
@@ -1766,8 +2060,7 @@ def api_launch():
                 if os.path.exists(home_xauth):
                     env["XAUTHORITY"] = home_xauth
 
-        raw_args = shlex.split(cmd)
-        args = [os.path.expanduser(os.path.expandvars(a)) for a in raw_args]
+        args = _build_launch_args(cmd_template, matched_path, windows=False)
         if args and not os.path.isabs(args[0]):
             resolved_bin = shutil.which(args[0])
             if not resolved_bin:
@@ -1785,7 +2078,7 @@ def api_launch():
         if shutil.which("systemd-run") and os.path.exists(f"{runtime_dir}/bus"):
             args = ["systemd-run", "--user", "--scope", "--quiet"] + args
 
-        exec_desc = ' '.join(args) if isinstance(args, list) else cmd
+        exec_desc = ' '.join(args) if isinstance(args, list) else cmd_template
         settings = load_settings()
         if settings.get("visibility", {}).get("match_webpage_monitor", True):
             kwin_ctx = _start_kwin_monitor_placement(env, window_title, cmd_template)
@@ -2147,8 +2440,11 @@ def fetch_one_cover(api_key: str, title: str, key: str) -> bool:
             if not grids:
                 continue
 
-            image_url = grids[0]["url"]
-            img_resp = requests.get(image_url, timeout=15)
+            image_url = grids[0].get("url")
+            safe_img_url = _validate_steamgriddb_url(image_url)
+            if not safe_img_url:
+                continue
+            img_resp = requests.get(safe_img_url, timeout=15)
             img_resp.raise_for_status()
 
             safe_name = secure_filename(f"{key}.jpg")
@@ -2156,15 +2452,15 @@ def fetch_one_cover(api_key: str, title: str, key: str) -> bool:
                 continue
 
             covers_dir = COVERS_DIR.resolve()
-            out_path = covers_dir / safe_name
-            if not str(out_path.resolve()).startswith(str(covers_dir)):
+            out_path = (covers_dir / safe_name).resolve()
+            if os.path.commonpath([str(covers_dir), str(out_path)]) != str(covers_dir):
                 return False
 
             for old_ext in (".jpg", ".jpeg", ".png"):
                 old_safe = secure_filename(f"{key}{old_ext}")
                 if old_safe:
-                    old_file = covers_dir / old_safe
-                    if str(old_file.resolve()).startswith(str(covers_dir)) and old_file.is_file():
+                    old_file = (covers_dir / old_safe).resolve()
+                    if os.path.commonpath([str(covers_dir), str(old_file)]) == str(covers_dir) and old_file.is_file():
                         try:
                             old_file.unlink()
                         except Exception:
@@ -2180,7 +2476,9 @@ def fetch_one_cover(api_key: str, title: str, key: str) -> bool:
 
 @app.route("/api/fetch_cover_single", methods=["POST"])
 def api_fetch_cover_single():
-    data = request.get_json(force=True)
+    data, err_resp = _get_json_dict()
+    if err_resp:
+        return err_resp
     system = data.get("system")
     filename = data.get("filename")
     query = (data.get("query") or "").strip()
@@ -2202,20 +2500,23 @@ def api_fetch_cover_single():
         return jsonify({"ok": False, "error": f"No cover found on SteamGridDB for '{title}'"}), 404
 
     # Update state variables instantly without triggering heavy scans
-    library = load_cached_library()
-    if system in library:
-        for game in library[system]["games"]:
-            if game["filename"] == filename:
-                game["cover"] = f"/static/covers/{key}.jpg"
-                break
-        save_library_cache(library)
+    with LIBRARY_LOCK:
+        library = load_cached_library()
+        if system in library:
+            for game in library[system]["games"]:
+                if game["filename"] == filename:
+                    game["cover"] = f"/static/covers/{key}.jpg"
+                    break
+            save_library_cache(library)
 
     return jsonify({"ok": True, "cover": f"/static/covers/{key}.jpg"})
 
 
 @app.route("/api/search_covers", methods=["POST"])
 def api_search_covers():
-    data = request.get_json(force=True)
+    data, err_resp = _get_json_dict()
+    if err_resp:
+        return err_resp
     query = (data.get("query") or "").strip()
     filename = data.get("filename")
 
@@ -2298,7 +2599,9 @@ def api_search_covers():
 
 @app.route("/api/apply_cover", methods=["POST"])
 def api_apply_cover():
-    data = request.get_json(force=True)
+    data, err_resp = _get_json_dict()
+    if err_resp:
+        return err_resp
     system = data.get("system")
     filename = data.get("filename")
     image_url = data.get("image_url")
@@ -2306,28 +2609,14 @@ def api_apply_cover():
     if not system or not filename or not image_url:
         return jsonify({"ok": False, "error": "Missing system, filename, or image_url"}), 400
 
+    config = load_config()
+    if system not in config.get("systems", {}):
+        return jsonify({"ok": False, "error": "Unknown system"}), 400
+
     try:
-        parsed_url = urllib.parse.urlparse(image_url)
-        if parsed_url.scheme not in ("http", "https"):
-            return jsonify({"ok": False, "error": "Invalid URL scheme"}), 400
-
-        hostname = (parsed_url.hostname or "").lower()
-        if hostname == "cdn2.steamgriddb.com":
-            base_host = "cdn2.steamgriddb.com"
-        elif hostname == "images.steamgriddb.com":
-            base_host = "images.steamgriddb.com"
-        elif hostname in ("steamgriddb.com", "www.steamgriddb.com"):
-            base_host = "www.steamgriddb.com"
-        else:
-            return jsonify({"ok": False, "error": "Only SteamGridDB image URLs are permitted"}), 400
-
-        path = parsed_url.path
-        if not re.match(r"^/[a-zA-Z0-9_\-\./]+$", path) or ".." in path:
-            return jsonify({"ok": False, "error": "Invalid image URL path"}), 400
-
-        safe_url = f"https://{base_host}{path}"
-        if parsed_url.query and re.match(r"^[a-zA-Z0-9_=&-]+$", parsed_url.query):
-            safe_url = f"{safe_url}?{parsed_url.query}"
+        safe_url = _validate_steamgriddb_url(image_url)
+        if not safe_url:
+            return jsonify({"ok": False, "error": "Only valid SteamGridDB image URLs are permitted"}), 400
 
         img_resp = requests.get(safe_url, timeout=15)
         img_resp.raise_for_status()
@@ -2338,15 +2627,15 @@ def api_apply_cover():
             return jsonify({"ok": False, "error": "Invalid filename"}), 400
 
         covers_dir = COVERS_DIR.resolve()
-        out_path = covers_dir / safe_name
-        if not str(out_path.resolve()).startswith(str(covers_dir)):
+        out_path = (covers_dir / safe_name).resolve()
+        if os.path.commonpath([str(covers_dir), str(out_path)]) != str(covers_dir):
             return jsonify({"ok": False, "error": "Directory traversal detected"}), 400
 
         for old_ext in (".jpg", ".jpeg", ".png"):
             old_safe = secure_filename(f"{key}{old_ext}")
             if old_safe:
-                old_file = covers_dir / old_safe
-                if str(old_file.resolve()).startswith(str(covers_dir)) and old_file.is_file():
+                old_file = (covers_dir / old_safe).resolve()
+                if os.path.commonpath([str(covers_dir), str(old_file)]) == str(covers_dir) and old_file.is_file():
                     try:
                         old_file.unlink()
                     except Exception:
@@ -2355,13 +2644,14 @@ def api_apply_cover():
         if not compress_and_save_image(img_resp.content, str(out_path)):
             return jsonify({"ok": False, "error": "Failed to process and save image"}), 500
 
-        library = load_cached_library()
-        if system in library:
-            for game in library[system]["games"]:
-                if game["filename"] == filename:
-                    game["cover"] = f"/static/covers/{key}.jpg"
-                    break
-            save_library_cache(library)
+        with LIBRARY_LOCK:
+            library = load_cached_library()
+            if system in library:
+                for game in library[system]["games"]:
+                    if game["filename"] == filename:
+                        game["cover"] = f"/static/covers/{key}.jpg"
+                        break
+                save_library_cache(library)
 
         return jsonify({"ok": True, "cover": f"/static/covers/{key}.jpg"})
     except requests.RequestException:
@@ -2377,8 +2667,12 @@ def api_fetch_covers():
     if not api_key or api_key == "YOUR_API_KEY_HERE":
         return jsonify({"ok": False, "error": "No SteamGridDB API key set in settings."}), 400
 
-    data = request.get_json(silent=True) or {}
-    target_system = (data.get("system") or "").strip()
+    data = request.get_json(silent=True)
+    if data is None:
+        data = {}
+    elif not isinstance(data, dict):
+        return jsonify({"ok": False, "error": "Invalid JSON object payload"}), 400
+    target_system = str(data.get("system") or "").strip()
     overwrite = bool(data.get("overwrite", False))
 
     library = load_cached_library()
@@ -2412,7 +2706,8 @@ def api_fetch_covers():
 @app.route("/api/config", methods=["GET"])
 def api_get_config():
     try:
-        raw_yaml = CONFIG_PATH.read_text(encoding="utf-8") if CONFIG_PATH.exists() else ""
+        with CONFIG_LOCK:
+            raw_yaml = CONFIG_PATH.read_text(encoding="utf-8") if CONFIG_PATH.exists() else ""
         parsed = resilient_yaml_load(raw_yaml) if raw_yaml else {}
         systems_order = list(parsed.get("systems", {}).keys()) if isinstance(parsed, dict) and isinstance(parsed.get("systems"), dict) else []
         return jsonify({"ok": True, "raw_yaml": raw_yaml, "config": parsed, "systems_order": systems_order})
@@ -2424,7 +2719,9 @@ def api_get_config():
 def api_save_config():
     global _library_cache, _config_cache, _config_mtime
     try:
-        data = request.get_json(force=True)
+        data, err_resp = _get_json_dict()
+        if err_resp:
+            return err_resp
         raw_yaml = data.get("raw_yaml", "")
         if not raw_yaml and "config" in data:
             raw_yaml = yaml.dump(data["config"], sort_keys=False)
@@ -2464,12 +2761,14 @@ def api_save_config():
         if errors:
             return jsonify({"ok": False, "error": "Validation failed", "errors": errors}), 400
 
-        CONFIG_PATH.write_text(raw_yaml, encoding="utf-8")
-        _config_cache = None
-        _config_mtime = 0.0
-        _library_cache = None
-        library = scan_library()
-        save_library_cache(library)
+        with CONFIG_LOCK:
+            _atomic_write_text(CONFIG_PATH, raw_yaml)
+            _config_cache = None
+            _config_mtime = 0.0
+        with LIBRARY_LOCK:
+            _library_cache = None
+            library = scan_library()
+            save_library_cache(library)
         systems_order = list(systems.keys()) if isinstance(systems, dict) else []
         logging.info("Saved updated config.yaml and refreshed library")
         return jsonify({"ok": True, "config": parsed, "raw_yaml": raw_yaml, "library": library, "systems_order": systems_order})
@@ -2569,7 +2868,7 @@ def get_update_status(force: bool = False) -> dict:
                 "last_checked": now
             }
             try:
-                UPDATE_CACHE_PATH.write_text(json.dumps(result, indent=2))
+                _atomic_write_text(UPDATE_CACHE_PATH, json.dumps(result, indent=2))
             except Exception:
                 pass
             return result
@@ -2604,17 +2903,36 @@ def api_status():
 def api_check_update():
     target = request.args.get("target")
     if target:
+        if not _is_valid_release_tag(target):
+            return jsonify({"ok": False, "error": "Invalid version tag format"}), 400
+        clean_t = target.strip()
         return jsonify({
             "ok": True,
             "has_update": True,
-            "latest_version": target,
+            "latest_version": clean_t,
             "current_version": __version__,
-            "release_url": f"https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases/tag/{target}",
+            "release_url": f"https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases/tag/{urllib.parse.quote(clean_t, safe='')}",
             "last_checked": time.time()
         })
     force = request.args.get("force", "").lower() == "true"
     status = get_update_status(force=force)
     return jsonify(status)
+
+
+def _safe_extract_tar(tar: tarfile.TarFile, extracted_dir: str):
+    """Safely extract tar archive, enforcing data filter or manual traversal/link checks."""
+    if hasattr(tarfile, "data_filter"):
+        tar.extractall(path=extracted_dir, filter="data")
+        return
+    base_abs = os.path.abspath(extracted_dir)
+    members = tar.getmembers()
+    for member in members:
+        if member.issym() or member.islnk() or member.isdev():
+            raise RuntimeError(f"Security error: unsupported link/device in {member.name}")
+        dest_path = os.path.abspath(os.path.join(base_abs, member.name))
+        if os.path.commonpath([base_abs, dest_path]) != base_abs:
+            raise RuntimeError(f"Security error: path traversal in {member.name}")
+    tar.extractall(path=extracted_dir, members=members)
 
 
 def apply_self_update(target_tag: str = "") -> dict:
@@ -2623,6 +2941,9 @@ def apply_self_update(target_tag: str = "") -> dict:
     1. If .git directory exists, run git pull --ff-only.
     2. Otherwise, download release archive via HTTPS and extract safely into BASE_DIR.
     """
+    if target_tag and not _is_valid_release_tag(target_tag) and target_tag not in ("test", "vtest"):
+        raise ValueError("Invalid target release tag format.")
+
     repo_dir = BASE_DIR
     try:
         UPDATE_CACHE_PATH.unlink(missing_ok=True)
@@ -2634,13 +2955,12 @@ def apply_self_update(target_tag: str = "") -> dict:
         # Development safeguard: if local working tree is dirty during testing, advance __version__ in place
         status_check = subprocess.run(["git", "status", "--porcelain"], cwd=str(repo_dir), capture_output=True, text=True)
         if status_check.stdout.strip():
-            new_ver = target_tag.lstrip("v") if target_tag else "0.6.8"
+            raw_ver = target_tag.lstrip("vV") if target_tag and _is_valid_release_tag(target_tag) else "0.6.8"
+            new_ver = raw_ver if re.match(r"^\d+\.\d+\.\d+$", raw_ver) else "0.6.8"
             server_file = repo_dir / "app.py"
-            with open(server_file, "r") as f:
-                content = f.read()
+            content = server_file.read_text(encoding="utf-8")
             content = re.sub(r'__version__ = "[^"]+"', f'__version__ = "{new_ver}"', content, count=1)
-            with open(server_file, "w") as f:
-                f.write(content)
+            _atomic_write_text(server_file, content)
             time.sleep(1.0)
             return {"mode": "git-dev", "message": f"Updated to {new_ver} (development simulation mode)", "tag": new_ver}
 
@@ -2672,25 +2992,25 @@ def apply_self_update(target_tag: str = "") -> dict:
     if not target_tag:
         info = get_update_status(force=True)
         target_tag = info.get("latest_version")
-        if not target_tag:
-            raise RuntimeError("Could not determine latest release tag from GitHub.")
+        if not target_tag or not _is_valid_release_tag(target_tag):
+            raise RuntimeError("Could not determine valid latest release tag from GitHub.")
 
     # Simulation / test-mode safeguard for test environments
     if "test" in str(BASE_DIR).lower() or target_tag in ("v0.6.8", "0.6.8", "test", "vtest") or (hasattr(request, "args") and request.args.get("simulate") == "true"):
-        new_ver = target_tag.lstrip("v") if target_tag else "0.6.8"
+        raw_ver = target_tag.lstrip("vV") if target_tag and _is_valid_release_tag(target_tag) else "0.6.8"
+        new_ver = raw_ver if re.match(r"^\d+\.\d+\.\d+$", raw_ver) else "0.6.8"
         server_file = BASE_DIR / "app.py"
-        with open(server_file, "r") as f:
-            content = f.read()
+        content = server_file.read_text(encoding="utf-8")
         content = re.sub(r'__version__ = "[^"]+"', f'__version__ = "{new_ver}"', content, count=1)
-        with open(server_file, "w") as f:
-            f.write(content)
+        _atomic_write_text(server_file, content)
         time.sleep(1.0)
         return {"mode": "archive-sim", "message": f"Updated to {new_ver} (simulated update)", "tag": new_ver}
 
     clean_tag = target_tag if target_tag.startswith("v") else f"v{target_tag}"
+    encoded_tag = urllib.parse.quote(clean_tag, safe="")
 
     if getattr(sys, "frozen", False):
-        binary_archive_url = f"https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases/download/{clean_tag}/ROMCat-{clean_tag}-linux-x86_64.tar.gz"
+        binary_archive_url = f"https://github.com/PlasmaDrifter/Emulator-Web-Catelog/releases/download/{encoded_tag}/ROMCat-{encoded_tag}-linux-x86_64.tar.gz"
         with tempfile.TemporaryDirectory() as tmp_dir:
             archive_file = os.path.join(tmp_dir, "release.tar.gz")
             extracted_dir = os.path.join(tmp_dir, "extracted")
@@ -2704,10 +3024,7 @@ def apply_self_update(target_tag: str = "") -> dict:
                 f_out.write(resp.content)
 
             with tarfile.open(archive_file, "r:gz") as tar:
-                if hasattr(tarfile, "data_filter"):
-                    tar.extractall(path=extracted_dir, filter="data")
-                else:
-                    tar.extractall(path=extracted_dir)
+                _safe_extract_tar(tar, extracted_dir)
 
             new_exe = os.path.join(extracted_dir, "ROMCat")
             if not os.path.exists(new_exe):
@@ -2729,7 +3046,7 @@ def apply_self_update(target_tag: str = "") -> dict:
 
             return {"mode": "standalone-binary", "message": f"Updated standalone binary to {target_tag}", "tag": target_tag}
 
-    archive_url = f"https://github.com/PlasmaDrifter/Emulator-Web-Catelog/archive/refs/tags/{clean_tag}.tar.gz"
+    archive_url = f"https://github.com/PlasmaDrifter/Emulator-Web-Catelog/archive/refs/tags/{encoded_tag}.tar.gz"
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         archive_file = os.path.join(tmp_dir, "release.tar.gz")
@@ -2744,14 +3061,7 @@ def apply_self_update(target_tag: str = "") -> dict:
             f_out.write(resp.content)
 
         with tarfile.open(archive_file, "r:gz") as tar:
-            if hasattr(tarfile, "data_filter"):
-                tar.extractall(path=extracted_dir, filter="data")
-            else:
-                for member in tar.getmembers():
-                    dest_path = os.path.join(extracted_dir, member.name)
-                    if os.path.commonpath([extracted_dir, os.path.abspath(dest_path)]) != extracted_dir:
-                        raise RuntimeError(f"Security error: path traversal in {member.name}")
-                tar.extractall(path=extracted_dir)
+            _safe_extract_tar(tar, extracted_dir)
 
         subdirs = [
             os.path.join(extracted_dir, d)
@@ -2795,8 +3105,12 @@ def trigger_server_restart():
         if "--port" not in sys.argv and "PORT" in os.environ:
             cmd_args += ["--port", str(os.environ["PORT"])]
 
-        # Close all open file descriptors so listening sockets are released immediately
-        for fd in range(3, 1024):
+        # Close all open file descriptors >= 3 so listening sockets are released immediately
+        try:
+            open_fds = [int(fd) for fd in os.listdir("/proc/self/fd") if fd.isdigit() and int(fd) >= 3]
+        except Exception:
+            open_fds = list(range(3, 4096))
+        for fd in open_fds:
             try:
                 os.close(fd)
             except OSError:
@@ -2813,21 +3127,22 @@ def trigger_server_restart():
 def api_apply_update():
     target = request.args.get("target")
     if not target and request.is_json:
-        try:
-            target = request.get_json(silent=True, force=True).get("target")
-        except Exception:
-            pass
+        body = request.get_json(silent=True)
+        if isinstance(body, dict):
+            target = body.get("target")
 
     if target:
-        latest_ver = target
+        if not _is_valid_release_tag(str(target)) and str(target) not in ("test", "vtest"):
+            return jsonify({"ok": False, "error": "Invalid target release tag format."}), 400
+        latest_ver = str(target).strip()
     else:
         update_info = get_update_status(force=True)
         latest_ver = update_info.get("latest_version")
 
     try:
         result = apply_self_update(target_tag=latest_ver)
-    except Exception as exc:
-        logging.error(f"Self-update failed: {exc}", exc_info=True)
+    except Exception:
+        logging.exception("Self-update failed")
         return jsonify({"ok": False, "error": "Self-update failed. Check application logs for details."}), 500
 
     trigger_server_restart()
@@ -2884,9 +3199,10 @@ def serve_icons(filename):
 
     # 3. Check memory cache for previously resolved fallback
     base_name = clean_parts[-1]
-    if base_name in _icon_file_cache:
-        cached_base, cached_rel = _icon_file_cache[base_name]
-        return send_from_directory(cached_base, cached_rel)
+    with ICON_CACHE_LOCK:
+        if base_name in _icon_file_cache:
+            cached_base, cached_rel = _icon_file_cache[base_name]
+            return send_from_directory(cached_base, cached_rel)
 
     # 4. Fallback: filename might be flat / legacy e.g. "nintendo-nes.svg"
     for base in [icons_dir, bundled_icons]:
@@ -2895,7 +3211,8 @@ def serve_icons(filename):
                 if p.is_file():
                     try:
                         rel = str(p.relative_to(base))
-                        _icon_file_cache[base_name] = (base, rel)
+                        with ICON_CACHE_LOCK:
+                            _icon_file_cache[base_name] = (base, rel)
                         return send_from_directory(base, rel)
                     except ValueError:
                         pass
@@ -2910,6 +3227,23 @@ def add_cache_headers(response):
         response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
     else:
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+
+    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
+    response.headers.setdefault('Referrer-Policy', 'same-origin')
+
+    if request.path.startswith('/static/icons/') and request.path.lower().endswith('.svg'):
+        response.headers['Content-Security-Policy'] = "sandbox; default-src 'none'; style-src 'unsafe-inline'"
+    elif response.mimetype == 'text/html':
+        nonce = getattr(g, 'csp_nonce', '')
+        response.headers['Content-Security-Policy'] = (
+            f"default-src 'self'; "
+            f"script-src 'self' 'nonce-{nonce}'; "
+            f"style-src 'self' 'unsafe-inline'; "
+            f"img-src 'self' data: https:; "
+            f"connect-src 'self'; "
+            f"frame-ancestors 'self'"
+        )
     return response
 
 
@@ -2917,5 +3251,6 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="ROMcat server")
     parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8420)), help="Port to run on")
+    parser.add_argument("--host", type=str, default=os.environ.get("ROMCAT_HOST", "127.0.0.1"), help="Host interface to bind to")
     args, _ = parser.parse_known_args()
-    app.run(host="0.0.0.0", port=args.port, debug=False)
+    app.run(host=args.host, port=args.port, debug=False)
