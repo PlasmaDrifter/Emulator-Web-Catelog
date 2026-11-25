@@ -31,7 +31,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import safe_join
 from PIL import Image
 
-__version__ = "0.8.3"
+__version__ = "0.8.4"
 
 MAX_LOG_ENTRIES = 250
 LOG_BUFFER = deque(maxlen=MAX_LOG_ENTRIES)
@@ -79,6 +79,9 @@ HIDDEN_LOCK = threading.RLock()
 ICON_CACHE_LOCK = threading.RLock()
 ACTIVE_SESSIONS = {}
 ACTIVE_SESSIONS_LOCK = threading.RLock()
+LAUNCH_LOCK = threading.Lock()
+RECENT_LAUNCHES = {}
+LAUNCH_DEBOUNCE_SECONDS = 3.0
 UPDATE_CACHE_PATH = BASE_DIR / "update_cache.json"
 UPDATE_CHECK_INTERVAL_SECONDS = 3600  # 1 hour
 COVERS_DIR.mkdir(parents=True, exist_ok=True)
@@ -1996,6 +1999,26 @@ def api_launch():
         logging.warning(f"Launch failed: Game path '{path_param}' not found in library cache for [{system}]")
         return jsonify({"ok": False, "error": "Game not found in library cache"}), 404
 
+    filename_val = os.path.basename(matched_path)
+    game_title = matched_title or filename_val
+    launch_key = f"{system}:{matched_path}"
+    with LAUNCH_LOCK:
+        now = time.time()
+        expired = [k for k, ts in RECENT_LAUNCHES.items() if now - ts >= LAUNCH_DEBOUNCE_SECONDS]
+        for k in expired:
+            RECENT_LAUNCHES.pop(k, None)
+        with ACTIVE_SESSIONS_LOCK:
+            for sess in ACTIVE_SESSIONS.values():
+                if sess.get("system") == system and sess.get("filename") == filename_val:
+                    sess_proc = sess.get("proc")
+                    if sess_proc is not None and sess_proc.poll() is None:
+                        logging.info(f"Duplicate launch blocked for [{system}] '{filename_val}' (session still active)")
+                        return jsonify({"ok": False, "error": f"{game_title} is already running."}), 409
+        if launch_key in RECENT_LAUNCHES:
+            logging.info(f"Duplicate launch blocked by debounce for [{system}] '{filename_val}'")
+            return jsonify({"ok": False, "error": f"{game_title} is already launching."}), 429
+        RECENT_LAUNCHES[launch_key] = now
+
     cmd_template = sys_cfg["command"]
     kwin_ctx = None
     if os.name == "nt":
@@ -2009,6 +2032,8 @@ def api_launch():
                 stderr=subprocess.DEVNULL,
             )
         except Exception as e:
+            with LAUNCH_LOCK:
+                RECENT_LAUNCHES.pop(launch_key, None)
             logging.error(f"Failed to launch [{system}] on Windows: {e}")
             return jsonify({"ok": False, "error": "Emulator launch failed on Windows."}), 500
     else:
@@ -2096,10 +2121,14 @@ def api_launch():
             )
         except FileNotFoundError:
             _cleanup_kwin_ctx(kwin_ctx)
+            with LAUNCH_LOCK:
+                RECENT_LAUNCHES.pop(launch_key, None)
             logging.error(f"Emulator executable not found for [{system}]. Command: {exec_desc}")
             return jsonify({"ok": False, "error": "Emulator executable not found. Please check your command in settings."}), 500
         except Exception as e:
             _cleanup_kwin_ctx(kwin_ctx)
+            with LAUNCH_LOCK:
+                RECENT_LAUNCHES.pop(launch_key, None)
             logging.error(f"Failed to launch emulator process for [{system}]: {e}")
             return jsonify({"ok": False, "error": "Failed to launch emulator process."}), 500
 
@@ -2112,8 +2141,6 @@ def api_launch():
         placement_thread.start()
 
     start_time = time.time()
-    filename_val = os.path.basename(matched_path)
-    game_title = matched_title or filename_val
     session_id = f"{system}:{filename_val}:{int(start_time * 1000)}"
     with ACTIVE_SESSIONS_LOCK:
         ACTIVE_SESSIONS[session_id] = {

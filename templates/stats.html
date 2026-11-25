@@ -852,8 +852,11 @@ function showLaunchToast(message, isError = false) {
   }, 3500);
 }
 
+let launchInFlight = false;
+
 async function launchGame(system, filename, path, card, title) {
-  if (!system) return;
+  if (!system || launchInFlight || (card && card.classList.contains('launching'))) return;
+  launchInFlight = true;
   if (card) card.classList.add('launching');
   showLaunchToast(`Launching ${title || filename}...`);
 
@@ -874,6 +877,7 @@ async function launchGame(system, filename, path, card, title) {
     showLaunchToast(`Launch error: ${err}`, true);
   } finally {
     setTimeout(() => {
+      launchInFlight = false;
       if (card) card.classList.remove('launching');
     }, 2000);
   }

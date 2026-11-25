@@ -1289,6 +1289,7 @@
 
 <script nonce="{{ g.csp_nonce }}">
 // Delegated click handling on game cards and their controls
+let cardLaunchInFlight = false;
 document.addEventListener('click', async (e) => {
   // 1. Star click
   const star = e.target.closest('.star');
@@ -1361,6 +1362,8 @@ document.addEventListener('click', async (e) => {
   // 5. Card launch click
   const card = e.target.closest('.card');
   if (card) {
+    if (cardLaunchInFlight || card.classList.contains('launching')) return;
+    cardLaunchInFlight = true;
     const system = card.dataset.system;
     const path = card.dataset.path;
     card.classList.add('launching');
@@ -1379,11 +1382,13 @@ document.addEventListener('click', async (e) => {
       }
     } catch (err) {
       if (statusEl) statusEl.textContent = 'Error: ' + err;
+    } finally {
+      setTimeout(() => {
+        cardLaunchInFlight = false;
+        card.classList.remove('launching');
+        if (statusEl) statusEl.textContent = '';
+      }, 2000);
     }
-    setTimeout(() => {
-      card.classList.remove('launching');
-      if (statusEl) statusEl.textContent = '';
-    }, 2000);
   }
 });
 
